@@ -1,6 +1,5 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca v5
-//   Compatível com index.html atual
+//   APP.JS — Mockup 3D Caneca v6
 // ══════════════════════════════════════════
 
 // ── 1. RENDERER ──────────────────────────
@@ -90,18 +89,17 @@ inner.position.y = G.h / 2 - 0.001;
 mugGroup.add(inner);
 
 // ── 6. ALÇA ──────────────────────────────
-// Cola na lateral direita (X+), meia altura
-const hY = 0.24; // distância vertical do centro
-const hX = G.rTop; // raio do topo
+const hY = 0.24;
+const hX = G.rTop;
 
 const handlePts = [
-  new THREE.Vector3(hX,          hY,    0),
-  new THREE.Vector3(hX + 0.08,  hY,    0),
+  new THREE.Vector3(hX,          hY,       0),
+  new THREE.Vector3(hX + 0.08,  hY,       0),
   new THREE.Vector3(hX + 0.30,  hY * 0.5, 0),
-  new THREE.Vector3(hX + 0.38,  0,     0),
+  new THREE.Vector3(hX + 0.38,  0,        0),
   new THREE.Vector3(hX + 0.30, -hY * 0.5, 0),
-  new THREE.Vector3(hX + 0.08, -hY,   0),
-  new THREE.Vector3(hX,         -hY,   0),
+  new THREE.Vector3(hX + 0.08, -hY,       0),
+  new THREE.Vector3(hX,        -hY,       0),
 ];
 
 mugGroup.add(new THREE.Mesh(
@@ -124,7 +122,7 @@ scene.add(floor);
 
 // ── 8. TEXTURA DA ARTE ───────────────────
 const ART_W = 2048;
-const ART_H = 512;
+const ART_H  = 512;
 
 const artCanvas = document.createElement('canvas');
 artCanvas.width  = ART_W;
@@ -138,12 +136,12 @@ artTex.wrapT = THREE.ClampToEdgeWrapping;
 
 // Estado da arte
 const art = {
-  image:   null,
-  offsetX: 0,      // -1 a +1
-  offsetY: 0,      // -1 a +1
-  scale:   1.0,    // 0.1 a 2.0
-  rotation: 0,     // graus
-  opacity: 1.0,
+  image:    null,
+  offsetX:  0,
+  offsetY:  0,
+  scale:    1.0,
+  rotation: 0,
+  opacity:  1.0,
 };
 
 function redrawArt() {
@@ -153,25 +151,24 @@ function redrawArt() {
   artCtx.save();
   artCtx.globalAlpha = art.opacity;
 
-  // Centro do canvas
   const cx = ART_W / 2;
   const cy = ART_H / 2;
 
-  // Dimensões base da arte (preenche o canvas inteiro)
   const iw = art.image.naturalWidth  || art.image.width;
   const ih = art.image.naturalHeight || art.image.height;
 
-  // Escala para cobrir o canvas + scale do slider
   const scaleX = (ART_W / iw) * art.scale;
   const scaleY = (ART_H / ih) * art.scale;
 
-  // Offset em pixels
   const ox = art.offsetX * ART_W * 0.3;
   const oy = art.offsetY * ART_H * 0.3;
 
   artCtx.translate(cx + ox, cy + oy);
   artCtx.rotate((art.rotation * Math.PI) / 180);
-  artCtx.scale(scaleX, scaleY);
+
+  // Escala Y negativa corrige a inversão vertical
+  artCtx.scale(scaleX, -scaleY);
+
   artCtx.drawImage(art.image, -iw / 2, -ih / 2);
 
   artCtx.restore();
@@ -182,20 +179,13 @@ function redrawArt() {
 const stampGeo = new THREE.CylinderGeometry(
   G.rTop + 0.002,
   G.rBot + 0.002,
-  G.h * 0.90,   // 90% da altura
+  G.h * 0.90,
   G.seg,
   1,
   true,
   0,
-  Math.PI * 2   // 360° completo
+  Math.PI * 2
 );
-
-// Corrige UVs (inverte V para arte não ficar de cabeça pra baixo)
-const uvArr = stampGeo.attributes.uv.array;
-for (let i = 1; i < uvArr.length; i += 2) {
-  uvArr[i] = 1 - uvArr[i];
-}
-stampGeo.attributes.uv.needsUpdate = true;
 
 const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
   map:         artTex,
@@ -203,7 +193,7 @@ const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
   roughness:   0.2,
   metalness:   0.0,
   depthWrite:  false,
-  polygonOffset: true,
+  polygonOffset:       true,
   polygonOffsetFactor: -1,
 }));
 mugGroup.add(stampMesh);
@@ -221,8 +211,8 @@ window.addEventListener('mousemove', e => {
   if (!mouseDown) return;
   rot.y += (e.clientX - lastX) * 0.011;
   rot.x += (e.clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.7, Math.min(0.7, rot.x));
-  lastX = e.clientX; lastY = e.clientY;
+  rot.x  = Math.max(-0.7, Math.min(0.7, rot.x));
+  lastX  = e.clientX; lastY = e.clientY;
 });
 
 canvas.addEventListener('touchstart', e => {
@@ -235,9 +225,9 @@ window.addEventListener('touchmove', e => {
   if (!mouseDown) return;
   rot.y += (e.touches[0].clientX - lastX) * 0.011;
   rot.x += (e.touches[0].clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.7, Math.min(0.7, rot.x));
-  lastX = e.touches[0].clientX;
-  lastY = e.touches[0].clientY;
+  rot.x  = Math.max(-0.7, Math.min(0.7, rot.x));
+  lastX  = e.touches[0].clientX;
+  lastY  = e.touches[0].clientY;
 }, { passive: true });
 
 canvas.addEventListener('wheel', e => {
@@ -246,9 +236,6 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 
 // ── 11. SLIDERS ──────────────────────────
-// IDs do HTML: offsetX, offsetY, artScale, artRotation, artOpacity
-// Values:      valOffsetX, valOffsetY, valScale, valRotation, valOpacity
-
 document.getElementById('offsetX').addEventListener('input', function () {
   art.offsetX = parseFloat(this.value);
   document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2);
@@ -290,7 +277,6 @@ document.getElementById('fileInput').addEventListener('change', function () {
     img.onload = () => {
       art.image = img;
 
-      // Mostra thumbnail
       const thumb = document.getElementById('artThumb');
       thumb.src = ev.target.result;
       thumb.style.display = 'block';
@@ -341,31 +327,26 @@ document.getElementById('btnExport').addEventListener('click', () => {
 
 // ── 16. RESET ────────────────────────────
 document.getElementById('btnReset').addEventListener('click', () => {
-  // Reseta arte
   art.image = null; art.offsetX = 0; art.offsetY = 0;
-  art.scale = 1; art.rotation = 0; art.opacity = 1;
+  art.scale = 1;    art.rotation = 0; art.opacity = 1;
 
-  // Reseta sliders
-  document.getElementById('offsetX').value    = 0;
-  document.getElementById('offsetY').value    = 0;
-  document.getElementById('artScale').value   = 100;
+  document.getElementById('offsetX').value     = 0;
+  document.getElementById('offsetY').value     = 0;
+  document.getElementById('artScale').value    = 100;
   document.getElementById('artRotation').value = 0;
   document.getElementById('artOpacity').value  = 100;
 
-  // Reseta labels
   document.getElementById('valOffsetX').textContent  = '0';
   document.getElementById('valOffsetY').textContent  = '0';
   document.getElementById('valScale').textContent    = '100%';
   document.getElementById('valRotation').textContent = '0°';
   document.getElementById('valOpacity').textContent  = '100%';
 
-  // Reseta thumbnail
   const thumb = document.getElementById('artThumb');
   thumb.src = ''; thumb.style.display = 'none';
   document.getElementById('artPlaceholder').style.display = 'block';
   document.getElementById('fileInput').value = '';
 
-  // Reseta câmera e cores
   rot.x = 0.15; rot.y = -0.5; targetZoom = 4.5;
   mugMat.color.set('#ffffff'); mugMat.needsUpdate = true;
   scene.background = new THREE.Color('#ffffff');
