@@ -45,8 +45,9 @@ let mugMesh  = null;
 let mugGroup = new THREE.Group();
 scene.add(mugGroup);
 
-const ART_W = 2048;
-const ART_H  = 512;
+// Dimensões da textura — proporcional à caneca
+const ART_W = 1024;
+const ART_H  = 1024;
 
 const artCanvas = document.createElement('canvas');
 artCanvas.width  = ART_W;
@@ -58,23 +59,27 @@ artTex.colorSpace = THREE.SRGBColorSpace;
 artTex.wrapS = THREE.RepeatWrapping;
 artTex.wrapT = THREE.ClampToEdgeWrapping;
 
+// Cor atual da caneca
+let currentColor = '#ffffff';
+
 const art = {
   image:    null,
   offsetX:  0,
   offsetY:  0,
-  scale:    1.0,
+  scale:    0.5,   // começa menor para encaixar melhor na caneca
   rotation: 0,
   opacity:  1.0,
 };
 
 // ── 5. CARREGAR GLB ──────────────────────
-const loader = new GLTFLoader(); // ✅ CORRIGIDO
+const loader = new GLTFLoader();
 
 loader.load(
   'Mug.glb',
   function (gltf) {
     const model = gltf.scene;
 
+    // Centraliza e escala o modelo automaticamente
     const box    = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
     const size   = box.getSize(new THREE.Vector3());
@@ -84,73 +89,73 @@ loader.load(
     model.position.sub(center.multiplyScalar(scale));
     model.scale.setScalar(scale);
 
+    // Percorre todas as malhas do modelo
     model.traverse(child => {
       if (!child.isMesh) return;
 
       child.castShadow    = true;
       child.receiveShadow = true;
 
-      const name = child.name.toLowerCase();
       console.log('Mesh encontrada:', child.name);
 
-      if (name.includes('body') || name.includes('corpo') ||
-          name.includes('mug')  || name.includes('caneca') ||
-          name.includes('cylinder') || name === '') {
+      // Como o modelo tem apenas 1 malha (Mug_Q),
+      // aplicamos a textura de arte COM cor de base
+      mugMesh = child;
 
-        mugMesh = child;
-
-        child.material = new THREE.MeshStandardMaterial({
-          color:     0xffffff,
-          map:       artTex,
-          roughness: 0.15,
-          metalness: 0.0,
-        });
-
-      } else {
-        child.material = new THREE.MeshStandardMaterial({
-          color:     0xffffff,
-          roughness: 0.2,
-          metalness: 0.0,
-        });
-      }
+      child.material = new THREE.MeshStandardMaterial({
+        color:     new THREE.Color(currentColor),
+        map:       artTex,
+        roughness: 0.15,
+        metalness: 0.0,
+      });
     });
 
     mugGroup.add(model);
+    redrawArt();
     showToast('✅ Caneca 3D carregada!');
   },
 
   function (xhr) {
-    const pct = Math.round((xhr.loaded / xhr.total) * 100);
-    console.log(`Carregando GLB: ${pct}%`);
+    if (xhr.total > 0) {
+      const pct = Math.round((xhr.loaded / xhr.total) * 100);
+      console.log(`Carregando GLB: ${pct}%`);
+    }
   },
 
   function (err) {
     console.error('Erro ao carregar GLB:', err);
-    showToast('❌ Erro ao carregar caneca.glb');
+    showToast('❌ Erro ao carregar Mug.glb');
   }
 );
 
 // ── 6. REDESENHAR ARTE ───────────────────
 function redrawArt() {
   artCtx.clearRect(0, 0, ART_W, ART_H);
-  if (!art.image) { artTex.needsUpdate = true; return; }
 
-  const iw = art.image.naturalWidth  || art.image.width;
-  const ih = art.image.naturalHeight || art.image.height;
+  // Preenche o fundo com a cor da caneca
+  artCtx.fillStyle = currentColor;
+  artCtx.fillRect(0, 0, ART_W, ART_H);
 
-  const scaleX = (ART_W / iw) * art.scale;
-  const scaleY = (ART_H / ih) * art.scale;
+  if (art.image) {
+    const iw = art.image.naturalWidth  || art.image.width;
+    const ih = art.image.naturalHeight || art.image.height;
 
-  const cx = ART_W / 2 + art.offsetX * ART_W * 0.3;
-  const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
+    // Mantém proporção da imagem dentro do canvas
+    const fitScale = Math.min(ART_W / iw, ART_H / ih) * art.scale;
 
-  artCtx.save();
-  artCtx.globalAlpha = art.opacity;
-  artCtx.translate(cx, cy);
-  artCtx.rotate((art.rotation * Math.PI) / 180);
-  artCtx.scale(-scaleX, scaleY);
-  artCtx.drawImage(art.image, -iw / 2, -ih / 2);
-  artCtx.restore();
+    const scaleX = fitScale;
+    const scaleY = fitScale;
+
+    const cx = ART_W / 2 + art.offsetX * ART_W * 0.3;
+    const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
+
+    artCtx.save();
+    artCtx.globalAlpha = art.opacity;
+    artCtx.translate(cx, cy);
+    artCtx.rotate((art.rotation * Math.PI) / 180);
+    artCtx.drawImage(art.image, -iw / 2 * scaleX, -ih / 2 * scaleY, iw * scaleX, ih * scaleY);
+    artCtx.restore();
+  }
 
   artTex.needsUpdate = true;
 }
@@ -244,17 +249,13 @@ document.getElementById('fileInput').addEventListener('change', function () {
 document.getElementById('mugColors').addEventListener('click', function (e) {
   const dot = e.target.closest('[data-color]');
   if (!dot) return;
+
   this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   dot.classList.add('active');
 
-  mugGroup.traverse(child => {
-    if (!child.isMesh) return;
-    const name = child.name.toLowerCase();
-    if (name.includes('base') || name.includes('bottom') ||
-        name.includes('inner') || name.includes('interior')) return;
-    child.material.color.set(dot.dataset.color);
-    child.material.needsUpdate = true;
-  });
+  // Salva a cor atual e redesenha a textura com a nova cor de fundo
+  currentColor = dot.dataset.color;
+  redrawArt();
 
   showToast('🎨 Cor alterada!');
 });
@@ -284,8 +285,13 @@ document.getElementById('btnExport').addEventListener('click', () => {
 
 // ── 13. RESET ────────────────────────────
 document.getElementById('btnReset').addEventListener('click', () => {
-  art.image = null; art.offsetX = 0; art.offsetY = 0;
-  art.scale = 1; art.rotation = 0; art.opacity = 1;
+  art.image    = null;
+  art.offsetX  = 0;
+  art.offsetY  = 0;
+  art.scale    = 0.5;
+  art.rotation = 0;
+  art.opacity  = 1;
+  currentColor = '#ffffff';
 
   ['offsetX','offsetY'].forEach(id => document.getElementById(id).value = 0);
   document.getElementById('artScale').value    = 100;
@@ -305,14 +311,9 @@ document.getElementById('btnReset').addEventListener('click', () => {
 
   rot.x = 0.15; rot.y = -0.5; targetZoom = 4.5;
 
-  mugGroup.traverse(child => {
-    if (!child.isMesh) return;
-    child.material.color.set('#ffffff');
-    child.material.needsUpdate = true;
-  });
-
   scene.background = new THREE.Color('#f0f0f0');
   document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+
   redrawArt();
   showToast('🔄 Resetado!');
 });
