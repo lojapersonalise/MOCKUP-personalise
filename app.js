@@ -71,7 +71,7 @@ const art = {
 const loader = new GLTFLoader(); // ✅ CORRIGIDO
 
 loader.load(
-  'caneca.glb',
+  'Mug.glb',
   function (gltf) {
     const model = gltf.scene;
 
