@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca v6
+//   APP.JS — Mockup 3D Caneca v7
 // ══════════════════════════════════════════
 
 // ── 1. RENDERER ──────────────────────────
@@ -88,25 +88,22 @@ inner.rotation.x = -Math.PI / 2;
 inner.position.y = G.h / 2 - 0.001;
 mugGroup.add(inner);
 
-// ── 6. ALÇA ──────────────────────────────
-const hY = 0.24;
-const hX = G.rTop;
+// ── 6. ALÇA (lateral direita, eixo Z=0) ──
+// A alça fica no lado X+ e é plana em Z=0
+const hR  = 0.22;  // raio do arco
+const hX  = G.rTop + 0.01; // encosta no corpo
+const hCX = hX + 0.18;     // centro do arco
 
-const handlePts = [
-  new THREE.Vector3(hX,          hY,       0),
-  new THREE.Vector3(hX + 0.08,  hY,       0),
-  new THREE.Vector3(hX + 0.30,  hY * 0.5, 0),
-  new THREE.Vector3(hX + 0.38,  0,        0),
-  new THREE.Vector3(hX + 0.30, -hY * 0.5, 0),
-  new THREE.Vector3(hX + 0.08, -hY,       0),
-  new THREE.Vector3(hX,        -hY,       0),
-];
+const handleCurve = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(hX,       hR * 0.85,  0),
+  new THREE.Vector3(hCX,      hR,         0),
+  new THREE.Vector3(hCX + 0.10, 0,        0),
+  new THREE.Vector3(hCX,     -hR,         0),
+  new THREE.Vector3(hX,      -hR * 0.85,  0),
+]);
 
 mugGroup.add(new THREE.Mesh(
-  new THREE.TubeGeometry(
-    new THREE.CatmullRomCurve3(handlePts),
-    60, 0.050, 16, false
-  ),
+  new THREE.TubeGeometry(handleCurve, 60, 0.045, 16, false),
   mugMat
 ));
 
@@ -134,7 +131,6 @@ artTex.colorSpace = THREE.SRGBColorSpace;
 artTex.wrapS = THREE.RepeatWrapping;
 artTex.wrapT = THREE.ClampToEdgeWrapping;
 
-// Estado da arte
 const art = {
   image:    null,
   offsetX:  0,
@@ -148,27 +144,22 @@ function redrawArt() {
   artCtx.clearRect(0, 0, ART_W, ART_H);
   if (!art.image) { artTex.needsUpdate = true; return; }
 
-  artCtx.save();
-  artCtx.globalAlpha = art.opacity;
-
-  const cx = ART_W / 2;
-  const cy = ART_H / 2;
-
   const iw = art.image.naturalWidth  || art.image.width;
   const ih = art.image.naturalHeight || art.image.height;
 
   const scaleX = (ART_W / iw) * art.scale;
   const scaleY = (ART_H / ih) * art.scale;
 
-  const ox = art.offsetX * ART_W * 0.3;
-  const oy = art.offsetY * ART_H * 0.3;
+  const cx = ART_W / 2 + art.offsetX * ART_W * 0.3;
+  const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
 
-  artCtx.translate(cx + ox, cy + oy);
+  artCtx.save();
+  artCtx.globalAlpha = art.opacity;
+  artCtx.translate(cx, cy);
   artCtx.rotate((art.rotation * Math.PI) / 180);
 
-  // Escala Y negativa corrige a inversão vertical
-  artCtx.scale(scaleX, -scaleY);
-
+  // SEM espelhamento — só escala normal
+  artCtx.scale(scaleX, scaleY);
   artCtx.drawImage(art.image, -iw / 2, -ih / 2);
 
   artCtx.restore();
@@ -176,6 +167,8 @@ function redrawArt() {
 }
 
 // ── 9. CILINDRO DA ESTAMPA ───────────────
+// Correção das UVs: Three.js gera V de baixo pra cima (0=base, 1=topo)
+// Invertemos V para que a imagem fique na orientação correta
 const stampGeo = new THREE.CylinderGeometry(
   G.rTop + 0.002,
   G.rBot + 0.002,
@@ -186,6 +179,13 @@ const stampGeo = new THREE.CylinderGeometry(
   0,
   Math.PI * 2
 );
+
+// Inverte U para corrigir espelhamento horizontal
+const uvArr = stampGeo.attributes.uv.array;
+for (let i = 0; i < uvArr.length; i += 2) {
+  uvArr[i] = 1 - uvArr[i]; // inverte U (horizontal)
+}
+stampGeo.attributes.uv.needsUpdate = true;
 
 const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
   map:         artTex,
@@ -198,7 +198,7 @@ const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
 }));
 mugGroup.add(stampMesh);
 
-// ── 10. ROTAÇÃO DA CANECA (mouse/touch) ──
+// ── 10. ROTAÇÃO DA CANECA ────────────────
 const rot = { x: 0.15, y: -0.5, smoothX: 0.15, smoothY: -0.5 };
 let mouseDown = false, lastX = 0, lastY = 0;
 let targetZoom = 4.5;
