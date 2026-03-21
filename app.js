@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca v8 COMPLETO
+//   APP.JS — Mockup 3D Caneca v9
 // ══════════════════════════════════════════
 
 // ── 1. RENDERER ──────────────────────────
@@ -37,8 +37,16 @@ const back = new THREE.DirectionalLight(0xffffff, 0.5);
 back.position.set(0, -2, -4);
 scene.add(back);
 
-// ── 4. MATERIAL DA CANECA ────────────────
+// ── 4. MATERIAIS ─────────────────────────
+// Material colorido (corpo + alça + borda)
 const mugMat = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  roughness: 0.2,
+  metalness: 0.0,
+});
+
+// Material sempre branco (base + interior) — não muda com a cor
+const whiteMat = new THREE.MeshStandardMaterial({
   color: 0xffffff,
   roughness: 0.2,
   metalness: 0.0,
@@ -56,22 +64,22 @@ const G = {
 const mugGroup = new THREE.Group();
 scene.add(mugGroup);
 
-// Corpo
+// Corpo — recebe cor
 mugGroup.add(new THREE.Mesh(
   new THREE.CylinderGeometry(G.rTop, G.rBot, G.h, G.seg, 1, true),
   mugMat
 ));
 
-// Base
+// Base — sempre branca ✅
 const base = new THREE.Mesh(
   new THREE.CircleGeometry(G.rBot, G.seg),
-  mugMat
+  whiteMat
 );
 base.rotation.x = -Math.PI / 2;
 base.position.y = -G.h / 2;
 mugGroup.add(base);
 
-// Borda superior
+// Borda superior — recebe cor
 const rim = new THREE.Mesh(
   new THREE.TorusGeometry(G.rTop, G.wall, 16, G.seg),
   mugMat
@@ -79,31 +87,35 @@ const rim = new THREE.Mesh(
 rim.position.y = G.h / 2;
 mugGroup.add(rim);
 
-// Interior da boca
+// Interior da boca — sempre branco ✅
 const inner = new THREE.Mesh(
   new THREE.CircleGeometry(G.rTop - G.wall * 2, G.seg),
-  mugMat
+  whiteMat
 );
 inner.rotation.x = -Math.PI / 2;
 inner.position.y = G.h / 2 - 0.001;
 mugGroup.add(inner);
 
-// ── 6. ALÇA (lateral direita) ─────────────
-const hR  = 0.22;
-const hX  = G.rTop + 0.01;
-const hCX = hX + 0.18;
+// ── 6. ALÇA (lateral direita, Z=0) ───────
+// A alça fica no plano Z=0, no lado X+
+// Pontos formam um arco em D na lateral
+const hY  = 0.30;   // meia-altura do arco (distância vertical)
+const hX0 = G.rTop; // onde encosta no corpo (raio do topo)
+const hXm = G.rTop + 0.38; // ponto mais externo do arco
 
 const handleCurve = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(hX,         hR * 0.85,  0),
-  new THREE.Vector3(hCX,        hR,         0),
-  new THREE.Vector3(hCX + 0.10, 0,          0),
-  new THREE.Vector3(hCX,       -hR,         0),
-  new THREE.Vector3(hX,        -hR * 0.85,  0),
+  new THREE.Vector3(hX0,        hY,         0),   // topo — encosta no corpo
+  new THREE.Vector3(hX0 + 0.05, hY,         0),   // sai suavemente
+  new THREE.Vector3(hXm,        hY * 0.5,   0),   // curva superior
+  new THREE.Vector3(hXm + 0.05, 0,          0),   // ponto mais externo
+  new THREE.Vector3(hXm,       -hY * 0.5,   0),   // curva inferior
+  new THREE.Vector3(hX0 + 0.05,-hY,         0),   // volta suavemente
+  new THREE.Vector3(hX0,       -hY,         0),   // base — encosta no corpo
 ]);
 
 mugGroup.add(new THREE.Mesh(
-  new THREE.TubeGeometry(handleCurve, 60, 0.045, 16, false),
-  mugMat
+  new THREE.TubeGeometry(handleCurve, 80, 0.048, 20, false),
+  mugMat  // alça recebe cor também
 ));
 
 // ── 7. CHÃO (sombra) ─────────────────────
@@ -156,12 +168,10 @@ function redrawArt() {
   artCtx.globalAlpha = art.opacity;
   artCtx.translate(cx, cy);
   artCtx.rotate((art.rotation * Math.PI) / 180);
-
-  // -scaleX espelha horizontalmente para compensar inversão UV do Three.js
-  artCtx.scale(-scaleX, scaleY);
-
+  artCtx.scale(-scaleX, scaleY); // -X corrige espelhamento do Three.js
   artCtx.drawImage(art.image, -iw / 2, -ih / 2);
   artCtx.restore();
+
   artTex.needsUpdate = true;
 }
 
@@ -169,7 +179,7 @@ function redrawArt() {
 const stampGeo = new THREE.CylinderGeometry(
   G.rTop + 0.002,
   G.rBot + 0.002,
-  G.h - 0.01,   // ✅ altura igual ao corpo, sem vazar na base
+  G.h - 0.01,
   G.seg,
   1,
   true,
@@ -177,8 +187,7 @@ const stampGeo = new THREE.CylinderGeometry(
   Math.PI * 2
 );
 
-// SEM inversão de UV — compensado pelo espelhamento no canvas 2D
-const stampMat = new THREE.MeshStandardMaterial({
+const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
   map:         artTex,
   transparent: true,
   roughness:   0.2,
@@ -186,9 +195,7 @@ const stampMat = new THREE.MeshStandardMaterial({
   depthWrite:  false,
   polygonOffset:       true,
   polygonOffsetFactor: -1,
-});
-
-const stampMesh = new THREE.Mesh(stampGeo, stampMat);
+}));
 stampMesh.position.y = 0;
 mugGroup.add(stampMesh);
 
@@ -292,6 +299,7 @@ document.getElementById('mugColors').addEventListener('click', function (e) {
   dot.classList.add('active');
   mugMat.color.set(dot.dataset.color);
   mugMat.needsUpdate = true;
+  // whiteMat NÃO é alterado — base sempre branca ✅
   showToast('🎨 Cor da caneca alterada!');
 });
 
@@ -342,7 +350,8 @@ document.getElementById('btnReset').addEventListener('click', () => {
   document.getElementById('fileInput').value = '';
 
   rot.x = 0.15; rot.y = -0.5; targetZoom = 4.5;
-  mugMat.color.set('#ffffff'); mugMat.needsUpdate = true;
+  mugMat.color.set('#ffffff');
+  mugMat.needsUpdate = true;
   scene.background = new THREE.Color('#ffffff');
 
   document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
