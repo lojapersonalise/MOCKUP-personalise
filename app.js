@@ -89,26 +89,29 @@ loader.load(
     model.position.sub(center.multiplyScalar(scale));
     model.scale.setScalar(scale);
 
-    // Percorre todas as malhas do modelo
-    model.traverse(child => {
-      if (!child.isMesh) return;
+    /// Percorre todas as malhas do modelo
+model.traverse(child => {
+  if (!child.isMesh) return;
 
-      child.castShadow    = true;
-      child.receiveShadow = true;
+  child.castShadow    = true;
+  child.receiveShadow = true;
 
-      console.log('Mesh encontrada:', child.name);
+  console.log('Mesh encontrada:', child.name, '| UV sets:', child.geometry.attributes);
 
-      // Como o modelo tem apenas 1 malha (Mug_Q),
-      // aplicamos a textura de arte COM cor de base
-      mugMesh = child;
+  // Aplica material branco em todas as malhas por padrão
+  child.material = new THREE.MeshStandardMaterial({
+    color:      new THREE.Color(currentColor),
+    roughness:  0.15,
+    metalness:  0.0,
+  });
 
-      child.material = new THREE.MeshStandardMaterial({
-        color:     new THREE.Color(currentColor),
-        map:       artTex,
-        roughness: 0.15,
-        metalness: 0.0,
-      });
-    });
+  // Se for o corpo da caneca (tem UV), aplica a arte
+  if (child.geometry.attributes.uv) {
+    mugMesh = child;
+    child.material.map = artTex;
+    child.material.needsUpdate = true;
+  }
+});
 
     mugGroup.add(model);
     redrawArt();
