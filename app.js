@@ -45,7 +45,6 @@ let mugMesh  = null;
 let mugGroup = new THREE.Group();
 scene.add(mugGroup);
 
-// Dimensões da textura — proporcional à caneca
 const ART_W = 1024;
 const ART_H  = 1024;
 
@@ -59,14 +58,13 @@ artTex.colorSpace = THREE.SRGBColorSpace;
 artTex.wrapS = THREE.RepeatWrapping;
 artTex.wrapT = THREE.ClampToEdgeWrapping;
 
-// Cor atual da caneca
 let currentColor = '#ffffff';
 
 const art = {
   image:    null,
   offsetX:  0,
   offsetY:  0,
-  scale:    0.5,   // começa menor para encaixar melhor na caneca
+  scale:    0.5,
   rotation: 0,
   opacity:  1.0,
 };
@@ -79,7 +77,6 @@ loader.load(
   function (gltf) {
     const model = gltf.scene;
 
-    // Centraliza e escala o modelo automaticamente
     const box    = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
     const size   = box.getSize(new THREE.Vector3());
@@ -89,29 +86,28 @@ loader.load(
     model.position.sub(center.multiplyScalar(scale));
     model.scale.setScalar(scale);
 
-    /// Percorre todas as malhas do modelo
-model.traverse(child => {
-  if (!child.isMesh) return;
+    model.traverse(child => {
+      if (!child.isMesh) return;
 
-  child.castShadow    = true;
-  child.receiveShadow = true;
+      child.castShadow    = true;
+      child.receiveShadow = true;
 
-  console.log('Mesh encontrada:', child.name, '| UV sets:', child.geometry.attributes);
+      console.log('Mesh encontrada:', child.name, '| UV sets:', child.geometry.attributes);
 
-  // Aplica material branco em todas as malhas por padrão
-  child.material = new THREE.MeshStandardMaterial({
-    color:      new THREE.Color(currentColor),
-    roughness:  0.15,
-    metalness:  0.0,
-  });
+      // Material base branco para todas as malhas
+      child.material = new THREE.MeshStandardMaterial({
+        color:     new THREE.Color(currentColor),
+        roughness: 0.15,
+        metalness: 0.0,
+      });
 
-  // Se for o corpo da caneca (tem UV), aplica a arte
-  if (child.geometry.attributes.uv) {
-    mugMesh = child;
-    child.material.map = artTex;
-    child.material.needsUpdate = true;
-  }
-});
+      // Se tiver UV, é o corpo da caneca — aplica a arte
+      if (child.geometry.attributes.uv) {
+        mugMesh = child;
+        child.material.map = artTex;
+        child.material.needsUpdate = true;
+      }
+    });
 
     mugGroup.add(model);
     redrawArt();
@@ -135,19 +131,15 @@ model.traverse(child => {
 function redrawArt() {
   artCtx.clearRect(0, 0, ART_W, ART_H);
 
-  // Preenche o fundo com a cor da caneca
-  artCtx.fillStyle = currentColor;
+  // Fundo SEMPRE branco (corpo externo da caneca)
+  artCtx.fillStyle = '#ffffff';
   artCtx.fillRect(0, 0, ART_W, ART_H);
 
   if (art.image) {
     const iw = art.image.naturalWidth  || art.image.width;
     const ih = art.image.naturalHeight || art.image.height;
 
-    // Mantém proporção da imagem dentro do canvas
     const fitScale = Math.min(ART_W / iw, ART_H / ih) * art.scale;
-
-    const scaleX = fitScale;
-    const scaleY = fitScale;
 
     const cx = ART_W / 2 + art.offsetX * ART_W * 0.3;
     const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
@@ -156,11 +148,17 @@ function redrawArt() {
     artCtx.globalAlpha = art.opacity;
     artCtx.translate(cx, cy);
     artCtx.rotate((art.rotation * Math.PI) / 180);
-    artCtx.drawImage(art.image, -iw / 2 * scaleX, -ih / 2 * scaleY, iw * scaleX, ih * scaleY);
+    artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale);
     artCtx.restore();
   }
 
   artTex.needsUpdate = true;
+
+  // Aplica a cor no material (afeta alça e interior)
+  if (mugMesh) {
+    mugMesh.material.color.set(currentColor);
+    mugMesh.material.needsUpdate = true;
+  }
 }
 
 // ── 7. ROTAÇÃO (mouse/touch) ─────────────
@@ -256,7 +254,6 @@ document.getElementById('mugColors').addEventListener('click', function (e) {
   this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   dot.classList.add('active');
 
-  // Salva a cor atual e redesenha a textura com a nova cor de fundo
   currentColor = dot.dataset.color;
   redrawArt();
 
