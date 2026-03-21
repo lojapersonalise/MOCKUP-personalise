@@ -1,12 +1,10 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca v4
+//   APP.JS — Mockup 3D Caneca v5
+//   Compatível com index.html atual
 // ══════════════════════════════════════════
 
-// ──────────────────────────────────────────
-// 1. RENDERER + CENA + CÂMERA
-// ──────────────────────────────────────────
+// ── 1. RENDERER ──────────────────────────
 const canvas = document.getElementById('canvas3d');
-
 const renderer = new THREE.WebGLRenderer({
   canvas,
   antialias: true,
@@ -16,138 +14,117 @@ renderer.setSize(600, 500);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
 
+// ── 2. CENA + CÂMERA ─────────────────────
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#f0f2f5');
+scene.background = new THREE.Color('#ffffff');
 
 const camera = new THREE.PerspectiveCamera(38, 600 / 500, 0.1, 100);
-camera.position.set(0, 0.1, 4.2);
+camera.position.set(0, 0.2, 4.5);
 
-// ──────────────────────────────────────────
-// 2. ILUMINAÇÃO — forte para caneca branca
-// ──────────────────────────────────────────
-// Luz ambiente forte para branco
-const ambient = new THREE.AmbientLight(0xffffff, 1.2);
-scene.add(ambient);
+// ── 3. ILUMINAÇÃO ────────────────────────
+scene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
-// Luz principal
-const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-sun.position.set(3, 6, 5);
+const sun = new THREE.DirectionalLight(0xffffff, 2.0);
+sun.position.set(4, 6, 5);
 sun.castShadow = true;
 scene.add(sun);
 
-// Fill lateral
-const fill = new THREE.DirectionalLight(0xffffff, 0.8);
-fill.position.set(-4, 2, 2);
+const fill = new THREE.DirectionalLight(0xffffff, 1.0);
+fill.position.set(-4, 2, 3);
 scene.add(fill);
 
-// Rim atrás
-const rim = new THREE.DirectionalLight(0xffffff, 0.4);
-rim.position.set(0, -1, -5);
-scene.add(rim);
+const back = new THREE.DirectionalLight(0xffffff, 0.5);
+back.position.set(0, -2, -4);
+scene.add(back);
 
-// ──────────────────────────────────────────
-// 3. MATERIAL DA CANECA
-//    Começa branco, cor muda pelo picker
-// ──────────────────────────────────────────
+// ── 4. MATERIAL DA CANECA ────────────────
 const mugMat = new THREE.MeshStandardMaterial({
-  color:     0xffffff,
-  roughness: 0.15,
+  color: 0xffffff,
+  roughness: 0.2,
   metalness: 0.0,
-  envMapIntensity: 0.5,
 });
 
-function setMugColor(hex) {
-  mugMat.color.set(hex);
-  mugMat.needsUpdate = true;
-}
-
-// ──────────────────────────────────────────
-// 4. CANECA — medidas realistas
-//    Altura 9.5cm, Ø 8.2cm topo, Ø 7.2cm base
-//    Escala: 1 unit = 10cm
-// ──────────────────────────────────────────
-const MUG = {
-  rTop:  0.41,   // 8.2cm / 2 / 10
-  rBot:  0.36,   // 7.2cm / 2 / 10
-  h:     0.95,   // 9.5cm / 10
-  seg:   128,
-  wall:  0.025,
+// ── 5. GEOMETRIA DA CANECA ───────────────
+const G = {
+  rTop: 0.42,
+  rBot: 0.36,
+  h:    1.00,
+  seg:  120,
+  wall: 0.026,
 };
 
-const group = new THREE.Group();
-scene.add(group);
+const mugGroup = new THREE.Group();
+scene.add(mugGroup);
 
-// Corpo (aberto nas tampas)
-group.add(new THREE.Mesh(
-  new THREE.CylinderGeometry(MUG.rTop, MUG.rBot, MUG.h, MUG.seg, 1, true),
+// Corpo
+mugGroup.add(new THREE.Mesh(
+  new THREE.CylinderGeometry(G.rTop, G.rBot, G.h, G.seg, 1, true),
   mugMat
 ));
 
 // Base
-group.add(Object.assign(
-  new THREE.Mesh(new THREE.CircleGeometry(MUG.rBot, MUG.seg), mugMat),
-  { rotation: new THREE.Euler(-Math.PI / 2, 0, 0), position: new THREE.Vector3(0, -MUG.h / 2, 0) }
-));
-
-// Borda (torus)
-group.add(Object.assign(
-  new THREE.Mesh(new THREE.TorusGeometry(MUG.rTop, MUG.wall, 20, MUG.seg), mugMat),
-  { position: new THREE.Vector3(0, MUG.h / 2, 0) }
-));
-
-// ──────────────────────────────────────────
-// 5. ALÇA — lateral direita, meia altura
-//    A alça DEVE ficar no lado direito (X+)
-//    e conectar em dois pontos do cilindro
-// ──────────────────────────────────────────
-
-// Calcula o ponto exato na superfície do cilindro
-// O cilindro está em X=0, Z=0. A alça fica em Z=0, X positivo
-// No meio da altura: Y=0. Cola em Y=+hH e Y=-hH (hH = handle height)
-const hH = 0.22; // distância do centro onde a alça toca o corpo
-
-// A alça está no plano XY, Z=0
-// Mas a alça deve aparecer no LADO da caneca — então Z=0, X = rTop
-// Após rotação inicial da caneca (rotY=-0.4), a alça ficará visível à direita
-const pts = [
-  new THREE.Vector3(MUG.rTop,        hH,    0),
-  new THREE.Vector3(MUG.rTop + 0.10, hH,    0),
-  new THREE.Vector3(MUG.rTop + 0.28, hH * 0.6, 0),
-  new THREE.Vector3(MUG.rTop + 0.38, 0,     0),
-  new THREE.Vector3(MUG.rTop + 0.28, -hH * 0.6, 0),
-  new THREE.Vector3(MUG.rTop + 0.10, -hH,   0),
-  new THREE.Vector3(MUG.rTop,        -hH,   0),
-];
-
-const handleMesh = new THREE.Mesh(
-  new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 60, 0.048, 16, false),
+const base = new THREE.Mesh(
+  new THREE.CircleGeometry(G.rBot, G.seg),
   mugMat
 );
-group.add(handleMesh);
+base.rotation.x = -Math.PI / 2;
+base.position.y = -G.h / 2;
+mugGroup.add(base);
 
-// ──────────────────────────────────────────
-// 6. SOMBRA NO CHÃO
-// ──────────────────────────────────────────
+// Borda superior
+const rim = new THREE.Mesh(
+  new THREE.TorusGeometry(G.rTop, G.wall, 16, G.seg),
+  mugMat
+);
+rim.position.y = G.h / 2;
+mugGroup.add(rim);
+
+// Interior da boca
+const inner = new THREE.Mesh(
+  new THREE.CircleGeometry(G.rTop - G.wall * 2, G.seg),
+  mugMat
+);
+inner.rotation.x = -Math.PI / 2;
+inner.position.y = G.h / 2 - 0.001;
+mugGroup.add(inner);
+
+// ── 6. ALÇA ──────────────────────────────
+// Cola na lateral direita (X+), meia altura
+const hY = 0.24; // distância vertical do centro
+const hX = G.rTop; // raio do topo
+
+const handlePts = [
+  new THREE.Vector3(hX,          hY,    0),
+  new THREE.Vector3(hX + 0.08,  hY,    0),
+  new THREE.Vector3(hX + 0.30,  hY * 0.5, 0),
+  new THREE.Vector3(hX + 0.38,  0,     0),
+  new THREE.Vector3(hX + 0.30, -hY * 0.5, 0),
+  new THREE.Vector3(hX + 0.08, -hY,   0),
+  new THREE.Vector3(hX,         -hY,   0),
+];
+
+mugGroup.add(new THREE.Mesh(
+  new THREE.TubeGeometry(
+    new THREE.CatmullRomCurve3(handlePts),
+    60, 0.050, 16, false
+  ),
+  mugMat
+));
+
+// ── 7. CHÃO (sombra) ─────────────────────
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(10, 10),
-  new THREE.ShadowMaterial({ opacity: 0.12 })
+  new THREE.ShadowMaterial({ opacity: 0.10 })
 );
 floor.rotation.x = -Math.PI / 2;
-floor.position.y = -MUG.h / 2 - 0.001;
+floor.position.y = -G.h / 2 - 0.001;
 floor.receiveShadow = true;
 scene.add(floor);
 
-// ──────────────────────────────────────────
-// 7. TEXTURA DA ARTE (canvas 2D)
-//    2048×512 → proporção 4:1 ≈ envolve 360°
-//    Arte original 20cm×9cm é esticada para
-//    cobrir a volta inteira (como na sublimação)
-// ──────────────────────────────────────────
+// ── 8. TEXTURA DA ARTE ───────────────────
 const ART_W = 2048;
-const ART_H =  512;
+const ART_H = 512;
 
 const artCanvas = document.createElement('canvas');
 artCanvas.width  = ART_W;
@@ -156,270 +133,272 @@ const artCtx = artCanvas.getContext('2d');
 
 const artTex = new THREE.CanvasTexture(artCanvas);
 artTex.colorSpace = THREE.SRGBColorSpace;
+artTex.wrapS = THREE.RepeatWrapping;
+artTex.wrapT = THREE.ClampToEdgeWrapping;
 
-let artImage   = null;
-let artOpacity = 1.0;
+// Estado da arte
+const art = {
+  image:   null,
+  offsetX: 0,      // -1 a +1
+  offsetY: 0,      // -1 a +1
+  scale:   1.0,    // 0.1 a 2.0
+  rotation: 0,     // graus
+  opacity: 1.0,
+};
 
 function redrawArt() {
   artCtx.clearRect(0, 0, ART_W, ART_H);
-  if (!artImage) return;
+  if (!art.image) { artTex.needsUpdate = true; return; }
 
-  artCtx.globalAlpha = artOpacity;
-  artCtx.drawImage(artImage, 0, 0, ART_W, ART_H);
-  artCtx.globalAlpha = 1;
+  artCtx.save();
+  artCtx.globalAlpha = art.opacity;
 
+  // Centro do canvas
+  const cx = ART_W / 2;
+  const cy = ART_H / 2;
+
+  // Dimensões base da arte (preenche o canvas inteiro)
+  const iw = art.image.naturalWidth  || art.image.width;
+  const ih = art.image.naturalHeight || art.image.height;
+
+  // Escala para cobrir o canvas + scale do slider
+  const scaleX = (ART_W / iw) * art.scale;
+  const scaleY = (ART_H / ih) * art.scale;
+
+  // Offset em pixels
+  const ox = art.offsetX * ART_W * 0.3;
+  const oy = art.offsetY * ART_H * 0.3;
+
+  artCtx.translate(cx + ox, cy + oy);
+  artCtx.rotate((art.rotation * Math.PI) / 180);
+  artCtx.scale(scaleX, scaleY);
+  artCtx.drawImage(art.image, -iw / 2, -ih / 2);
+
+  artCtx.restore();
   artTex.needsUpdate = true;
 }
 
-// ──────────────────────────────────────────
-// 8. MALHA DA ESTAMPA — 360° completo
-//    Cilindro ligeiramente à frente do corpo
-//    phiStart=0, phiLength=2π
-// ──────────────────────────────────────────
-const STAMP_H = MUG.h * 0.88;  // quase toda a altura
-
+// ── 9. CILINDRO DA ESTAMPA ───────────────
 const stampGeo = new THREE.CylinderGeometry(
-  MUG.rTop + 0.0015,
-  MUG.rBot + 0.0015,
-  STAMP_H,
-  MUG.seg,
+  G.rTop + 0.002,
+  G.rBot + 0.002,
+  G.h * 0.90,   // 90% da altura
+  G.seg,
   1,
   true,
   0,
-  Math.PI * 2
+  Math.PI * 2   // 360° completo
 );
 
-// Inverte UV vertical (Three.js coloca V=0 embaixo, queremos arte certa)
+// Corrige UVs (inverte V para arte não ficar de cabeça pra baixo)
 const uvArr = stampGeo.attributes.uv.array;
 for (let i = 1; i < uvArr.length; i += 2) {
   uvArr[i] = 1 - uvArr[i];
 }
 stampGeo.attributes.uv.needsUpdate = true;
 
-const stampMat = new THREE.MeshStandardMaterial({
+const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
   map:         artTex,
   transparent: true,
-  roughness:   0.15,
+  roughness:   0.2,
   metalness:   0.0,
   depthWrite:  false,
-  polygonOffset:      true,
+  polygonOffset: true,
   polygonOffsetFactor: -1,
-  polygonOffsetUnits:  -1,
+}));
+mugGroup.add(stampMesh);
+
+// ── 10. ROTAÇÃO DA CANECA (mouse/touch) ──
+const rot = { x: 0.15, y: -0.5, smoothX: 0.15, smoothY: -0.5 };
+let mouseDown = false, lastX = 0, lastY = 0;
+let targetZoom = 4.5;
+
+canvas.addEventListener('mousedown', e => {
+  mouseDown = true; lastX = e.clientX; lastY = e.clientY;
+});
+window.addEventListener('mouseup', () => mouseDown = false);
+window.addEventListener('mousemove', e => {
+  if (!mouseDown) return;
+  rot.y += (e.clientX - lastX) * 0.011;
+  rot.x += (e.clientY - lastY) * 0.011;
+  rot.x = Math.max(-0.7, Math.min(0.7, rot.x));
+  lastX = e.clientX; lastY = e.clientY;
 });
 
-const stampMesh = new THREE.Mesh(stampGeo, stampMat);
-group.add(stampMesh);
-
-// ──────────────────────────────────────────
-// 9. ESTADO DA CÂMERA / INTERAÇÃO
-// ──────────────────────────────────────────
-const cam = {
-  rotX:  0.15,
-  rotY: -0.5,   // começa mostrando a frente com alça visível à direita
-  zoom:  4.2,
-  smoothX: 0.15,
-  smoothY: -0.5,
-};
-
-// Mouse
-canvas.addEventListener('mousedown', (e) => {
-  cam._down  = true;
-  cam._lx    = e.clientX;
-  cam._ly    = e.clientY;
-});
-window.addEventListener('mouseup',   () => cam._down = false);
-window.addEventListener('mousemove', (e) => {
-  if (!cam._down) return;
-  cam.rotY += (e.clientX - cam._lx) * 0.011;
-  cam.rotX += (e.clientY - cam._ly) * 0.011;
-  cam.rotX  = Math.max(-0.7, Math.min(0.7, cam.rotX));
-  cam._lx   = e.clientX;
-  cam._ly   = e.clientY;
-});
-
-// Touch
-canvas.addEventListener('touchstart', (e) => {
-  cam._down = true;
-  cam._lx   = e.touches[0].clientX;
-  cam._ly   = e.touches[0].clientY;
+canvas.addEventListener('touchstart', e => {
+  mouseDown = true;
+  lastX = e.touches[0].clientX;
+  lastY = e.touches[0].clientY;
 }, { passive: true });
-window.addEventListener('touchend', () => cam._down = false);
-window.addEventListener('touchmove', (e) => {
-  if (!cam._down) return;
-  cam.rotY += (e.touches[0].clientX - cam._lx) * 0.011;
-  cam.rotX += (e.touches[0].clientY - cam._ly) * 0.011;
-  cam.rotX  = Math.max(-0.7, Math.min(0.7, cam.rotX));
-  cam._lx   = e.touches[0].clientX;
-  cam._ly   = e.touches[0].clientY;
+window.addEventListener('touchend', () => mouseDown = false);
+window.addEventListener('touchmove', e => {
+  if (!mouseDown) return;
+  rot.y += (e.touches[0].clientX - lastX) * 0.011;
+  rot.x += (e.touches[0].clientY - lastY) * 0.011;
+  rot.x = Math.max(-0.7, Math.min(0.7, rot.x));
+  lastX = e.touches[0].clientX;
+  lastY = e.touches[0].clientY;
 }, { passive: true });
 
-// Scroll zoom
-canvas.addEventListener('wheel', (e) => {
+canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  cam.zoom = Math.min(7, Math.max(2, cam.zoom + e.deltaY * 0.005));
+  targetZoom = Math.min(7, Math.max(2.5, targetZoom + e.deltaY * 0.005));
 }, { passive: false });
 
-// ──────────────────────────────────────────
-// 10. SLIDERS
-// ──────────────────────────────────────────
-function bindSlider(id, valId, label, fmt, fn) {
-  // Atualiza o texto do label no HTML
-  const row   = document.getElementById(id)?.closest('.control-row');
-  const spans = row?.querySelectorAll('.control-label span');
-  if (spans?.[0]) spans[0].textContent = label;
+// ── 11. SLIDERS ──────────────────────────
+// IDs do HTML: offsetX, offsetY, artScale, artRotation, artOpacity
+// Values:      valOffsetX, valOffsetY, valScale, valRotation, valOpacity
 
-  document.getElementById(id).addEventListener('input', function () {
-    document.getElementById(valId).textContent = fmt(this.value);
-    fn(parseFloat(this.value));
-  });
-}
+document.getElementById('offsetX').addEventListener('input', function () {
+  art.offsetX = parseFloat(this.value);
+  document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2);
+  redrawArt();
+});
 
-bindSlider('offsetX', 'valOffsetX', 'Rotação Horizontal',
-  v => (v >= 0 ? '+' : '') + parseFloat(v).toFixed(2),
-  v => { cam.rotY = v * Math.PI; }
-);
+document.getElementById('offsetY').addEventListener('input', function () {
+  art.offsetY = parseFloat(this.value);
+  document.getElementById('valOffsetY').textContent = parseFloat(this.value).toFixed(2);
+  redrawArt();
+});
 
-bindSlider('offsetY', 'valOffsetY', 'Rotação Vertical',
-  v => (v >= 0 ? '+' : '') + parseFloat(v).toFixed(2),
-  v => { cam.rotX = Math.max(-0.7, Math.min(0.7, v * 0.7)); }
-);
+document.getElementById('artScale').addEventListener('input', function () {
+  art.scale = parseFloat(this.value) / 100;
+  document.getElementById('valScale').textContent = this.value + '%';
+  redrawArt();
+});
 
-bindSlider('artScale', 'valScale', 'Zoom',
-  v => v + '%',
-  v => { cam.zoom = 7 - (v / 200) * 5; }
-);
+document.getElementById('artRotation').addEventListener('input', function () {
+  art.rotation = parseFloat(this.value);
+  document.getElementById('valRotation').textContent = this.value + '°';
+  redrawArt();
+});
 
-bindSlider('artRotation', 'valRotation', 'Altura da Câmera',
-  v => v + '°',
-  v => { camera.position.y = ((v - 180) / 180) * 1.0; }
-);
+document.getElementById('artOpacity').addEventListener('input', function () {
+  art.opacity = parseFloat(this.value) / 100;
+  document.getElementById('valOpacity').textContent = this.value + '%';
+  redrawArt();
+});
 
-bindSlider('artOpacity', 'valOpacity', 'Opacidade da Arte',
-  v => v + '%',
-  v => { artOpacity = v / 100; redrawArt(); }
-);
-
-// ──────────────────────────────────────────
-// 11. UPLOAD
-// ──────────────────────────────────────────
-document.getElementById('fileInput').addEventListener('change', (e) => {
-  const file = e.target.files[0];
+// ── 12. UPLOAD ───────────────────────────
+document.getElementById('fileInput').addEventListener('change', function () {
+  const file = this.files[0];
   if (!file) return;
+
   const reader = new FileReader();
   reader.onload = ev => {
     const img = new Image();
     img.onload = () => {
-      artImage = img;
+      art.image = img;
+
+      // Mostra thumbnail
       const thumb = document.getElementById('artThumb');
       thumb.src = ev.target.result;
       thumb.style.display = 'block';
       document.getElementById('artPlaceholder').style.display = 'none';
+
       redrawArt();
-      showToast('✅ Arte carregada!');
+      showToast('✅ Arte carregada com sucesso!');
     };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
 });
 
-// ──────────────────────────────────────────
-// 12. COR DA CANECA
-// ──────────────────────────────────────────
-document.getElementById('mugColors').addEventListener('click', (e) => {
+// ── 13. COR DA CANECA ────────────────────
+document.getElementById('mugColors').addEventListener('click', function (e) {
   const dot = e.target.closest('[data-color]');
   if (!dot) return;
-  document.querySelectorAll('#mugColors .color-dot').forEach(d => d.classList.remove('active'));
+  this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   dot.classList.add('active');
-  setMugColor(dot.dataset.color);
-  showToast('🎨 Cor alterada!');
+  mugMat.color.set(dot.dataset.color);
+  mugMat.needsUpdate = true;
+  showToast('🎨 Cor da caneca alterada!');
 });
 
-// ──────────────────────────────────────────
-// 13. COR DO FUNDO
-// ──────────────────────────────────────────
-document.getElementById('bgColors').addEventListener('click', (e) => {
+// ── 14. COR DO FUNDO ─────────────────────
+document.getElementById('bgColors').addEventListener('click', function (e) {
   const dot = e.target.closest('[data-bg]');
   if (!dot) return;
-  document.querySelectorAll('#bgColors .color-dot').forEach(d => d.classList.remove('active'));
+  this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   dot.classList.add('active');
   scene.background = new THREE.Color(dot.dataset.bg);
 });
 
-document.getElementById('bgColorPicker').addEventListener('input', (e) => {
-  scene.background = new THREE.Color(e.target.value);
+document.getElementById('bgColorPicker').addEventListener('input', function () {
+  scene.background = new THREE.Color(this.value);
   document.querySelectorAll('#bgColors .color-dot').forEach(d => d.classList.remove('active'));
 });
 
-// ──────────────────────────────────────────
-// 14. EXPORTAR
-// ──────────────────────────────────────────
+// ── 15. EXPORTAR ─────────────────────────
 document.getElementById('btnExport').addEventListener('click', () => {
   renderer.render(scene, camera);
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/png');
   a.download = 'mockup-caneca.png';
   a.click();
-  showToast('💾 Exportado!');
+  showToast('💾 Imagem salva!');
 });
 
-// ──────────────────────────────────────────
-// 15. RESET
-// ──────────────────────────────────────────
+// ── 16. RESET ────────────────────────────
 document.getElementById('btnReset').addEventListener('click', () => {
-  artImage   = null;
-  artOpacity = 1;
-  cam.rotX = 0.15; cam.rotY = -0.5; cam.zoom = 4.2;
-  camera.position.y = 0;
+  // Reseta arte
+  art.image = null; art.offsetX = 0; art.offsetY = 0;
+  art.scale = 1; art.rotation = 0; art.opacity = 1;
 
-  ['offsetX','offsetY','artScale','artRotation','artOpacity'].forEach(id => {
-    const el = document.getElementById(id);
-    el.value = el.defaultValue;
-  });
-  document.getElementById('valOffsetX').textContent  = '+0.00';
-  document.getElementById('valOffsetY').textContent  = '+0.00';
+  // Reseta sliders
+  document.getElementById('offsetX').value    = 0;
+  document.getElementById('offsetY').value    = 0;
+  document.getElementById('artScale').value   = 100;
+  document.getElementById('artRotation').value = 0;
+  document.getElementById('artOpacity').value  = 100;
+
+  // Reseta labels
+  document.getElementById('valOffsetX').textContent  = '0';
+  document.getElementById('valOffsetY').textContent  = '0';
   document.getElementById('valScale').textContent    = '100%';
-  document.getElementById('valRotation').textContent = '180°';
+  document.getElementById('valRotation').textContent = '0°';
   document.getElementById('valOpacity').textContent  = '100%';
 
+  // Reseta thumbnail
   const thumb = document.getElementById('artThumb');
   thumb.src = ''; thumb.style.display = 'none';
   document.getElementById('artPlaceholder').style.display = 'block';
   document.getElementById('fileInput').value = '';
 
-  setMugColor('#ffffff');
-  scene.background = new THREE.Color('#f0f2f5');
+  // Reseta câmera e cores
+  rot.x = 0.15; rot.y = -0.5; targetZoom = 4.5;
+  mugMat.color.set('#ffffff'); mugMat.needsUpdate = true;
+  scene.background = new THREE.Color('#ffffff');
 
   document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   document.querySelector('#mugColors [data-color="#ffffff"]')?.classList.add('active');
+  document.querySelector('#bgColors [data-bg="#ffffff"]')?.classList.add('active');
 
   redrawArt();
-  showToast('🔄 Resetado!');
+  showToast('🔄 Tudo resetado!');
 });
 
-// ──────────────────────────────────────────
-// 16. TOAST
-// ──────────────────────────────────────────
-let _tt = null;
+// ── 17. TOAST ────────────────────────────
+let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  clearTimeout(_tt);
-  _tt = setTimeout(() => t.classList.remove('show'), 2500);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ──────────────────────────────────────────
-// 17. LOOP
-// ──────────────────────────────────────────
+// ── 18. LOOP ─────────────────────────────
 (function animate() {
   requestAnimationFrame(animate);
 
-  cam.smoothX += (cam.rotX - cam.smoothX) * 0.08;
-  cam.smoothY += (cam.rotY - cam.smoothY) * 0.08;
-  group.rotation.x = cam.smoothX;
-  group.rotation.y = cam.smoothY;
+  rot.smoothX += (rot.x - rot.smoothX) * 0.08;
+  rot.smoothY += (rot.y - rot.smoothY) * 0.08;
 
-  camera.position.z += (cam.zoom - camera.position.z) * 0.08;
+  mugGroup.rotation.x = rot.smoothX;
+  mugGroup.rotation.y = rot.smoothY;
+
+  camera.position.z += (targetZoom - camera.position.z) * 0.08;
 
   renderer.render(scene, camera);
 })();
