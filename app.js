@@ -5,6 +5,7 @@
 // ── 1. RENDERER ──────────────────────────
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 const canvas = document.getElementById('canvas3d');
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -40,11 +41,10 @@ back.position.set(0, -2, -4);
 scene.add(back);
 
 // ── 4. VARIÁVEIS GLOBAIS ─────────────────
-let mugMesh   = null;   // malha principal da caneca (recebe cor)
-let mugGroup  = new THREE.Group();
+let mugMesh  = null;
+let mugGroup = new THREE.Group();
 scene.add(mugGroup);
 
-// Material da estampa
 const ART_W = 2048;
 const ART_H  = 512;
 
@@ -68,24 +68,22 @@ const art = {
 };
 
 // ── 5. CARREGAR GLB ──────────────────────
-const loader = new THREE.GLTFLoader();
+const loader = new GLTFLoader(); // ✅ CORRIGIDO
 
 loader.load(
-  'caneca.glb',   // ⚠️ coloque o arquivo caneca.glb na raiz do projeto
+  'caneca.glb',
   function (gltf) {
     const model = gltf.scene;
 
-    // Centraliza e escala o modelo automaticamente
     const box    = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
     const size   = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale  = 2.0 / maxDim; // normaliza para tamanho ~2 unidades
+    const scale  = 2.0 / maxDim;
 
     model.position.sub(center.multiplyScalar(scale));
     model.scale.setScalar(scale);
 
-    // Percorre todas as malhas do modelo
     model.traverse(child => {
       if (!child.isMesh) return;
 
@@ -93,28 +91,22 @@ loader.load(
       child.receiveShadow = true;
 
       const name = child.name.toLowerCase();
-
-      // Tenta identificar qual parte é o corpo da caneca
-      // (ajuste os nomes conforme o seu GLB — veja no console)
       console.log('Mesh encontrada:', child.name);
 
-      // Se for a parte que recebe a estampa (corpo principal)
       if (name.includes('body') || name.includes('corpo') ||
           name.includes('mug')  || name.includes('caneca') ||
           name.includes('cylinder') || name === '') {
 
         mugMesh = child;
 
-        // Aplica material com a textura da arte
         child.material = new THREE.MeshStandardMaterial({
-          color:       0xffffff,
-          map:         artTex,
-          roughness:   0.15,
-          metalness:   0.0,
+          color:     0xffffff,
+          map:       artTex,
+          roughness: 0.15,
+          metalness: 0.0,
         });
 
       } else {
-        // Outras partes (alça, base) recebem material padrão
         child.material = new THREE.MeshStandardMaterial({
           color:     0xffffff,
           roughness: 0.2,
@@ -127,13 +119,11 @@ loader.load(
     showToast('✅ Caneca 3D carregada!');
   },
 
-  // Progresso
   function (xhr) {
     const pct = Math.round((xhr.loaded / xhr.total) * 100);
     console.log(`Carregando GLB: ${pct}%`);
   },
 
-  // Erro
   function (err) {
     console.error('Erro ao carregar GLB:', err);
     showToast('❌ Erro ao carregar caneca.glb');
@@ -257,11 +247,9 @@ document.getElementById('mugColors').addEventListener('click', function (e) {
   this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   dot.classList.add('active');
 
-  // Aplica cor em todas as malhas do grupo
   mugGroup.traverse(child => {
     if (!child.isMesh) return;
     const name = child.name.toLowerCase();
-    // Não muda base/interior
     if (name.includes('base') || name.includes('bottom') ||
         name.includes('inner') || name.includes('interior')) return;
     child.material.color.set(dot.dataset.color);
