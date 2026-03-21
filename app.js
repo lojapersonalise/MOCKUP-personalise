@@ -3,6 +3,8 @@
 // ══════════════════════════════════════════
 
 // ── 1. RENDERER ──────────────────────────
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const canvas = document.getElementById('canvas3d');
 const renderer = new THREE.WebGLRenderer({
   canvas,
