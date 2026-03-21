@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca v7
+//   APP.JS — Mockup 3D Caneca v8
 // ══════════════════════════════════════════
 
 // ── 1. RENDERER ──────────────────────────
@@ -88,18 +88,17 @@ inner.rotation.x = -Math.PI / 2;
 inner.position.y = G.h / 2 - 0.001;
 mugGroup.add(inner);
 
-// ── 6. ALÇA (lateral direita, eixo Z=0) ──
-// A alça fica no lado X+ e é plana em Z=0
-const hR  = 0.22;  // raio do arco
-const hX  = G.rTop + 0.01; // encosta no corpo
-const hCX = hX + 0.18;     // centro do arco
+// ── 6. ALÇA (lateral direita) ─────────────
+const hR  = 0.22;
+const hX  = G.rTop + 0.01;
+const hCX = hX + 0.18;
 
 const handleCurve = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(hX,       hR * 0.85,  0),
-  new THREE.Vector3(hCX,      hR,         0),
-  new THREE.Vector3(hCX + 0.10, 0,        0),
-  new THREE.Vector3(hCX,     -hR,         0),
-  new THREE.Vector3(hX,      -hR * 0.85,  0),
+  new THREE.Vector3(hX,        hR * 0.85,  0),
+  new THREE.Vector3(hCX,       hR,         0),
+  new THREE.Vector3(hCX + 0.10, 0,         0),
+  new THREE.Vector3(hCX,      -hR,         0),
+  new THREE.Vector3(hX,       -hR * 0.85,  0),
 ]);
 
 mugGroup.add(new THREE.Mesh(
@@ -158,21 +157,22 @@ function redrawArt() {
   artCtx.translate(cx, cy);
   artCtx.rotate((art.rotation * Math.PI) / 180);
 
-  // SEM espelhamento — só escala normal
-  artCtx.scale(scaleX, scaleY);
-  artCtx.drawImage(art.image, -iw / 2, -ih / 2);
+  // Espelha horizontalmente no canvas para compensar a inversão do UV do Three.js
+  artCtx.scale(-scaleX, scaleY);
 
+  artCtx.drawImage(art.image, -iw / 2, -ih / 2);
   artCtx.restore();
   artTex.needsUpdate = true;
 }
 
 // ── 9. CILINDRO DA ESTAMPA ───────────────
-// Correção das UVs: Three.js gera V de baixo pra cima (0=base, 1=topo)
-// Invertemos V para que a imagem fique na orientação correta
+// Altura exatamente igual ao corpo da caneca, sem ultrapassar
+const STAMP_H = G.h - 0.01; // apenas 0.01 menor para não vazar
+
 const stampGeo = new THREE.CylinderGeometry(
   G.rTop + 0.002,
   G.rBot + 0.002,
-  G.h * 0.90,
+  STAMP_H,          // ✅ mesma altura do corpo
   G.seg,
   1,
   true,
@@ -180,13 +180,7 @@ const stampGeo = new THREE.CylinderGeometry(
   Math.PI * 2
 );
 
-// Inverte U para corrigir espelhamento horizontal
-const uvArr = stampGeo.attributes.uv.array;
-for (let i = 0; i < uvArr.length; i += 2) {
-  uvArr[i] = 1 - uvArr[i]; // inverte U (horizontal)
-}
-stampGeo.attributes.uv.needsUpdate = true;
-
+// Sem inversão de UV — a imagem já é espelhada no canvas 2D
 const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
   map:         artTex,
   transparent: true,
@@ -196,190 +190,11 @@ const stampMesh = new THREE.Mesh(stampGeo, new THREE.MeshStandardMaterial({
   polygonOffset:       true,
   polygonOffsetFactor: -1,
 }));
+
+// Centraliza verticalmente junto ao corpo
+stampMesh.position.y = 0;
 mugGroup.add(stampMesh);
 
 // ── 10. ROTAÇÃO DA CANECA ────────────────
 const rot = { x: 0.15, y: -0.5, smoothX: 0.15, smoothY: -0.5 };
-let mouseDown = false, lastX = 0, lastY = 0;
-let targetZoom = 4.5;
-
-canvas.addEventListener('mousedown', e => {
-  mouseDown = true; lastX = e.clientX; lastY = e.clientY;
-});
-window.addEventListener('mouseup', () => mouseDown = false);
-window.addEventListener('mousemove', e => {
-  if (!mouseDown) return;
-  rot.y += (e.clientX - lastX) * 0.011;
-  rot.x += (e.clientY - lastY) * 0.011;
-  rot.x  = Math.max(-0.7, Math.min(0.7, rot.x));
-  lastX  = e.clientX; lastY = e.clientY;
-});
-
-canvas.addEventListener('touchstart', e => {
-  mouseDown = true;
-  lastX = e.touches[0].clientX;
-  lastY = e.touches[0].clientY;
-}, { passive: true });
-window.addEventListener('touchend', () => mouseDown = false);
-window.addEventListener('touchmove', e => {
-  if (!mouseDown) return;
-  rot.y += (e.touches[0].clientX - lastX) * 0.011;
-  rot.x += (e.touches[0].clientY - lastY) * 0.011;
-  rot.x  = Math.max(-0.7, Math.min(0.7, rot.x));
-  lastX  = e.touches[0].clientX;
-  lastY  = e.touches[0].clientY;
-}, { passive: true });
-
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  targetZoom = Math.min(7, Math.max(2.5, targetZoom + e.deltaY * 0.005));
-}, { passive: false });
-
-// ── 11. SLIDERS ──────────────────────────
-document.getElementById('offsetX').addEventListener('input', function () {
-  art.offsetX = parseFloat(this.value);
-  document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2);
-  redrawArt();
-});
-
-document.getElementById('offsetY').addEventListener('input', function () {
-  art.offsetY = parseFloat(this.value);
-  document.getElementById('valOffsetY').textContent = parseFloat(this.value).toFixed(2);
-  redrawArt();
-});
-
-document.getElementById('artScale').addEventListener('input', function () {
-  art.scale = parseFloat(this.value) / 100;
-  document.getElementById('valScale').textContent = this.value + '%';
-  redrawArt();
-});
-
-document.getElementById('artRotation').addEventListener('input', function () {
-  art.rotation = parseFloat(this.value);
-  document.getElementById('valRotation').textContent = this.value + '°';
-  redrawArt();
-});
-
-document.getElementById('artOpacity').addEventListener('input', function () {
-  art.opacity = parseFloat(this.value) / 100;
-  document.getElementById('valOpacity').textContent = this.value + '%';
-  redrawArt();
-});
-
-// ── 12. UPLOAD ───────────────────────────
-document.getElementById('fileInput').addEventListener('change', function () {
-  const file = this.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      art.image = img;
-
-      const thumb = document.getElementById('artThumb');
-      thumb.src = ev.target.result;
-      thumb.style.display = 'block';
-      document.getElementById('artPlaceholder').style.display = 'none';
-
-      redrawArt();
-      showToast('✅ Arte carregada com sucesso!');
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-// ── 13. COR DA CANECA ────────────────────
-document.getElementById('mugColors').addEventListener('click', function (e) {
-  const dot = e.target.closest('[data-color]');
-  if (!dot) return;
-  this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-  dot.classList.add('active');
-  mugMat.color.set(dot.dataset.color);
-  mugMat.needsUpdate = true;
-  showToast('🎨 Cor da caneca alterada!');
-});
-
-// ── 14. COR DO FUNDO ─────────────────────
-document.getElementById('bgColors').addEventListener('click', function (e) {
-  const dot = e.target.closest('[data-bg]');
-  if (!dot) return;
-  this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-  dot.classList.add('active');
-  scene.background = new THREE.Color(dot.dataset.bg);
-});
-
-document.getElementById('bgColorPicker').addEventListener('input', function () {
-  scene.background = new THREE.Color(this.value);
-  document.querySelectorAll('#bgColors .color-dot').forEach(d => d.classList.remove('active'));
-});
-
-// ── 15. EXPORTAR ─────────────────────────
-document.getElementById('btnExport').addEventListener('click', () => {
-  renderer.render(scene, camera);
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = 'mockup-caneca.png';
-  a.click();
-  showToast('💾 Imagem salva!');
-});
-
-// ── 16. RESET ────────────────────────────
-document.getElementById('btnReset').addEventListener('click', () => {
-  art.image = null; art.offsetX = 0; art.offsetY = 0;
-  art.scale = 1;    art.rotation = 0; art.opacity = 1;
-
-  document.getElementById('offsetX').value     = 0;
-  document.getElementById('offsetY').value     = 0;
-  document.getElementById('artScale').value    = 100;
-  document.getElementById('artRotation').value = 0;
-  document.getElementById('artOpacity').value  = 100;
-
-  document.getElementById('valOffsetX').textContent  = '0';
-  document.getElementById('valOffsetY').textContent  = '0';
-  document.getElementById('valScale').textContent    = '100%';
-  document.getElementById('valRotation').textContent = '0°';
-  document.getElementById('valOpacity').textContent  = '100%';
-
-  const thumb = document.getElementById('artThumb');
-  thumb.src = ''; thumb.style.display = 'none';
-  document.getElementById('artPlaceholder').style.display = 'block';
-  document.getElementById('fileInput').value = '';
-
-  rot.x = 0.15; rot.y = -0.5; targetZoom = 4.5;
-  mugMat.color.set('#ffffff'); mugMat.needsUpdate = true;
-  scene.background = new THREE.Color('#ffffff');
-
-  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-  document.querySelector('#mugColors [data-color="#ffffff"]')?.classList.add('active');
-  document.querySelector('#bgColors [data-bg="#ffffff"]')?.classList.add('active');
-
-  redrawArt();
-  showToast('🔄 Tudo resetado!');
-});
-
-// ── 17. TOAST ────────────────────────────
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ── 18. LOOP ─────────────────────────────
-(function animate() {
-  requestAnimationFrame(animate);
-
-  rot.smoothX += (rot.x - rot.smoothX) * 0.08;
-  rot.smoothY += (rot.y - rot.smoothY) * 0.08;
-
-  mugGroup.rotation.x = rot.smoothX;
-  mugGroup.rotation.y = rot.smoothY;
-
-  camera.position.z += (targetZoom - camera.position.z) * 0.08;
-
-  renderer.render(scene, camera);
-})();
+let mouse
