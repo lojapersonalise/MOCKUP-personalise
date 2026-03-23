@@ -53,7 +53,7 @@ header {
 }
 
 /* ══════════════════════════════════════════
-   CANVAS AREA
+   CANVAS AREA & MARCA D'ÁGUA
 ══════════════════════════════════════════ */
 .canvas-wrapper {
   flex: 1;
@@ -64,16 +64,34 @@ header {
   position: relative;
 }
 
-#canvas3d {
-  display: block;
+/* Novo contêiner que prende o Canvas e a Logo */
+.canvas-container {
+  position: relative;
+  width: 800px;
+  height: 500px;
   border-radius: 8px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  background: #fff;
+  overflow: hidden;
+}
+
+#canvas3d {
+  display: block;
+  background: transparent; /* Fundo controlado pelo Three.js */
   cursor: grab;
 }
 
 #canvas3d:active {
   cursor: grabbing;
+}
+
+.watermark-logo {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 140px;
+  opacity: 0.65;
+  pointer-events: none; /* Não bloqueia o mouse de girar a caneca */
+  z-index: 5;
 }
 
 .canvas-hint {
@@ -88,6 +106,7 @@ header {
   border-radius: 20px;
   pointer-events: none;
   white-space: nowrap;
+  z-index: 5;
 }
 
 /* ══════════════════════════════════════════
