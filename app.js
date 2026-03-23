@@ -1,3 +1,7 @@
+// ══════════════════════════════════════════
+//   APP.JS — Mockup 3D Caneca Tripla (Versão Final Otimizada)
+// ══════════════════════════════════════════
+
 import * as THREE from 'three';
 
 window.addEventListener('error', function(e) {
@@ -28,8 +32,9 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+// Exposição corrigida para 1.0 (cores vivas e reais)
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0; // Corrigido para as cores ficarem mais vivas
+renderer.toneMappingExposure = 1.0; 
 if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 // ── 2. CENA + CÂMERA ──
@@ -42,8 +47,9 @@ camera.position.set(0, 0.8, 10.0);
 // ── 3. ILUMINAÇÃO ──
 scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
+// Luz principal ajustada para criar reflexo de estúdio na cerâmica
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
-keyLight.position.set(3, 4, 6); // Movido para frente para dar reflexo de estúdio
+keyLight.position.set(3, 4, 6); 
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.width = 1024;
 keyLight.shadow.mapSize.height = 1024;
@@ -87,7 +93,7 @@ artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 
-// Novo Material de Porcelana (Resolve a opacidade)
+// Propriedades atualizadas para efeito real de cerâmica/porcelana polida
 const physicalProps = {
   roughness: 0.02,         
   metalness: 0.0,          
@@ -142,7 +148,7 @@ function createProceduralMug() {
   baseMug.add(meshRim);
 
   const geoBottomIn = new THREE.CircleGeometry(r - wall, 64);
-  const meshBottomIn = new THREE.Mesh(geoBottomIn, colorMaterial); // Corrigido erro de visualização do fundo
+  const meshBottomIn = new THREE.Mesh(geoBottomIn, colorMaterial); // Corrigido para não ficar transparente
   meshBottomIn.rotation.x = -Math.PI / 2;
   meshBottomIn.position.y = -(h / 2) + wall;
   baseMug.add(meshBottomIn);
@@ -201,7 +207,13 @@ function redrawArt() {
 
     artCtx.save();
     artCtx.globalAlpha = art.opacity;
+    
+    // Move para o centro da imagem
     artCtx.translate(cx, cy);
+    
+    // Inverte a imagem no eixo X para corrigir o texto espelhado no 3D
+    artCtx.scale(-1, 1);
+    
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale);
     artCtx.restore();
@@ -247,7 +259,7 @@ canvas.addEventListener('wheel', e => {
   targetZoom = Math.min(15, Math.max(6.0, targetZoom + e.deltaY * 0.01));
 }, { passive: false });
 
-// ── 10. EVENTOS DOS SLIDERS (AGORA COM PROTEÇÃO CONTRA ERROS) ──
+// ── 10. EVENTOS DOS SLIDERS (COM PROTEÇÃO CONTRA ERROS) ──
 const offsetXEl = document.getElementById('offsetX');
 if (offsetXEl) offsetXEl.addEventListener('input', function () { art.offsetX = parseFloat(this.value); const v = document.getElementById('valOffsetX'); if(v) v.textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
 
