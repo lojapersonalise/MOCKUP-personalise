@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mockup de Caneca 360º</title>
+  <title>Mockup de Caneca 360º - Loja Personalise</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -52,6 +52,18 @@
       cursor: grab;
     }
     #canvas3d:active { cursor: grabbing; }
+    
+    /* ── MARCA D'ÁGUA DA LOJA ── */
+    .watermark-logo {
+      position: absolute;
+      top: 24px; /* Distância do topo */
+      left: 24px; /* Distância da esquerda */
+      width: 140px; /* Tamanho da logo, ajuste conforme necessário */
+      opacity: 0.65; /* Transparência para ficar elegante */
+      pointer-events: none; /* Garante que o mouse atravesse a imagem para girar a caneca */
+      z-index: 5;
+    }
+
     .canvas-hint {
       position: absolute;
       bottom: 16px;
@@ -66,7 +78,7 @@
       white-space: nowrap;
     }
 
-    /* ── SIDEBAR & CONTROLS (Mantidos exatamentes iguais) ── */
+    /* ── SIDEBAR & CONTROLS ── */
     .sidebar { width: 280px; background: #ffffff; border-left: 1px solid #e0e0e0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
     .sidebar-section { padding: 20px; border-bottom: 1px solid #f0f0f0; }
     .sidebar-section:last-child { border-bottom: none; }
@@ -101,13 +113,15 @@
 <body>
 
   <header>
-    <div class="logo">Mockup <span>Caneca</span></div>
-    <div style="font-size:0.78rem; color:#9ca3af;">Editor 3D</div>
+    <div class="logo">Loja <span>Personalise</span></div>
+    <div style="font-size:0.78rem; color:#9ca3af;">Mockup Premium 360º</div>
   </header>
 
   <div class="main">
 
     <div class="canvas-wrapper">
+      <img src="logo-personalise.png" alt="Logo Personalise" class="watermark-logo" />
+      
       <canvas id="canvas3d" width="800" height="500"></canvas>
       <div class="canvas-hint">🖱️ Arraste para rotacionar · Scroll para zoom</div>
     </div>
@@ -130,7 +144,7 @@
         <div class="section-title">Ajustar Arte</div>
         <div class="control-row"><div class="control-label"><span>Posição Horizontal</span><span id="valOffsetX">0</span></div><input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" /></div>
         <div class="control-row"><div class="control-label"><span>Posição Vertical</span><span id="valOffsetY">0</span></div><input type="range" id="offsetY" min="-1" max="1" step="0.01" value="0" /></div>
-        <div class="control-row"><div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div><input type="range" id="artScale" min="10" max="200" step="1" value="100" /></div>
+        <div class="control-row"><div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div><input type="range" id="artScale" min="10" max="300" step="1" value="100" /></div>
         <div class="control-row"><div class="control-label"><span>Rotação</span><span id="valRotation">0°</span></div><input type="range" id="artRotation" min="0" max="360" step="1" value="0" /></div>
         <div class="control-row"><div class="control-label"><span>Opacidade</span><span id="valOpacity">100%</span></div><input type="range" id="artOpacity" min="0" max="100" step="1" value="100" /></div>
       </div>
@@ -152,13 +166,13 @@
       <div class="sidebar-section">
         <div class="section-title">Fundo da Cena</div>
         <div class="color-options" id="bgColors">
-          <div class="color-dot active" data-bg="#ffffff" style="background:#ffffff; border-color:#e0e0e0;"></div>
+          <div class="color-dot active" data-bg="#6b2b8e" style="background:#6b2b8e; border-color:#ffffff;"></div>
+          <div class="color-dot" data-bg="#ffffff" style="background:#ffffff; border-color:#e0e0e0;"></div>
           <div class="color-dot" data-bg="#f0f2f5" style="background:#f0f2f5;"></div>
           <div class="color-dot" data-bg="#111827" style="background:#111827;"></div>
           <div class="color-dot" data-bg="#fef9c3" style="background:#fef9c3;"></div>
-          <div class="color-dot" data-bg="#dbeafe" style="background:#dbeafe;"></div>
           <div class="color-dot" data-bg="#dcfce7" style="background:#dcfce7;"></div>
-          <div class="color-dot custom" style="position:relative;">🎨<input type="color" id="bgColorPicker" value="#ffffff" title="Cor personalizada" /></div>
+          <div class="color-dot custom" style="position:relative;">🎨<input type="color" id="bgColorPicker" value="#6b2b8e" title="Cor personalizada" /></div>
         </div>
       </div>
 
