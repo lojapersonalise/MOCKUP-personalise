@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca Tripla (Preenchimento Perfeito 360º)
+//   APP.JS — Mockup 3D Caneca Tripla (Preenchimento 360º + Elevação Ajustada)
 // ══════════════════════════════════════════
 
 window.addEventListener('error', function(e) {
@@ -17,7 +17,7 @@ import * as THREE from 'three';
 // ── 0. AJUSTE DO HTML VIA JS (Aumentando limite de zoom) ──
 const scaleSlider = document.getElementById('artScale');
 if (scaleSlider) {
-  scaleSlider.max = 300; // Permite esticar a arte até encostar na alça
+  scaleSlider.max = 300; 
 }
 
 // ── 1. RENDERER (Configuração de Estúdio Fotográfico) ──
@@ -69,14 +69,14 @@ const shadowPlaneGeo = new THREE.PlaneGeometry(100, 100);
 const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.18 }); 
 const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
 shadowPlane.rotation.x = -Math.PI / 2;
-shadowPlane.position.y = -1.2; 
+// CHÃO ELEVADO (Acompanhando as canecas no novo alinhamento)
+shadowPlane.position.y = -0.6; 
 shadowPlane.receiveShadow = true;
 scene.add(shadowPlane);
 
 // ── 5. MATERIAIS E TEXTURAS (O WRAP PERFEITO DE 360º) ──
 let currentColor = '#ffffff';
 
-// Proporção matemática exata de um cilindro (2.618 : 1)
 const ART_W = 2618; 
 const ART_H = 1000; 
 
@@ -88,7 +88,6 @@ const artCtx = artCanvas.getContext('2d');
 const artTex = new THREE.CanvasTexture(artCanvas);
 if (THREE.SRGBColorSpace) artTex.colorSpace = THREE.SRGBColorSpace;
 
-// Mapeamento espelhado para corrigir a leitura 3D
 artTex.repeat.x = -1; 
 artTex.wrapS = THREE.RepeatWrapping;
 artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -123,6 +122,8 @@ const colorMaterialInside = new THREE.MeshPhysicalMaterial({
 
 // ── 6. GERAÇÃO PROCEDURAL DA CANECA ──────
 const mugGroup = new THREE.Group();
+// CANECAS MAIS ELEVADAS NO ENQUADRAMENTO (+0.6)
+mugGroup.position.y = 0.6;
 scene.add(mugGroup);
 
 function createProceduralMug() {
@@ -131,7 +132,6 @@ function createProceduralMug() {
   const r = 1.0;     
   const wall = 0.08; 
 
-  // Cilindro sem rotação artificial: a costura nasce exatamente no +Z
   const geoOutside = new THREE.CylinderGeometry(r, r, h, 64, 1, true);
   const meshOutside = new THREE.Mesh(geoOutside, printMaterial);
   meshOutside.castShadow = true;
@@ -161,11 +161,10 @@ function createProceduralMug() {
   meshBottomOut.castShadow = true;
   baseMug.add(meshBottomOut);
 
-  // Alça alinhada perfeitamente na costura (+Z)
   const geoHandle = new THREE.TorusGeometry(0.65, 0.16, 32, 64);
   const meshHandle = new THREE.Mesh(geoHandle, colorMaterial);
   meshHandle.position.set(0, 0, r); 
-  meshHandle.rotation.y = Math.PI / 2; // Gira para apontar para fora
+  meshHandle.rotation.y = Math.PI / 2; 
   meshHandle.scale.set(0.7, 1.2, 1);
   meshHandle.castShadow = true;
   baseMug.add(meshHandle);
@@ -173,22 +172,19 @@ function createProceduralMug() {
   return baseMug;
 }
 
-// ── 7. INSTANCIAMENTO (Câmeras apontadas para os locais exatos) ─────
+// ── 7. INSTANCIAMENTO ─────
 const masterMug = createProceduralMug();
 
 const mugLeft = masterMug.clone();
 mugLeft.position.x = -2.8;
-// Gira deixando a alça na Direita e exibindo a lateral esquerda da arte
 mugLeft.rotation.y = -Math.PI / 2 - 0.35; 
 
 const mugCenter = masterMug.clone();
 mugCenter.position.x = 0;
-// Gira 180º escondendo a alça nas costas e exibindo o centro da arte
 mugCenter.rotation.y = Math.PI; 
 
 const mugRight = masterMug.clone();
 mugRight.position.x = 2.8;
-// Gira deixando a alça na Esquerda e exibindo a lateral direita da arte
 mugRight.rotation.y = Math.PI / 2 + 0.35; 
 
 mugGroup.add(mugLeft, mugCenter, mugRight);
@@ -206,17 +202,12 @@ function redrawArt() {
     const iw = art.image.naturalWidth || art.image.width;
     const ih = art.image.naturalHeight || art.image.height;
     
-    // NOVO COMPORTAMENTO: A escala sempre bate pela Altura da caneca.
-    // Isso evita vãos nas laterais ao usar templates retangulares longos.
     const fitScale = (ART_H / ih) * art.scale;
-    
-    // Invertemos a matemática do OffsetX para acompanhar o espelhamento do canvas
     const cx = ART_W / 2 - art.offsetX * ART_W * 0.3;
     const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
 
     artCtx.save();
     
-    // Espelhamento do Canvas 2D para corrigir a leitura (Texto não ficar ao contrário)
     artCtx.translate(ART_W, 0);
     artCtx.scale(-1, 1);
 
