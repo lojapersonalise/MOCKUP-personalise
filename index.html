@@ -1,178 +1,109 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Mockup 360º - Loja Personalise</title>
-  <style>
-    /* ── BASE ── */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f2f5;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 0 20px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      z-index: 10;
-    }
-    .logo { font-size: 1.1rem; font-weight: 700; color: #2563eb; }
-    .logo span { color: #111; }
-
-    /* ── LAYOUT RESPONSIVO ── */
-    .main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      flex-direction: row; /* Padrão Desktop */
-    }
-
-    .canvas-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #e8eaf0;
-      position: relative;
-      padding: 10px;
-    }
-
-    .canvas-container {
-      position: relative;
-      width: 100%;
-      max-width: 800px; /* Limite no Desktop */
-      aspect-ratio: 8 / 5; /* Mantém a proporção do Rapid Mockup */
-      background: #6b2b8e;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      overflow: hidden;
-    }
-
-    #canvas3d {
-      width: 100% !important;
-      height: 100% !important;
-      display: block;
-    }
-
-    .watermark-logo {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      width: clamp(80px, 15vw, 120px); /* Logo diminui no celular */
-      opacity: 0.6;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    /* ── SIDEBAR RESPONSIVA ── */
-    .sidebar {
-      width: 320px;
-      background: #ffffff;
-      border-left: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-
-    .sidebar-section { padding: 15px; border-bottom: 1px solid #f0f0f0; }
-    .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #9ca3af; margin-bottom: 12px; }
-
-    /* ── CONTROLES ── */
-    .btn-upload, .btn-export { 
-      width: 100%; padding: 12px; border-radius: 8px; border: none; 
-      font-weight: 600; cursor: pointer; margin-bottom: 10px;
-    }
-    .btn-upload { background: #2563eb; color: #fff; }
-    .btn-export { background: #16a34a; color: #fff; }
-    
-    .color-options, .mug-colors { display: flex; flex-wrap: wrap; gap: 8px; }
-    .color-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid #eee; }
-    .color-dot.active { border-color: #2563eb; transform: scale(1.1); }
-    .color-dot.custom { display: flex; align-items: center; justify-content: center; position: relative; }
-    input[type="color"] { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-
-    input[type="range"] { width: 100%; margin: 10px 0; accent-color: #2563eb; }
-    .control-label { display: flex; justify-content: space-between; font-size: 0.8rem; }
-
-    /* ── MEDIA QUERY PARA CELULAR ── */
-    @media (max-width: 768px) {
-      body { overflow-y: auto; height: auto; }
-      .main { flex-direction: column; overflow: visible; }
-      .sidebar { width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
-      .canvas-wrapper { padding: 0; }
-      .canvas-container { border-radius: 0; max-width: 100%; }
-      header { height: 50px; }
-    }
-
-    /* Ajuste para telas muito pequenas */
-    @media (max-width: 480px) {
-      .sidebar-section { padding: 12px; }
-      .color-dot { width: 28px; height: 28px; }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mockup de Caneca 360º - Loja Personalise</title>
+  
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
   <header>
     <div class="logo">Loja <span>Personalise</span></div>
-    <div style="font-size:0.75rem; color:#9ca3af;">Mockup 360º</div>
+    <div style="font-size:0.78rem; color:#9ca3af;">Mockup Premium 360º</div>
   </header>
 
   <div class="main">
+
     <div class="canvas-wrapper">
+      
       <div class="canvas-container">
-        <img src="logo-personalise.png" class="watermark-logo" />
-        <canvas id="canvas3d"></canvas>
-      </div>
-    </div>
-
-    <div class="sidebar">
-      <div class="sidebar-section">
-        <div class="section-title">Arte</div>
-        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
-        <input type="file" id="fileInput" style="display:none" accept="image/*" />
-      </div>
-
-      <div class="sidebar-section">
-        <div class="section-title">Ajustes</div>
-        <div class="control-label"><span>Horizontal</span><span id="valOffsetX">0</span></div>
-        <input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" />
         
-        <div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div>
-        <input type="range" id="artScale" min="10" max="300" step="1" value="100" />
+        <img src="logo-personalise.png" alt="Logo Personalise" class="watermark-logo" />
+        
+        <canvas id="canvas3d" width="800" height="500"></canvas>
+        <div class="canvas-hint">🖱️ Arraste para rotacionar · Scroll para zoom</div>
+
       </div>
 
+    </div><div class="sidebar">
+
       <div class="sidebar-section">
-        <div class="section-title">Cores</div>
-        <div class="mug-colors" id="mugColors">
-          <div class="color-dot active" data-color="#ffffff" style="background:#fff"></div>
-          <div class="color-dot" data-color="#1A181C" style="background:#1A181C"></div>
-          <div class="color-dot" data-color="#E24329" style="background:#E24329"></div>
-          <div class="color-dot" data-color="#2386C2" style="background:#2386C2"></div>
-          <div class="color-dot custom">🎨<input type="color" id="mugColorPicker" value="#ffffff"></div>
+        <div class="section-title">Arte / Estampa</div>
+        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+          ⬆️ Carregar Imagem
+        </button>
+        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp" />
+        <div class="art-preview" id="artPreview">
+          <img id="artThumb" src="" alt="preview" />
+          <span id="artPlaceholder">Nenhuma arte carregada</span>
         </div>
       </div>
 
       <div class="sidebar-section">
-        <button class="btn-export" id="btnExport">💾 Baixar PNG</button>
+        <div class="section-title">Ajustar Arte</div>
+        <div class="control-row"><div class="control-label"><span>Posição Horizontal</span><span id="valOffsetX">0</span></div><input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" /></div>
+        <div class="control-row"><div class="control-label"><span>Posição Vertical</span><span id="valOffsetY">0</span></div><input type="range" id="offsetY" min="-1" max="1" step="0.01" value="0" /></div>
+        <div class="control-row"><div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div><input type="range" id="artScale" min="10" max="300" step="1" value="100" /></div>
+        <div class="control-row"><div class="control-label"><span>Rotação</span><span id="valRotation">0°</span></div><input type="range" id="artRotation" min="0" max="360" step="1" value="0" /></div>
+        <div class="control-row"><div class="control-label"><span>Opacidade</span><span id="valOpacity">100%</span></div><input type="range" id="artOpacity" min="0" max="100" step="1" value="100" /></div>
       </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">Cor da Caneca</div>
+        <div class="mug-colors" id="mugColors">
+          <div class="color-dot active" data-color="#ffffff" style="background:#ffffff; border-color:#e0e0e0;" title="Branco (Padrão)"></div>
+          <div class="color-dot" data-color="#1A181C" style="background:#1A181C;"></div>
+          <div class="color-dot" data-color="#9C525B" style="background:#9C525B;"></div>
+          <div class="color-dot" data-color="#E24329" style="background:#E24329;"></div>
+          <div class="color-dot" data-color="#F7D015" style="background:#F7D015;"></div>
+          <div class="color-dot" data-color="#2386C2" style="background:#2386C2;"></div>
+          <div class="color-dot" data-color="#F0A8B9" style="background:#F0A8B9;"></div>
+          <div class="color-dot" data-color="#7FC84F" style="background:#7FC84F;"></div>
+          <div class="color-dot" data-color="#AC89C1" style="background:#AC89C1;"></div>
+          <div class="color-dot" data-color="#FA5019" style="background:#FA5019;"></div>
+          <div class="color-dot custom" style="position:relative;">🎨<input type="color" id="mugColorPicker" value="#ffffff" title="Cor personalizada" /></div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">Fundo da Cena</div>
+        <div class="color-options" id="bgColors">
+          <div class="color-dot active" data-bg="#6b2b8e" style="background:#6b2b8e; border-color:#ffffff;" title="Roxo Premium"></div>
+          <div class="color-dot" data-bg="#ffffff" style="background:#ffffff; border-color:#e0e0e0;"></div>
+          <div class="color-dot" data-bg="#1A181C" style="background:#1A181C;"></div>
+          <div class="color-dot" data-bg="#9C525B" style="background:#9C525B;"></div>
+          <div class="color-dot" data-bg="#E24329" style="background:#E24329;"></div>
+          <div class="color-dot" data-bg="#F7D015" style="background:#F7D015;"></div>
+          <div class="color-dot" data-bg="#2386C2" style="background:#2386C2;"></div>
+          <div class="color-dot" data-bg="#F0A8B9" style="background:#F0A8B9;"></div>
+          <div class="color-dot" data-bg="#7FC84F" style="background:#7FC84F;"></div>
+          <div class="color-dot" data-bg="#AC89C1" style="background:#AC89C1;"></div>
+          <div class="color-dot" data-bg="#FA5019" style="background:#FA5019;"></div>
+          <div class="color-dot custom" style="position:relative;">🎨<input type="color" id="bgColorPicker" value="#6b2b8e" title="Cor personalizada" /></div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">Exportar</div>
+        <button class="btn-export" id="btnExport">💾 Baixar PNG</button>
+        <button class="btn-reset" id="btnReset">🔄 Resetar tudo</button>
+      </div>
+
     </div>
   </div>
 
+  <div class="toast" id="toast"></div>
+
   <script type="importmap">
-    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
   </script>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>
