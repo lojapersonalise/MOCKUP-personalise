@@ -1,6 +1,4 @@
-// ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca Tripla (Preenchimento 360º + Elevação Ajustada)
-// ══════════════════════════════════════════
+import * as THREE from 'three';
 
 window.addEventListener('error', function(e) {
   const hint = document.querySelector('.canvas-hint');
@@ -12,15 +10,11 @@ window.addEventListener('error', function(e) {
   console.error(e);
 });
 
-import * as THREE from 'three';
-
-// ── 0. AJUSTE DO HTML VIA JS (Aumentando limite de zoom) ──
+// ── 0. AJUSTE DO HTML VIA JS ──
 const scaleSlider = document.getElementById('artScale');
-if (scaleSlider) {
-  scaleSlider.max = 300; 
-}
+if (scaleSlider) scaleSlider.max = 300;
 
-// ── 1. RENDERER (Configuração de Estúdio Fotográfico) ──
+// ── 1. RENDERER ──
 const canvas = document.getElementById('canvas3d');
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -28,28 +22,28 @@ const renderer = new THREE.WebGLRenderer({
   preserveDrawingBuffer: true,
   alpha: true
 });
-renderer.setSize(800, 500); 
+renderer.setSize(800, 500);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-renderer.toneMapping = THREE.ACESFilmicToneMapping; 
-renderer.toneMappingExposure = 1.0; 
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0; // Corrigido para as cores ficarem mais vivas
 if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-// ── 2. CENA + CÂMERA ─────────────────────
+// ── 2. CENA + CÂMERA ──
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#6b2b8e'); 
+scene.background = new THREE.Color('#6b2b8e');
 
 const camera = new THREE.PerspectiveCamera(35, 800 / 500, 0.1, 100);
 camera.position.set(0, 0.8, 10.0);
 
-// ── 3. ILUMINAÇÃO (Luzes Fortes e Bem Distribuídas) ─────
-scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
+// ── 3. ILUMINAÇÃO ──
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
-keyLight.position.set(3, 4, 6);
+keyLight.position.set(3, 4, 6); // Movido para frente para dar reflexo de estúdio
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.width = 1024;
 keyLight.shadow.mapSize.height = 1024;
@@ -64,21 +58,20 @@ const rimLight = new THREE.PointLight(0xffffff, 2.5, 20);
 rimLight.position.set(0, 5, -5);
 scene.add(rimLight);
 
-// ── 4. CHÃO INVISÍVEL PARA SOMBRAS ───────
+// ── 4. CHÃO INVISÍVEL PARA SOMBRAS ──
 const shadowPlaneGeo = new THREE.PlaneGeometry(100, 100);
-const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.18 }); 
+const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.18 });
 const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
 shadowPlane.rotation.x = -Math.PI / 2;
-// CHÃO ELEVADO (Acompanhando as canecas no novo alinhamento)
-shadowPlane.position.y = -0.6; 
+shadowPlane.position.y = -0.6;
 shadowPlane.receiveShadow = true;
 scene.add(shadowPlane);
 
-// ── 5. MATERIAIS E TEXTURAS (O WRAP PERFEITO DE 360º) ──
+// ── 5. MATERIAIS E TEXTURAS ──
 let currentColor = '#ffffff';
 
-const ART_W = 2618; 
-const ART_H = 1000; 
+const ART_W = 2618;
+const ART_H = 1000;
 
 const artCanvas = document.createElement('canvas');
 artCanvas.width = ART_W;
@@ -88,12 +81,13 @@ const artCtx = artCanvas.getContext('2d');
 const artTex = new THREE.CanvasTexture(artCanvas);
 if (THREE.SRGBColorSpace) artTex.colorSpace = THREE.SRGBColorSpace;
 
-artTex.repeat.x = -1; 
+artTex.repeat.x = -1;
 artTex.wrapS = THREE.RepeatWrapping;
 artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 
+// Novo Material de Porcelana (Resolve a opacidade)
 const physicalProps = {
   roughness: 0.02,         
   metalness: 0.0,          
@@ -102,7 +96,7 @@ const physicalProps = {
 };
 
 const printMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0xffffff, 
+  color: 0xffffff,
   map: artTex,
   side: THREE.FrontSide,
   ...physicalProps
@@ -120,17 +114,16 @@ const colorMaterialInside = new THREE.MeshPhysicalMaterial({
   ...physicalProps
 });
 
-// ── 6. GERAÇÃO PROCEDURAL DA CANECA ──────
+// ── 6. GERAÇÃO PROCEDURAL DA CANECA ──
 const mugGroup = new THREE.Group();
-// CANECAS MAIS ELEVADAS NO ENQUADRAMENTO (+0.6)
 mugGroup.position.y = 0.6;
 scene.add(mugGroup);
 
 function createProceduralMug() {
   const baseMug = new THREE.Group();
-  const h = 2.4;     
-  const r = 1.0;     
-  const wall = 0.08; 
+  const h = 2.4;
+  const r = 1.0;
+  const wall = 0.08;
 
   const geoOutside = new THREE.CylinderGeometry(r, r, h, 64, 1, true);
   const meshOutside = new THREE.Mesh(geoOutside, printMaterial);
@@ -149,8 +142,7 @@ function createProceduralMug() {
   baseMug.add(meshRim);
 
   const geoBottomIn = new THREE.CircleGeometry(r - wall, 64);
-  // CORREÇÃO 1: Trocado colorMaterialInside por colorMaterial para o fundo interno ficar visível de cima.
-  const meshBottomIn = new THREE.Mesh(geoBottomIn, colorMaterial);
+  const meshBottomIn = new THREE.Mesh(geoBottomIn, colorMaterial); // Corrigido erro de visualização do fundo
   meshBottomIn.rotation.x = -Math.PI / 2;
   meshBottomIn.position.y = -(h / 2) + wall;
   baseMug.add(meshBottomIn);
@@ -164,8 +156,8 @@ function createProceduralMug() {
 
   const geoHandle = new THREE.TorusGeometry(0.65, 0.16, 32, 64);
   const meshHandle = new THREE.Mesh(geoHandle, colorMaterial);
-  meshHandle.position.set(0, 0, r); 
-  meshHandle.rotation.y = Math.PI / 2; 
+  meshHandle.position.set(0, 0, r);
+  meshHandle.rotation.y = Math.PI / 2;
   meshHandle.scale.set(0.7, 1.2, 1);
   meshHandle.castShadow = true;
   baseMug.add(meshHandle);
@@ -173,26 +165,26 @@ function createProceduralMug() {
   return baseMug;
 }
 
-// ── 7. INSTANCIAMENTO ─────
+// ── 7. INSTANCIAMENTO ──
 const masterMug = createProceduralMug();
 
 const mugLeft = masterMug.clone();
 mugLeft.position.x = -2.8;
-mugLeft.rotation.y = -Math.PI / 2 - 0.35; 
+mugLeft.rotation.y = -Math.PI / 2 - 0.35;
 
 const mugCenter = masterMug.clone();
 mugCenter.position.x = 0;
-mugCenter.rotation.y = Math.PI; 
+mugCenter.rotation.y = Math.PI;
 
 const mugRight = masterMug.clone();
 mugRight.position.x = 2.8;
-mugRight.rotation.y = Math.PI / 2 + 0.35; 
+mugRight.rotation.y = Math.PI / 2 + 0.35;
 
 mugGroup.add(mugLeft, mugCenter, mugRight);
 
 redrawArt();
 
-// ── 8. REDESENHAR ARTE ───────────────────
+// ── 8. REDESENHAR ARTE ──
 function redrawArt() {
   artCtx.clearRect(0, 0, ART_W, ART_H);
   
@@ -208,14 +200,10 @@ function redrawArt() {
     const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
 
     artCtx.save();
-    
-    // CORREÇÃO 4: Removido o duplo espelhamento (artCtx.scale(-1, 1)) que conflita com o artTex.repeat.x = -1
-    // Isso evita confusão no eixo do offset e garante a arte do lado certo.
     artCtx.globalAlpha = art.opacity;
     artCtx.translate(cx, cy);
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale);
-    
     artCtx.restore();
   }
 
@@ -223,13 +211,9 @@ function redrawArt() {
   
   colorMaterial.color.set(currentColor);
   colorMaterialInside.color.set(currentColor);
-  
-  // CORREÇÃO 2: Removido needsUpdate dos materiais para corrigir o lag brutal ao mover os sliders.
-  // colorMaterial.needsUpdate = true;
-  // colorMaterialInside.needsUpdate = true;
 }
 
-// ── 9. CONTROLES DA CÂMERA ───────────────
+// ── 9. CONTROLES DA CÂMERA ──
 const rot = { x: 0.15, y: -0.2, smoothX: 0.15, smoothY: -0.2 };
 let mouseDown = false, lastX = 0, lastY = 0;
 let targetZoom = 10.0;
@@ -240,21 +224,18 @@ window.addEventListener('mousemove', e => {
   if (!mouseDown) return;
   rot.y += (e.clientX - lastX) * 0.011;
   rot.x += (e.clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.4, Math.min(0.5, rot.x)); 
+  rot.x = Math.max(-0.4, Math.min(0.5, rot.x));
   lastX = e.clientX; lastY = e.clientY;
 });
 
-// CORREÇÃO 3: Adicionado preventDefault e passive:false para evitar scroll de página no celular
 canvas.addEventListener('touchstart', e => {
-  e.preventDefault(); 
+  e.preventDefault();
   mouseDown = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
 }, { passive: false });
 window.addEventListener('touchend', () => mouseDown = false);
-
-// Alterado de window para canvas e com preventDefault para capturar corretamente o deslize em telas touch
 canvas.addEventListener('touchmove', e => {
   if (!mouseDown) return;
-  e.preventDefault(); 
+  e.preventDefault();
   rot.y += (e.touches[0].clientX - lastX) * 0.011;
   rot.x += (e.touches[0].clientY - lastY) * 0.011;
   rot.x = Math.max(-0.4, Math.min(0.5, rot.x));
@@ -266,93 +247,132 @@ canvas.addEventListener('wheel', e => {
   targetZoom = Math.min(15, Math.max(6.0, targetZoom + e.deltaY * 0.01));
 }, { passive: false });
 
-// ── 10. EVENTOS DOS SLIDERS ───────────────
-document.getElementById('offsetX').addEventListener('input', function () { art.offsetX = parseFloat(this.value); document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
-document.getElementById('offsetY').addEventListener('input', function () { art.offsetY = parseFloat(this.value); document.getElementById('valOffsetY').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
-document.getElementById('artScale').addEventListener('input', function () { art.scale = parseFloat(this.value) / 100; document.getElementById('valScale').textContent = this.value + '%'; redrawArt(); });
-document.getElementById('artRotation').addEventListener('input', function () { art.rotation = parseFloat(this.value); document.getElementById('valRotation').textContent = this.value + '°'; redrawArt(); });
-document.getElementById('artOpacity').addEventListener('input', function () { art.opacity = parseFloat(this.value) / 100; document.getElementById('valOpacity').textContent = this.value + '%'; redrawArt(); });
+// ── 10. EVENTOS DOS SLIDERS (AGORA COM PROTEÇÃO CONTRA ERROS) ──
+const offsetXEl = document.getElementById('offsetX');
+if (offsetXEl) offsetXEl.addEventListener('input', function () { art.offsetX = parseFloat(this.value); const v = document.getElementById('valOffsetX'); if(v) v.textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
 
-// ── 11. UPLOAD DE ARTE ────────────────────
-document.getElementById('fileInput').addEventListener('change', function () {
-  const file = this.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      art.image = img;
-      const thumb = document.getElementById('artThumb');
-      thumb.src = ev.target.result;
-      thumb.style.display = 'block';
-      document.getElementById('artPlaceholder').style.display = 'none';
-      
-      art.scale = 1.0;
-      document.getElementById('artScale').value = 100;
-      document.getElementById('valScale').textContent = '100%';
-      
-      redrawArt();
-      showToast('✅ Arte carregada!');
+const offsetYEl = document.getElementById('offsetY');
+if (offsetYEl) offsetYEl.addEventListener('input', function () { art.offsetY = parseFloat(this.value); const v = document.getElementById('valOffsetY'); if(v) v.textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
+
+const scaleEl = document.getElementById('artScale');
+if (scaleEl) scaleEl.addEventListener('input', function () { art.scale = parseFloat(this.value) / 100; const v = document.getElementById('valScale'); if(v) v.textContent = this.value + '%'; redrawArt(); });
+
+const rotEl = document.getElementById('artRotation');
+if (rotEl) rotEl.addEventListener('input', function () { art.rotation = parseFloat(this.value); const v = document.getElementById('valRotation'); if(v) v.textContent = this.value + '°'; redrawArt(); });
+
+const opEl = document.getElementById('artOpacity');
+if (opEl) opEl.addEventListener('input', function () { art.opacity = parseFloat(this.value) / 100; const v = document.getElementById('valOpacity'); if(v) v.textContent = this.value + '%'; redrawArt(); });
+
+// ── 11. UPLOAD DE ARTE ──
+const fileInput = document.getElementById('fileInput');
+if (fileInput) {
+  fileInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        art.image = img;
+        const thumb = document.getElementById('artThumb');
+        if (thumb) { thumb.src = ev.target.result; thumb.style.display = 'block'; }
+        const placeholder = document.getElementById('artPlaceholder');
+        if (placeholder) placeholder.style.display = 'none';
+        
+        art.scale = 1.0;
+        const sEl = document.getElementById('artScale');
+        if (sEl) sEl.value = 100;
+        const vEl = document.getElementById('valScale');
+        if (vEl) vEl.textContent = '100%';
+        
+        redrawArt();
+        showToast('✅ Arte carregada!');
+      };
+      img.src = ev.target.result;
     };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
+    reader.readAsDataURL(file);
+  });
+}
 
-// ── 12. COR DA CANECA E FUNDO ────────────
-document.getElementById('mugColors').addEventListener('click', function (e) {
-  const dot = e.target.closest('[data-color]');
-  if (!dot) return;
-  this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-  dot.classList.add('active');
-  currentColor = dot.dataset.color;
-  redrawArt();
-  showToast('🎨 Cor alterada!');
-});
+// ── 12. COR DA CANECA E FUNDO ──
+const mugColorsContainer = document.getElementById('mugColors');
+if (mugColorsContainer) {
+  mugColorsContainer.addEventListener('click', function (e) {
+    const dot = e.target.closest('[data-color]');
+    if (!dot) return;
+    this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+    currentColor = dot.dataset.color;
+    redrawArt();
+    showToast('🎨 Cor alterada!');
+  });
+}
 
-document.getElementById('bgColors').addEventListener('click', function (e) {
-  const dot = e.target.closest('[data-bg]');
-  if (!dot) return;
-  this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-  dot.classList.add('active');
-  scene.background = new THREE.Color(dot.dataset.bg);
-});
+const bgColorsContainer = document.getElementById('bgColors');
+if (bgColorsContainer) {
+  bgColorsContainer.addEventListener('click', function (e) {
+    const dot = e.target.closest('[data-bg]');
+    if (!dot) return;
+    this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+    scene.background = new THREE.Color(dot.dataset.bg);
+  });
+}
 
-document.getElementById('bgColorPicker').addEventListener('input', function () {
-  scene.background = new THREE.Color(this.value);
-  document.querySelectorAll('#bgColors .color-dot').forEach(d => d.classList.remove('active'));
-});
+const bgColorPicker = document.getElementById('bgColorPicker');
+if (bgColorPicker) {
+  bgColorPicker.addEventListener('input', function () {
+    scene.background = new THREE.Color(this.value);
+    const bgColors = document.getElementById('bgColors');
+    if (bgColors) bgColors.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  });
+}
 
-// ── 13. EXPORTAR E RESET ─────────────────
-document.getElementById('btnExport').addEventListener('click', () => {
-  renderer.render(scene, camera);
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = 'mockup-caneca.png';
-  a.click();
-  showToast('💾 Imagem salva!');
-});
+// ── 13. EXPORTAR E RESET ──
+const btnExport = document.getElementById('btnExport');
+if (btnExport) {
+  btnExport.addEventListener('click', () => {
+    renderer.render(scene, camera);
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'mockup-caneca.png';
+    a.click();
+    showToast('💾 Imagem salva!');
+  });
+}
 
-document.getElementById('btnReset').addEventListener('click', () => {
-  art.image = null; art.offsetX = 0; art.offsetY = 0; art.scale = 1.0; art.rotation = 0; art.opacity = 1; currentColor = '#ffffff';
-  ['offsetX','offsetY'].forEach(id => document.getElementById(id).value = 0);
-  document.getElementById('artScale').value = 100; document.getElementById('artRotation').value = 0; document.getElementById('artOpacity').value = 100;
-  document.getElementById('valOffsetX').textContent = '0'; document.getElementById('valOffsetY').textContent = '0';
-  document.getElementById('valScale').textContent = '100%'; document.getElementById('valRotation').textContent = '0°'; document.getElementById('valOpacity').textContent = '100%';
-  const thumb = document.getElementById('artThumb'); thumb.src = ''; thumb.style.display = 'none'; document.getElementById('artPlaceholder').style.display = 'block'; document.getElementById('fileInput').value = '';
-  rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
-  
-  scene.background = new THREE.Color('#6b2b8e');
-  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-  
-  redrawArt();
-  showToast('🔄 Resetado!');
-});
+const btnReset = document.getElementById('btnReset');
+if (btnReset) {
+  btnReset.addEventListener('click', () => {
+    art.image = null; art.offsetX = 0; art.offsetY = 0; art.scale = 1.0; art.rotation = 0; art.opacity = 1; currentColor = '#ffffff';
+    
+    ['offsetX','offsetY'].forEach(id => { const el = document.getElementById(id); if(el) el.value = 0; });
+    ['artScale', 'artOpacity'].forEach(id => { const el = document.getElementById(id); if(el) el.value = 100; });
+    const rotEl = document.getElementById('artRotation'); if(rotEl) rotEl.value = 0;
+    
+    ['valOffsetX', 'valOffsetY'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = '0'; });
+    ['valScale', 'valOpacity'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = '100%'; });
+    const valRotEl = document.getElementById('valRotation'); if(valRotEl) valRotEl.textContent = '0°';
+    
+    const thumb = document.getElementById('artThumb'); if(thumb) { thumb.src = ''; thumb.style.display = 'none'; }
+    const placeholder = document.getElementById('artPlaceholder'); if(placeholder) placeholder.style.display = 'block'; 
+    const fInput = document.getElementById('fileInput'); if(fInput) fInput.value = '';
+    
+    rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
+    
+    scene.background = new THREE.Color('#6b2b8e');
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    
+    redrawArt();
+    showToast('🔄 Resetado!');
+  });
+}
 
-// ── 14. TOAST E LOOP DE ANIMAÇÃO ─────────
+// ── 14. TOAST E LOOP DE ANIMAÇÃO ──
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
+  if(!t) return;
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
