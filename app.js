@@ -1,8 +1,7 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca Tripla (Wrap 360º + Luz de Estúdio)
+//   APP.JS — Mockup 3D Caneca Tripla (Preenchimento Perfeito 360º)
 // ══════════════════════════════════════════
 
-// ── 0. DIAGNÓSTICO VISUAL ────────────────
 window.addEventListener('error', function(e) {
   const hint = document.querySelector('.canvas-hint');
   if (hint) {
@@ -14,6 +13,12 @@ window.addEventListener('error', function(e) {
 });
 
 import * as THREE from 'three';
+
+// ── 0. AJUSTE DO HTML VIA JS (Aumentando limite de zoom) ──
+const scaleSlider = document.getElementById('artScale');
+if (scaleSlider) {
+  scaleSlider.max = 300; // Permite esticar a arte até encostar na alça
+}
 
 // ── 1. RENDERER (Configuração de Estúdio Fotográfico) ──
 const canvas = document.getElementById('canvas3d');
@@ -29,10 +34,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 
-// Retornamos o filtro de lente de cinema, mas com ALTA EXPOSIÇÃO 
-// para o branco ficar brilhante e não cinza.
 renderer.toneMapping = THREE.ACESFilmicToneMapping; 
-renderer.toneMappingExposure = 1.4; // Lente aberta = cerâmica clarinha e brilhante
+renderer.toneMappingExposure = 1.35; 
 if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 // ── 2. CENA + CÂMERA ─────────────────────
@@ -43,9 +46,8 @@ const camera = new THREE.PerspectiveCamera(35, 800 / 500, 0.1, 100);
 camera.position.set(0, 0.8, 10.0);
 
 // ── 3. ILUMINAÇÃO (Luzes Fortes e Bem Distribuídas) ─────
-scene.add(new THREE.AmbientLight(0xffffff, 1.0)); // Preenchimento global claro
+scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
 
-// Luz Principal (Gera a sombra no chão e brilho frontal)
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
 keyLight.position.set(5, 8, 4);
 keyLight.castShadow = true;
@@ -54,19 +56,17 @@ keyLight.shadow.mapSize.height = 1024;
 keyLight.shadow.bias = -0.001;
 scene.add(keyLight);
 
-// Luz de Preenchimento (Impede que a lateral oposta fique escura)
-const fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
+const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
 fillLight.position.set(-6, 3, 2);
 scene.add(fillLight);
 
-// Luz de Recorte (Backlight - faz o verniz brilhar nas bordas)
-const rimLight = new THREE.PointLight(0xffffff, 2.0, 20);
+const rimLight = new THREE.PointLight(0xffffff, 2.5, 20);
 rimLight.position.set(0, 5, -5);
 scene.add(rimLight);
 
 // ── 4. CHÃO INVISÍVEL PARA SOMBRAS ───────
 const shadowPlaneGeo = new THREE.PlaneGeometry(100, 100);
-const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.18 }); // Sombra elegante e suave
+const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.18 }); 
 const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
 shadowPlane.rotation.x = -Math.PI / 2;
 shadowPlane.position.y = -1.2; 
@@ -76,9 +76,9 @@ scene.add(shadowPlane);
 // ── 5. MATERIAIS E TEXTURAS (O WRAP PERFEITO DE 360º) ──
 let currentColor = '#ffffff';
 
-// Proporção panorâmica exata simulando o perímetro do cilindro
-const ART_W = 2730; 
-const ART_H = 1024; 
+// Proporção matemática exata de um cilindro (2.618 : 1)
+const ART_W = 2618; 
+const ART_H = 1000; 
 
 const artCanvas = document.createElement('canvas');
 artCanvas.width = ART_W;
@@ -87,22 +87,21 @@ const artCtx = artCanvas.getContext('2d');
 
 const artTex = new THREE.CanvasTexture(artCanvas);
 if (THREE.SRGBColorSpace) artTex.colorSpace = THREE.SRGBColorSpace;
-// Compensação de 25% para manter o centro da arte na frente da caneca
-artTex.offset.x = 0.25; 
+
+// Mapeamento espelhado para corrigir a leitura 3D
+artTex.repeat.x = -1; 
 artTex.wrapS = THREE.RepeatWrapping;
 artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 
-// Propriedades da Cerâmica (Brilho e Verniz altíssimos)
 const physicalProps = {
-  roughness: 0.15,         
+  roughness: 0.12,         
   metalness: 0.0,          
   clearcoat: 1.0,          
-  clearcoatRoughness: 0.05, // Verniz muito liso (reflexo super nítido)
+  clearcoatRoughness: 0.08, 
 };
 
-// Material Externo (Onde vai a estampa)
 const printMaterial = new THREE.MeshPhysicalMaterial({
   color: 0xffffff, 
   map: artTex,
@@ -110,14 +109,12 @@ const printMaterial = new THREE.MeshPhysicalMaterial({
   ...physicalProps
 });
 
-// Material da Alça, Borda e Fundo
 const colorMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
   side: THREE.FrontSide,
   ...physicalProps
 });
 
-// Material Interno
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
   side: THREE.BackSide,
@@ -134,9 +131,8 @@ function createProceduralMug() {
   const r = 1.0;     
   const wall = 0.08; 
 
+  // Cilindro sem rotação artificial: a costura nasce exatamente no +Z
   const geoOutside = new THREE.CylinderGeometry(r, r, h, 64, 1, true);
-  // O SEGREDO DO ALINHAMENTO: Rotacionamos a malha para esconder a "costura" embaixo da alça!
-  geoOutside.rotateY(-Math.PI / 2); 
   const meshOutside = new THREE.Mesh(geoOutside, printMaterial);
   meshOutside.castShadow = true;
   baseMug.add(meshOutside);
@@ -165,9 +161,11 @@ function createProceduralMug() {
   meshBottomOut.castShadow = true;
   baseMug.add(meshBottomOut);
 
+  // Alça alinhada perfeitamente na costura (+Z)
   const geoHandle = new THREE.TorusGeometry(0.65, 0.16, 32, 64);
   const meshHandle = new THREE.Mesh(geoHandle, colorMaterial);
-  meshHandle.position.set(r, 0, 0);
+  meshHandle.position.set(0, 0, r); 
+  meshHandle.rotation.y = Math.PI / 2; // Gira para apontar para fora
   meshHandle.scale.set(0.7, 1.2, 1);
   meshHandle.castShadow = true;
   baseMug.add(meshHandle);
@@ -175,20 +173,23 @@ function createProceduralMug() {
   return baseMug;
 }
 
-// ── 7. INSTANCIAMENTO (As 3 Canecas) ─────
+// ── 7. INSTANCIAMENTO (Câmeras apontadas para os locais exatos) ─────
 const masterMug = createProceduralMug();
 
 const mugLeft = masterMug.clone();
 mugLeft.position.x = -2.8;
-mugLeft.rotation.y = -1.8; 
+// Gira deixando a alça na Direita e exibindo a lateral esquerda da arte
+mugLeft.rotation.y = -Math.PI / 2 - 0.35; 
 
 const mugCenter = masterMug.clone();
 mugCenter.position.x = 0;
-mugCenter.rotation.y = 0;
+// Gira 180º escondendo a alça nas costas e exibindo o centro da arte
+mugCenter.rotation.y = Math.PI; 
 
 const mugRight = masterMug.clone();
 mugRight.position.x = 2.8;
-mugRight.rotation.y = 1.8; 
+// Gira deixando a alça na Esquerda e exibindo a lateral direita da arte
+mugRight.rotation.y = Math.PI / 2 + 0.35; 
 
 mugGroup.add(mugLeft, mugCenter, mugRight);
 
@@ -205,15 +206,25 @@ function redrawArt() {
     const iw = art.image.naturalWidth || art.image.width;
     const ih = art.image.naturalHeight || art.image.height;
     
-    const fitScale = Math.min(ART_W / iw, ART_H / ih) * art.scale;
-    const cx = ART_W / 2 + art.offsetX * ART_W * 0.3;
+    // NOVO COMPORTAMENTO: A escala sempre bate pela Altura da caneca.
+    // Isso evita vãos nas laterais ao usar templates retangulares longos.
+    const fitScale = (ART_H / ih) * art.scale;
+    
+    // Invertemos a matemática do OffsetX para acompanhar o espelhamento do canvas
+    const cx = ART_W / 2 - art.offsetX * ART_W * 0.3;
     const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
 
     artCtx.save();
+    
+    // Espelhamento do Canvas 2D para corrigir a leitura (Texto não ficar ao contrário)
+    artCtx.translate(ART_W, 0);
+    artCtx.scale(-1, 1);
+
     artCtx.globalAlpha = art.opacity;
     artCtx.translate(cx, cy);
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale);
+    
     artCtx.restore();
   }
 
@@ -278,7 +289,6 @@ document.getElementById('fileInput').addEventListener('change', function () {
       thumb.style.display = 'block';
       document.getElementById('artPlaceholder').style.display = 'none';
       
-      // Reseta escala para 100% ao enviar imagem
       art.scale = 1.0;
       document.getElementById('artScale').value = 100;
       document.getElementById('valScale').textContent = '100%';
