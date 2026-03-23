@@ -3,14 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mockup de Caneca</title>
+  <title>Mockup de Caneca 360º</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f0f2f5;
@@ -19,8 +14,6 @@
       height: 100vh;
       overflow: hidden;
     }
-
-    /* ── HEADER ── */
     header {
       background: #ffffff;
       border-bottom: 1px solid #e0e0e0;
@@ -33,25 +26,15 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
       z-index: 10;
     }
-
     .logo {
       font-size: 1.2rem;
       font-weight: 700;
       color: #2563eb;
       letter-spacing: -0.5px;
     }
-
-    .logo span {
-      color: #111;
-    }
-
-    /* ── MAIN LAYOUT ── */
-    .main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
+    .logo span { color: #111; }
+    .main { display: flex; flex: 1; overflow: hidden; }
+    
     /* ── CANVAS AREA ── */
     .canvas-wrapper {
       flex: 1;
@@ -61,7 +44,6 @@
       background: #e8eaf0;
       position: relative;
     }
-
     #canvas3d {
       display: block;
       border-radius: 8px;
@@ -69,11 +51,7 @@
       background: #fff;
       cursor: grab;
     }
-
-    #canvas3d:active {
-      cursor: grabbing;
-    }
-
+    #canvas3d:active { cursor: grabbing; }
     .canvas-hint {
       position: absolute;
       bottom: 16px;
@@ -88,267 +66,54 @@
       white-space: nowrap;
     }
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: 280px;
-      background: #ffffff;
-      border-left: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-
-    .sidebar-section {
-      padding: 20px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .sidebar-section:last-child {
-      border-bottom: none;
-    }
-
-    .section-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #9ca3af;
-      margin-bottom: 14px;
-    }
-
-    /* ── UPLOAD BUTTON ── */
-    .btn-upload {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 10px;
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-upload:hover {
-      background: #1d4ed8;
-    }
-
-    #fileInput {
-      display: none;
-    }
-
-    /* ── PREVIEW DA ARTE ── */
-    .art-preview {
-      margin-top: 12px;
-      width: 100%;
-      height: 80px;
-      border: 2px dashed #e0e0e0;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: #fafafa;
-    }
-
-    .art-preview img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      display: none;
-    }
-
-    .art-preview span {
-      font-size: 0.75rem;
-      color: #b0b0b0;
-    }
-
-    /* ── SLIDERS ── */
-    .control-row {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 14px;
-    }
-
-    .control-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .control-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.78rem;
-      color: #374151;
-      font-weight: 500;
-    }
-
-    .control-label span:last-child {
-      color: #9ca3af;
-      font-weight: 400;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: #2563eb;
-      height: 4px;
-      cursor: pointer;
-    }
-
-    /* ── COR DO FUNDO ── */
-    .color-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .color-dot {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: border-color 0.2s, transform 0.15s;
-    }
-
-    .color-dot:hover,
-    .color-dot.active {
-      border-color: #2563eb;
-      transform: scale(1.15);
-    }
-
-    .color-dot.custom {
-      background: linear-gradient(135deg, #f00, #0f0, #00f);
-      position: relative;
-      overflow: hidden;
-    }
-
-    #bgColorPicker {
-      opacity: 0;
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-    }
-
-    /* ── COR DA CANECA ── */
-    .mug-colors {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    /* ── BOTÃO EXPORTAR ── */
-    .btn-export {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 11px;
-      background: #16a34a;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-export:hover {
-      background: #15803d;
-    }
-
-    /* ── BOTÃO RESET ── */
-    .btn-reset {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 9px;
-      background: transparent;
-      color: #6b7280;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 500;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: all 0.2s;
-    }
-
-    .btn-reset:hover {
-      background: #f9fafb;
-      color: #374151;
-    }
-
-    /* ── TOAST ── */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: #111827;
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 500;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: all 0.3s;
-      pointer-events: none;
-      z-index: 999;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* ── SCROLLBAR ── */
-    .sidebar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .sidebar::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .sidebar::-webkit-scrollbar-thumb {
-      background: #e0e0e0;
-      border-radius: 4px;
-    }
+    /* ── SIDEBAR & CONTROLS (Mantidos exatamentes iguais) ── */
+    .sidebar { width: 280px; background: #ffffff; border-left: 1px solid #e0e0e0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+    .sidebar-section { padding: 20px; border-bottom: 1px solid #f0f0f0; }
+    .sidebar-section:last-child { border-bottom: none; }
+    .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 14px; }
+    .btn-upload { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-upload:hover { background: #1d4ed8; }
+    #fileInput { display: none; }
+    .art-preview { margin-top: 12px; width: 100%; height: 80px; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fafafa; }
+    .art-preview img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+    .art-preview span { font-size: 0.75rem; color: #b0b0b0; }
+    .control-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .control-row:last-child { margin-bottom: 0; }
+    .control-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #374151; font-weight: 500; }
+    .control-label span:last-child { color: #9ca3af; font-weight: 400; }
+    input[type="range"] { width: 100%; accent-color: #2563eb; height: 4px; cursor: pointer; }
+    .color-options, .mug-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+    .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s, transform 0.15s; }
+    .color-dot:hover, .color-dot.active { border-color: #2563eb; transform: scale(1.15); }
+    .color-dot.custom { background: linear-gradient(135deg, #f00, #0f0, #00f); position: relative; overflow: hidden; }
+    #bgColorPicker { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; }
+    .btn-export { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-export:hover { background: #15803d; }
+    .btn-reset { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 9px; background: transparent; color: #6b7280; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.82rem; font-weight: 500; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+    .btn-reset:hover { background: #f9fafb; color: #374151; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
   <header>
     <div class="logo">Mockup <span>Caneca</span></div>
     <div style="font-size:0.78rem; color:#9ca3af;">Editor 3D</div>
   </header>
 
-  <!-- MAIN -->
   <div class="main">
 
-    <!-- CANVAS 3D -->
     <div class="canvas-wrapper">
-      <canvas id="canvas3d" width="600" height="500"></canvas>
+      <canvas id="canvas3d" width="800" height="500"></canvas>
       <div class="canvas-hint">🖱️ Arraste para rotacionar · Scroll para zoom</div>
     </div>
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
 
-      <!-- SEÇÃO: ARTE -->
       <div class="sidebar-section">
         <div class="section-title">Arte / Estampa</div>
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
@@ -361,52 +126,15 @@
         </div>
       </div>
 
-      <!-- SEÇÃO: AJUSTAR ARTE -->
       <div class="sidebar-section">
         <div class="section-title">Ajustar Arte</div>
-
-        <div class="control-row">
-          <div class="control-label">
-            <span>Posição Horizontal</span>
-            <span id="valOffsetX">0</span>
-          </div>
-          <input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" />
-        </div>
-
-        <div class="control-row">
-          <div class="control-label">
-            <span>Posição Vertical</span>
-            <span id="valOffsetY">0</span>
-          </div>
-          <input type="range" id="offsetY" min="-1" max="1" step="0.01" value="0" />
-        </div>
-
-        <div class="control-row">
-          <div class="control-label">
-            <span>Tamanho</span>
-            <span id="valScale">100%</span>
-          </div>
-          <input type="range" id="artScale" min="10" max="200" step="1" value="100" />
-        </div>
-
-        <div class="control-row">
-          <div class="control-label">
-            <span>Rotação</span>
-            <span id="valRotation">0°</span>
-          </div>
-          <input type="range" id="artRotation" min="0" max="360" step="1" value="0" />
-        </div>
-
-        <div class="control-row">
-          <div class="control-label">
-            <span>Opacidade</span>
-            <span id="valOpacity">100%</span>
-          </div>
-          <input type="range" id="artOpacity" min="0" max="100" step="1" value="100" />
-        </div>
+        <div class="control-row"><div class="control-label"><span>Posição Horizontal</span><span id="valOffsetX">0</span></div><input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" /></div>
+        <div class="control-row"><div class="control-label"><span>Posição Vertical</span><span id="valOffsetY">0</span></div><input type="range" id="offsetY" min="-1" max="1" step="0.01" value="0" /></div>
+        <div class="control-row"><div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div><input type="range" id="artScale" min="10" max="200" step="1" value="100" /></div>
+        <div class="control-row"><div class="control-label"><span>Rotação</span><span id="valRotation">0°</span></div><input type="range" id="artRotation" min="0" max="360" step="1" value="0" /></div>
+        <div class="control-row"><div class="control-label"><span>Opacidade</span><span id="valOpacity">100%</span></div><input type="range" id="artOpacity" min="0" max="100" step="1" value="100" /></div>
       </div>
 
-      <!-- SEÇÃO: COR DA CANECA -->
       <div class="sidebar-section">
         <div class="section-title">Cor da Caneca</div>
         <div class="mug-colors" id="mugColors">
@@ -421,7 +149,6 @@
         </div>
       </div>
 
-      <!-- SEÇÃO: FUNDO DA CENA -->
       <div class="sidebar-section">
         <div class="section-title">Fundo da Cena</div>
         <div class="color-options" id="bgColors">
@@ -431,44 +158,29 @@
           <div class="color-dot" data-bg="#fef9c3" style="background:#fef9c3;"></div>
           <div class="color-dot" data-bg="#dbeafe" style="background:#dbeafe;"></div>
           <div class="color-dot" data-bg="#dcfce7" style="background:#dcfce7;"></div>
-          <!-- custom color picker -->
-          <div class="color-dot custom" style="position:relative;">
-            🎨
-            <input type="color" id="bgColorPicker" value="#ffffff" title="Cor personalizada" />
-          </div>
+          <div class="color-dot custom" style="position:relative;">🎨<input type="color" id="bgColorPicker" value="#ffffff" title="Cor personalizada" /></div>
         </div>
       </div>
 
-      <!-- SEÇÃO: EXPORTAR -->
       <div class="sidebar-section">
         <div class="section-title">Exportar</div>
-        <button class="btn-export" id="btnExport">
-          💾 Baixar PNG
-        </button>
-        <button class="btn-reset" id="btnReset">
-          🔄 Resetar tudo
-        </button>
+        <button class="btn-export" id="btnExport">💾 Baixar PNG</button>
+        <button class="btn-reset" id="btnReset">🔄 Resetar tudo</button>
       </div>
 
-    </div><!-- /sidebar -->
-  </div><!-- /main -->
+    </div>
+  </div>
 
-  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <!-- THREE.JS -->
-<script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
     }
-  }
-</script>
+  </script>
 
-<!-- APP como módulo -->
-<script type="module" src="app.js"></script>
-
-
+  <script type="module" src="app.js"></script>
 </body>
 </html>
