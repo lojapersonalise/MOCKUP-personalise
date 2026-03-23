@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca Tripla Premium (Fotorrealista)
+//   APP.JS — Mockup 3D Caneca Tripla (Cores Fiéis e Proporção Real)
 // ══════════════════════════════════════════
 
 // ── 0. DIAGNÓSTICO VISUAL ────────────────
@@ -15,73 +15,71 @@ window.addEventListener('error', function(e) {
 
 import * as THREE from 'three';
 
-// ── 1. RENDERER (Configuração de Câmera Fotográfica) ──
+// ── 1. RENDERER (Configuração de Cores Fiéis) ──
 const canvas = document.getElementById('canvas3d');
 const renderer = new THREE.WebGLRenderer({
   canvas,
   antialias: true,
   preserveDrawingBuffer: true,
-  alpha: true // Permite fundo transparente se necessário
+  alpha: true
 });
 renderer.setSize(800, 500); 
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-// Habilitando sombras suaves
+// Sombras ativadas
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 
-// Mapeamento de tons (O segredo do fotorrealismo - evita cores "estouradas")
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1; // Exposição da "lente"
+// Removido o ACESFilmic para não "acinzentar" o branco. 
+// Usamos cores lineares padrão para e-commerce.
+renderer.toneMapping = THREE.NoToneMapping; 
 if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 // ── 2. CENA + CÂMERA ─────────────────────
 const scene = new THREE.Scene();
-// Definindo o fundo roxo inspirado na sua imagem de referência
 scene.background = new THREE.Color('#6b2b8e'); 
 
 const camera = new THREE.PerspectiveCamera(35, 800 / 500, 0.1, 100);
-camera.position.set(0, 0.8, 10.0); // Levemente mais alta e recuada
+camera.position.set(0, 0.8, 10.0);
 
-// ── 3. ILUMINAÇÃO (Setup de Estúdio) ─────
-// Luz ambiente suave para preenchimento geral
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+// ── 3. ILUMINAÇÃO (Recalibrada para branco puro) ─────
+// Luz ambiente clara
+scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-// Key Light (Luz Principal - projeta sombra)
-const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+// Luz principal frontal (projeta a sombra)
+const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
 keyLight.position.set(5, 8, 4);
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.width = 1024; // Sombras em alta resolução
+keyLight.shadow.mapSize.width = 1024;
 keyLight.shadow.mapSize.height = 1024;
-keyLight.shadow.bias = -0.001; // Evita artefatos na própria malha
+keyLight.shadow.bias = -0.001;
 scene.add(keyLight);
 
-// Fill Light (Luz de Preenchimento - clareia as sombras laterais)
-const fillLight = new THREE.DirectionalLight(0xebefff, 1.2); // Levemente azulada
+// Luz de preenchimento suave
+const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
 fillLight.position.set(-6, 3, 2);
 scene.add(fillLight);
 
-// Rim Light (Luz de Recorte - cria aquele brilho no verniz na parte de trás)
-const rimLight = new THREE.PointLight(0xffffff, 3.0, 20);
+// Luz de recorte (realça o verniz/brilho da cerâmica)
+const rimLight = new THREE.PointLight(0xffffff, 0.6, 20);
 rimLight.position.set(0, 5, -5);
 scene.add(rimLight);
 
 // ── 4. CHÃO INVISÍVEL PARA SOMBRAS ───────
-// O plano recebe sombras, mas é invisível. A sombra escurece o fundo roxo.
 const shadowPlaneGeo = new THREE.PlaneGeometry(100, 100);
-const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.25 }); // Intensidade da sombra
+const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.15 }); 
 const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
 shadowPlane.rotation.x = -Math.PI / 2;
-shadowPlane.position.y = -1.2; // Exatamente na base da caneca
+shadowPlane.position.y = -1.2; 
 shadowPlane.receiveShadow = true;
 scene.add(shadowPlane);
 
-
-// ── 5. MATERIAIS E TEXTURAS (Cerâmica Fotorrealista) ──
+// ── 5. MATERIAIS E TEXTURAS (A PROPORÇÃO CORRETA) ──
 let currentColor = '#ffffff';
 
-const ART_W = 1024;
-const ART_H = 1024;
+// MUDANÇA CRUCIAL: Resolução Retangular simulando uma estampa real (aprox 21x9cm)
+const ART_W = 2048;
+const ART_H = 853; 
 
 const artCanvas = document.createElement('canvas');
 artCanvas.width = ART_W;
@@ -90,36 +88,36 @@ const artCtx = artCanvas.getContext('2d');
 
 const artTex = new THREE.CanvasTexture(artCanvas);
 if (THREE.SRGBColorSpace) artTex.colorSpace = THREE.SRGBColorSpace;
-artTex.offset.x = 0.5;
+artTex.offset.x = 0.5; // Centraliza a arte na frente da caneca
 artTex.wrapS = THREE.RepeatWrapping;
-artTex.anisotropy = renderer.capabilities.getMaxAnisotropy(); // Melhora textura em ângulos
+artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-const art = { image: null, offsetX: 0, offsetY: 0, scale: 0.5, rotation: 0, opacity: 1.0 };
+const art = { image: null, offsetX: 0, offsetY: 0, scale: 0.8, rotation: 0, opacity: 1.0 };
 
-// As propriedades mágicas: roughness baixo + clearcoat (verniz físico)
+// Propriedades físicas da Cerâmica Vitrificada
 const physicalProps = {
-  roughness: 0.15,         // Superfície polida
-  metalness: 0.0,          // É cerâmica, não metal
-  clearcoat: 1.0,          // Camada de verniz brilhante
-  clearcoatRoughness: 0.1, // O brilho do verniz é bem nítido
+  roughness: 0.15,         
+  metalness: 0.0,          
+  clearcoat: 1.0,          // Mantém o reflexo premium
+  clearcoatRoughness: 0.1, 
 };
 
 // Material da Estampa (Corpo Externo)
 const printMaterial = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color(0xffffff),
+  color: 0xffffff, // Branco 100% puro
   map: artTex,
   side: THREE.FrontSide,
   ...physicalProps
 });
 
-// Material da Cerâmica Externa (Alça, bordas)
+// Material da Cerâmica (Alça, bordas, fundo)
 const colorMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
   side: THREE.FrontSide,
   ...physicalProps
 });
 
-// Material da Cerâmica Interna (Parede de dentro - BackSide)
+// Material do Interior (BackSide)
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
   side: THREE.BackSide,
@@ -197,12 +195,16 @@ redrawArt();
 // ── 8. REDESENHAR ARTE ───────────────────
 function redrawArt() {
   artCtx.clearRect(0, 0, ART_W, ART_H);
+  
+  // Fundo do canvas 2D 100% branco
   artCtx.fillStyle = '#ffffff';
   artCtx.fillRect(0, 0, ART_W, ART_H);
 
   if (art.image) {
     const iw = art.image.naturalWidth || art.image.width;
     const ih = art.image.naturalHeight || art.image.height;
+    
+    // Calcula a escala para preencher mantendo a proporção
     const fitScale = Math.min(ART_W / iw, ART_H / ih) * art.scale;
     const cx = ART_W / 2 + art.offsetX * ART_W * 0.3;
     const cy = ART_H / 2 + art.offsetY * ART_H * 0.3;
@@ -234,7 +236,7 @@ window.addEventListener('mousemove', e => {
   if (!mouseDown) return;
   rot.y += (e.clientX - lastX) * 0.011;
   rot.x += (e.clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.4, Math.min(0.5, rot.x)); // Limite de rotação vertical mais elegante
+  rot.x = Math.max(-0.4, Math.min(0.5, rot.x)); 
   lastX = e.clientX; lastY = e.clientY;
 });
 
@@ -258,6 +260,7 @@ canvas.addEventListener('wheel', e => {
 // ── 10. EVENTOS DOS SLIDERS ───────────────
 document.getElementById('offsetX').addEventListener('input', function () { art.offsetX = parseFloat(this.value); document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
 document.getElementById('offsetY').addEventListener('input', function () { art.offsetY = parseFloat(this.value); document.getElementById('valOffsetY').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
+// Ajuste na sensibilidade do slider de tamanho (escala inicial = 0.8)
 document.getElementById('artScale').addEventListener('input', function () { art.scale = parseFloat(this.value) / 100; document.getElementById('valScale').textContent = this.value + '%'; redrawArt(); });
 document.getElementById('artRotation').addEventListener('input', function () { art.rotation = parseFloat(this.value); document.getElementById('valRotation').textContent = this.value + '°'; redrawArt(); });
 document.getElementById('artOpacity').addEventListener('input', function () { art.opacity = parseFloat(this.value) / 100; document.getElementById('valOpacity').textContent = this.value + '%'; redrawArt(); });
@@ -275,6 +278,12 @@ document.getElementById('fileInput').addEventListener('change', function () {
       thumb.src = ev.target.result;
       thumb.style.display = 'block';
       document.getElementById('artPlaceholder').style.display = 'none';
+      
+      // Reseta a escala para 100% ao carregar nova imagem
+      art.scale = 1.0;
+      document.getElementById('artScale').value = 100;
+      document.getElementById('valScale').textContent = '100%';
+      
       redrawArt();
       showToast('✅ Arte carregada!');
     };
@@ -318,15 +327,14 @@ document.getElementById('btnExport').addEventListener('click', () => {
 });
 
 document.getElementById('btnReset').addEventListener('click', () => {
-  art.image = null; art.offsetX = 0; art.offsetY = 0; art.scale = 0.5; art.rotation = 0; art.opacity = 1; currentColor = '#ffffff';
+  art.image = null; art.offsetX = 0; art.offsetY = 0; art.scale = 0.8; art.rotation = 0; art.opacity = 1; currentColor = '#ffffff';
   ['offsetX','offsetY'].forEach(id => document.getElementById(id).value = 0);
-  document.getElementById('artScale').value = 100; document.getElementById('artRotation').value = 0; document.getElementById('artOpacity').value = 100;
+  document.getElementById('artScale').value = 80; document.getElementById('artRotation').value = 0; document.getElementById('artOpacity').value = 100;
   document.getElementById('valOffsetX').textContent = '0'; document.getElementById('valOffsetY').textContent = '0';
-  document.getElementById('valScale').textContent = '100%'; document.getElementById('valRotation').textContent = '0°'; document.getElementById('valOpacity').textContent = '100%';
+  document.getElementById('valScale').textContent = '80%'; document.getElementById('valRotation').textContent = '0°'; document.getElementById('valOpacity').textContent = '100%';
   const thumb = document.getElementById('artThumb'); thumb.src = ''; thumb.style.display = 'none'; document.getElementById('artPlaceholder').style.display = 'block'; document.getElementById('fileInput').value = '';
   rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
   
-  // Reseta para a cor roxa padrão da cena premium
   scene.background = new THREE.Color('#6b2b8e');
   document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   
