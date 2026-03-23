@@ -1,13 +1,12 @@
 // ══════════════════════════════════════════
-//   APP.JS — Mockup 3D Caneca Tripla v2.0
+//   APP.JS — Mockup 3D Caneca Tripla Premium (Fotorrealista)
 // ══════════════════════════════════════════
 
-// ── 0. SISTEMA DE DIAGNÓSTICO VISUAL ──────
-// Se algo falhar, mostrará o erro na tela ao invés de tela preta
+// ── 0. DIAGNÓSTICO VISUAL ────────────────
 window.addEventListener('error', function(e) {
   const hint = document.querySelector('.canvas-hint');
   if (hint) {
-    hint.style.background = '#ef4444'; // Vermelho de erro
+    hint.style.background = '#ef4444';
     hint.style.color = '#ffffff';
     hint.textContent = 'ERRO JS: ' + e.message;
   }
@@ -16,41 +15,69 @@ window.addEventListener('error', function(e) {
 
 import * as THREE from 'three';
 
-// ── 1. RENDERER ──────────────────────────
+// ── 1. RENDERER (Configuração de Câmera Fotográfica) ──
 const canvas = document.getElementById('canvas3d');
 const renderer = new THREE.WebGLRenderer({
   canvas,
   antialias: true,
   preserveDrawingBuffer: true,
+  alpha: true // Permite fundo transparente se necessário
 });
 renderer.setSize(800, 500); 
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
 
-// Define a cor de fundo de segurança (evita tela preta se a cena falhar)
-renderer.setClearColor(0xf0f0f0, 1);
+// Habilitando sombras suaves
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+
+// Mapeamento de tons (O segredo do fotorrealismo - evita cores "estouradas")
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1; // Exposição da "lente"
 if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 // ── 2. CENA + CÂMERA ─────────────────────
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#f0f0f0');
+// Definindo o fundo roxo inspirado na sua imagem de referência
+scene.background = new THREE.Color('#6b2b8e'); 
 
 const camera = new THREE.PerspectiveCamera(35, 800 / 500, 0.1, 100);
-camera.position.set(0, 0.5, 9.5); 
+camera.position.set(0, 0.8, 10.0); // Levemente mais alta e recuada
 
-// ── 3. ILUMINAÇÃO ────────────────────────
-scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+// ── 3. ILUMINAÇÃO (Setup de Estúdio) ─────
+// Luz ambiente suave para preenchimento geral
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-sun.position.set(4, 6, 5);
-sun.castShadow = true;
-scene.add(sun);
+// Key Light (Luz Principal - projeta sombra)
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+keyLight.position.set(5, 8, 4);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 1024; // Sombras em alta resolução
+keyLight.shadow.mapSize.height = 1024;
+keyLight.shadow.bias = -0.001; // Evita artefatos na própria malha
+scene.add(keyLight);
 
-const fill = new THREE.DirectionalLight(0xffffff, 0.8);
-fill.position.set(-4, 2, 3);
-scene.add(fill);
+// Fill Light (Luz de Preenchimento - clareia as sombras laterais)
+const fillLight = new THREE.DirectionalLight(0xebefff, 1.2); // Levemente azulada
+fillLight.position.set(-6, 3, 2);
+scene.add(fillLight);
 
-// ── 4. MATERIAIS E TEXTURAS ──────────────
+// Rim Light (Luz de Recorte - cria aquele brilho no verniz na parte de trás)
+const rimLight = new THREE.PointLight(0xffffff, 3.0, 20);
+rimLight.position.set(0, 5, -5);
+scene.add(rimLight);
+
+// ── 4. CHÃO INVISÍVEL PARA SOMBRAS ───────
+// O plano recebe sombras, mas é invisível. A sombra escurece o fundo roxo.
+const shadowPlaneGeo = new THREE.PlaneGeometry(100, 100);
+const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.25 }); // Intensidade da sombra
+const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
+shadowPlane.rotation.x = -Math.PI / 2;
+shadowPlane.position.y = -1.2; // Exatamente na base da caneca
+shadowPlane.receiveShadow = true;
+scene.add(shadowPlane);
+
+
+// ── 5. MATERIAIS E TEXTURAS (Cerâmica Fotorrealista) ──
 let currentColor = '#ffffff';
 
 const ART_W = 1024;
@@ -65,78 +92,80 @@ const artTex = new THREE.CanvasTexture(artCanvas);
 if (THREE.SRGBColorSpace) artTex.colorSpace = THREE.SRGBColorSpace;
 artTex.offset.x = 0.5;
 artTex.wrapS = THREE.RepeatWrapping;
+artTex.anisotropy = renderer.capabilities.getMaxAnisotropy(); // Melhora textura em ângulos
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 0.5, rotation: 0, opacity: 1.0 };
 
+// As propriedades mágicas: roughness baixo + clearcoat (verniz físico)
+const physicalProps = {
+  roughness: 0.15,         // Superfície polida
+  metalness: 0.0,          // É cerâmica, não metal
+  clearcoat: 1.0,          // Camada de verniz brilhante
+  clearcoatRoughness: 0.1, // O brilho do verniz é bem nítido
+};
+
 // Material da Estampa (Corpo Externo)
-const printMaterial = new THREE.MeshStandardMaterial({
+const printMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(0xffffff),
-  roughness: 0.3,
-  metalness: 0.1,
   map: artTex,
-  side: THREE.FrontSide
+  side: THREE.FrontSide,
+  ...physicalProps
 });
 
 // Material da Cerâmica Externa (Alça, bordas)
-const colorMaterial = new THREE.MeshStandardMaterial({
+const colorMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
-  roughness: 0.3,
-  metalness: 0.1,
-  side: THREE.FrontSide
+  side: THREE.FrontSide,
+  ...physicalProps
 });
 
-// Material da Cerâmica Interna (Parede de dentro - Usa BackSide!)
-const colorMaterialInside = new THREE.MeshStandardMaterial({
+// Material da Cerâmica Interna (Parede de dentro - BackSide)
+const colorMaterialInside = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
-  roughness: 0.3,
-  metalness: 0.1,
-  side: THREE.BackSide 
+  side: THREE.BackSide,
+  ...physicalProps
 });
 
-// ── 5. GERAÇÃO PROCEDURAL DA CANECA ──────
+// ── 6. GERAÇÃO PROCEDURAL DA CANECA ──────
 const mugGroup = new THREE.Group();
 scene.add(mugGroup);
 
 function createProceduralMug() {
   const baseMug = new THREE.Group();
-  const h = 2.4;     // Altura
-  const r = 1.0;     // Raio Externo
-  const wall = 0.08; // Espessura da cerâmica
+  const h = 2.4;     
+  const r = 1.0;     
+  const wall = 0.08; 
 
-  // 1. Corpo Externo (Recebe a textura) - openEnded=true
   const geoOutside = new THREE.CylinderGeometry(r, r, h, 64, 1, true);
   const meshOutside = new THREE.Mesh(geoOutside, printMaterial);
   meshOutside.castShadow = true;
   baseMug.add(meshOutside);
 
-  // 2. Corpo Interno (Parede de dentro) - openEnded=true
   const geoInside = new THREE.CylinderGeometry(r - wall, r - wall, h, 64, 1, true);
   const meshInside = new THREE.Mesh(geoInside, colorMaterialInside);
   baseMug.add(meshInside);
 
-  // 3. Borda superior (O anel que une o lado de fora com o de dentro)
   const geoRim = new THREE.RingGeometry(r - wall, r, 64);
   const meshRim = new THREE.Mesh(geoRim, colorMaterial);
   meshRim.rotation.x = -Math.PI / 2;
   meshRim.position.y = h / 2;
+  meshRim.castShadow = true;
   baseMug.add(meshRim);
 
-  // 4. Fundo interno (Onde o líquido fica)
   const geoBottomIn = new THREE.CircleGeometry(r - wall, 64);
   const meshBottomIn = new THREE.Mesh(geoBottomIn, colorMaterialInside);
   meshBottomIn.rotation.x = -Math.PI / 2;
   meshBottomIn.position.y = -(h / 2) + wall;
   baseMug.add(meshBottomIn);
 
-  // 5. Fundo externo (Base que toca a mesa)
   const geoBottomOut = new THREE.CircleGeometry(r, 64);
   const meshBottomOut = new THREE.Mesh(geoBottomOut, colorMaterial);
   meshBottomOut.rotation.x = Math.PI / 2;
   meshBottomOut.position.y = -h / 2;
+  meshBottomOut.castShadow = true;
   baseMug.add(meshBottomOut);
 
-  // 6. Alça
-  const geoHandle = new THREE.TorusGeometry(0.65, 0.16, 16, 32);
+  const geoHandle = new THREE.TorusGeometry(0.65, 0.16, 32, 64);
   const meshHandle = new THREE.Mesh(geoHandle, colorMaterial);
   meshHandle.position.set(r, 0, 0);
   meshHandle.scale.set(0.7, 1.2, 1);
@@ -146,12 +175,12 @@ function createProceduralMug() {
   return baseMug;
 }
 
-// ── 6. INSTANCIAMENTO (As 3 Canecas) ─────
+// ── 7. INSTANCIAMENTO (As 3 Canecas) ─────
 const masterMug = createProceduralMug();
 
 const mugLeft = masterMug.clone();
 mugLeft.position.x = -2.8;
-mugLeft.rotation.y = -2.0; 
+mugLeft.rotation.y = -1.8; 
 
 const mugCenter = masterMug.clone();
 mugCenter.position.x = 0;
@@ -159,14 +188,13 @@ mugCenter.rotation.y = 0;
 
 const mugRight = masterMug.clone();
 mugRight.position.x = 2.8;
-mugRight.rotation.y = 2.0; 
+mugRight.rotation.y = 1.8; 
 
 mugGroup.add(mugLeft, mugCenter, mugRight);
 
-// Inicializa a textura branca
 redrawArt();
 
-// ── 7. REDESENHAR ARTE ───────────────────
+// ── 8. REDESENHAR ARTE ───────────────────
 function redrawArt() {
   artCtx.clearRect(0, 0, ART_W, ART_H);
   artCtx.fillStyle = '#ffffff';
@@ -195,10 +223,10 @@ function redrawArt() {
   colorMaterialInside.needsUpdate = true;
 }
 
-// ── 8. CONTROLES DA CÂMERA ───────────────
+// ── 9. CONTROLES DA CÂMERA ───────────────
 const rot = { x: 0.15, y: -0.2, smoothX: 0.15, smoothY: -0.2 };
 let mouseDown = false, lastX = 0, lastY = 0;
-let targetZoom = 9.5;
+let targetZoom = 10.0;
 
 canvas.addEventListener('mousedown', e => { mouseDown = true; lastX = e.clientX; lastY = e.clientY; });
 window.addEventListener('mouseup', () => mouseDown = false);
@@ -206,7 +234,7 @@ window.addEventListener('mousemove', e => {
   if (!mouseDown) return;
   rot.y += (e.clientX - lastX) * 0.011;
   rot.x += (e.clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.7, Math.min(0.7, rot.x));
+  rot.x = Math.max(-0.4, Math.min(0.5, rot.x)); // Limite de rotação vertical mais elegante
   lastX = e.clientX; lastY = e.clientY;
 });
 
@@ -218,23 +246,23 @@ window.addEventListener('touchmove', e => {
   if (!mouseDown) return;
   rot.y += (e.touches[0].clientX - lastX) * 0.011;
   rot.x += (e.touches[0].clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.7, Math.min(0.7, rot.x));
+  rot.x = Math.max(-0.4, Math.min(0.5, rot.x));
   lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
 }, { passive: true });
 
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  targetZoom = Math.min(15, Math.max(5.0, targetZoom + e.deltaY * 0.01));
+  targetZoom = Math.min(15, Math.max(6.0, targetZoom + e.deltaY * 0.01));
 }, { passive: false });
 
-// ── 9. EVENTOS DOS SLIDERS ───────────────
+// ── 10. EVENTOS DOS SLIDERS ───────────────
 document.getElementById('offsetX').addEventListener('input', function () { art.offsetX = parseFloat(this.value); document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
 document.getElementById('offsetY').addEventListener('input', function () { art.offsetY = parseFloat(this.value); document.getElementById('valOffsetY').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
 document.getElementById('artScale').addEventListener('input', function () { art.scale = parseFloat(this.value) / 100; document.getElementById('valScale').textContent = this.value + '%'; redrawArt(); });
 document.getElementById('artRotation').addEventListener('input', function () { art.rotation = parseFloat(this.value); document.getElementById('valRotation').textContent = this.value + '°'; redrawArt(); });
 document.getElementById('artOpacity').addEventListener('input', function () { art.opacity = parseFloat(this.value) / 100; document.getElementById('valOpacity').textContent = this.value + '%'; redrawArt(); });
 
-// ── 10. UPLOAD DE ARTE ────────────────────
+// ── 11. UPLOAD DE ARTE ────────────────────
 document.getElementById('fileInput').addEventListener('change', function () {
   const file = this.files[0];
   if (!file) return;
@@ -255,7 +283,7 @@ document.getElementById('fileInput').addEventListener('change', function () {
   reader.readAsDataURL(file);
 });
 
-// ── 11. COR DA CANECA E FUNDO ────────────
+// ── 12. COR DA CANECA E FUNDO ────────────
 document.getElementById('mugColors').addEventListener('click', function (e) {
   const dot = e.target.closest('[data-color]');
   if (!dot) return;
@@ -279,7 +307,7 @@ document.getElementById('bgColorPicker').addEventListener('input', function () {
   document.querySelectorAll('#bgColors .color-dot').forEach(d => d.classList.remove('active'));
 });
 
-// ── 12. EXPORTAR E RESET ─────────────────
+// ── 13. EXPORTAR E RESET ─────────────────
 document.getElementById('btnExport').addEventListener('click', () => {
   renderer.render(scene, camera);
   const a = document.createElement('a');
@@ -296,14 +324,17 @@ document.getElementById('btnReset').addEventListener('click', () => {
   document.getElementById('valOffsetX').textContent = '0'; document.getElementById('valOffsetY').textContent = '0';
   document.getElementById('valScale').textContent = '100%'; document.getElementById('valRotation').textContent = '0°'; document.getElementById('valOpacity').textContent = '100%';
   const thumb = document.getElementById('artThumb'); thumb.src = ''; thumb.style.display = 'none'; document.getElementById('artPlaceholder').style.display = 'block'; document.getElementById('fileInput').value = '';
-  rot.x = 0.15; rot.y = -0.2; targetZoom = 9.5;
-  scene.background = new THREE.Color('#f0f0f0');
+  rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
+  
+  // Reseta para a cor roxa padrão da cena premium
+  scene.background = new THREE.Color('#6b2b8e');
   document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  
   redrawArt();
   showToast('🔄 Resetado!');
 });
 
-// ── 13. TOAST E LOOP DE ANIMAÇÃO ─────────
+// ── 14. TOAST E LOOP DE ANIMAÇÃO ─────────
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
