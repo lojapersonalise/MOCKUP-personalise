@@ -359,4 +359,17 @@ function showToast(msg) {
   mugGroup.rotation.y = rot.smoothY;
   camera.position.z += (targetZoom - camera.position.z) * 0.08;
   renderer.render(scene, camera);
+  // Ajuste automático de tamanho (Responsividade 3D)
+window.addEventListener('resize', () => {
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  
+  renderer.setSize(width, height, false);
+});
+
+// Chamar uma vez no início para garantir o tamanho correto no carregamento
+window.dispatchEvent(new Event('resize'));
 })();
