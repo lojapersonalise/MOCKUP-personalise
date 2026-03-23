@@ -309,14 +309,43 @@ if (fileInput) {
 // ── 12. COR DA CANECA E FUNDO ──
 const mugColorsContainer = document.getElementById('mugColors');
 if (mugColorsContainer) {
+  // Lógica para as cores pré-definidas
   mugColorsContainer.addEventListener('click', function (e) {
+    // Ignora se o clique for no input color invisível, ele tem seu próprio listener
+    if (e.target.tagName === 'INPUT') return;
+    
     const dot = e.target.closest('[data-color]');
-    if (!dot) return;
+    if (!dot) {
+      // Verifica se o clique foi na paleta livre (que não tem data-color)
+      const label = e.target.closest('label.color-dot');
+      if (label) {
+        this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+        label.classList.add('active');
+        // Ao clicar no label, o input type=color será ativado automaticamente
+      }
+      return;
+    }
+    
     this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
     dot.classList.add('active');
     currentColor = dot.dataset.color;
     redrawArt();
     showToast('🎨 Cor alterada!');
+  });
+}
+
+// Lógica especial para o Seletor de Cor Livre da Caneca
+const customMugColor = document.getElementById('customMugColor');
+if (customMugColor) {
+  customMugColor.addEventListener('input', function () {
+    const parentLabel = this.closest('.color-dot');
+    if (parentLabel) {
+      document.querySelectorAll('#mugColors .color-dot').forEach(d => d.classList.remove('active'));
+      parentLabel.classList.add('active');
+    }
+    
+    currentColor = this.value;
+    redrawArt();
   });
 }
 
@@ -383,9 +412,18 @@ if (btnReset) {
 // ── 14. TOAST E LOOP DE ANIMAÇÃO ──
 let toastTimer;
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  if(!t) return;
-  t.textContent = msg; t.classList.add('show');
+  // Criar o toast dinamicamente caso ele não exista no HTML ainda
+  let t = document.getElementById('toast');
+  if(!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  
+  t.textContent = msg; 
+  t.classList.add('show');
+  
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
