@@ -35,7 +35,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping; 
-renderer.toneMappingExposure = 1.35; 
+renderer.toneMappingExposure = 1.0; 
 if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 // ── 2. CENA + CÂMERA ─────────────────────
@@ -49,7 +49,7 @@ camera.position.set(0, 0.8, 10.0);
 scene.add(new THREE.AmbientLight(0xffffff, 1.2)); 
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
-keyLight.position.set(5, 8, 4);
+keyLight.position.set(3, 4, 6);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.width = 1024;
 keyLight.shadow.mapSize.height = 1024;
@@ -95,10 +95,10 @@ artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 
 const physicalProps = {
-  roughness: 0.12,         
+  roughness: 0.02,         
   metalness: 0.0,          
   clearcoat: 1.0,          
-  clearcoatRoughness: 0.08, 
+  clearcoatRoughness: 0.02, 
 };
 
 const printMaterial = new THREE.MeshPhysicalMaterial({
