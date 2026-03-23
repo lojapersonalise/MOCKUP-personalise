@@ -1,200 +1,25 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mockup de Caneca 360º - Loja Personalise</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f2f5;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 0 24px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      z-index: 10;
-    }
-    .logo {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #2563eb;
-      letter-spacing: -0.5px;
-    }
-    .logo span { color: #111; }
-    .main { display: flex; flex: 1; overflow: hidden; }
-    
-    /* ── CANVAS AREA ── */
-    .canvas-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #e8eaf0;
+/* Novo contêiner para prender a logo */
+    .canvas-container {
       position: relative;
-    }
-    #canvas3d {
-      display: block;
+      width: 800px;
+      height: 500px;
       border-radius: 8px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      overflow: hidden; 
+    }
+
+    #canvas3d {
+      display: block;
       background: #fff;
       cursor: grab;
     }
-    #canvas3d:active { cursor: grabbing; }
-    
-    /* ── MARCA D'ÁGUA DA LOJA ── */
+
     .watermark-logo {
       position: absolute;
-      top: 24px; /* Distância do topo */
-      left: 24px; /* Distância da esquerda */
-      width: 140px; /* Tamanho da logo, ajuste conforme necessário */
-      opacity: 0.65; /* Transparência para ficar elegante */
-      pointer-events: none; /* Garante que o mouse atravesse a imagem para girar a caneca */
+      top: 24px;
+      left: 24px;
+      width: 140px;
+      opacity: 0.65;
+      pointer-events: none;
       z-index: 5;
     }
-
-    .canvas-hint {
-      position: absolute;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.45);
-      color: #fff;
-      font-size: 0.72rem;
-      padding: 4px 12px;
-      border-radius: 20px;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-
-    /* ── SIDEBAR & CONTROLS ── */
-    .sidebar { width: 280px; background: #ffffff; border-left: 1px solid #e0e0e0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
-    .sidebar-section { padding: 20px; border-bottom: 1px solid #f0f0f0; }
-    .sidebar-section:last-child { border-bottom: none; }
-    .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 14px; }
-    .btn-upload { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .btn-upload:hover { background: #1d4ed8; }
-    #fileInput { display: none; }
-    .art-preview { margin-top: 12px; width: 100%; height: 80px; border: 2px dashed #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fafafa; }
-    .art-preview img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
-    .art-preview span { font-size: 0.75rem; color: #b0b0b0; }
-    .control-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
-    .control-row:last-child { margin-bottom: 0; }
-    .control-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #374151; font-weight: 500; }
-    .control-label span:last-child { color: #9ca3af; font-weight: 400; }
-    input[type="range"] { width: 100%; accent-color: #2563eb; height: 4px; cursor: pointer; }
-    .color-options, .mug-colors { display: flex; flex-wrap: wrap; gap: 8px; }
-    .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s, transform 0.15s; }
-    .color-dot:hover, .color-dot.active { border-color: #2563eb; transform: scale(1.15); }
-    .color-dot.custom { background: linear-gradient(135deg, #f00, #0f0, #00f); position: relative; overflow: hidden; }
-    #bgColorPicker { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; top: 0; left: 0; }
-    .btn-export { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .btn-export:hover { background: #15803d; }
-    .btn-reset { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 9px; background: transparent; color: #6b7280; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.82rem; font-weight: 500; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
-    .btn-reset:hover { background: #f9fafb; color: #374151; }
-    .toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 999; }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .sidebar::-webkit-scrollbar { width: 4px; }
-    .sidebar::-webkit-scrollbar-track { background: transparent; }
-    .sidebar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
-  </style>
-</head>
-<body>
-
-  <header>
-    <div class="logo">Loja <span>Personalise</span></div>
-    <div style="font-size:0.78rem; color:#9ca3af;">Mockup Premium 360º</div>
-  </header>
-
-  <div class="main">
-
-    <div class="canvas-wrapper">
-      <img src="logo-personalise.png" alt="Logo Personalise" class="watermark-logo" />
-      
-      <canvas id="canvas3d" width="800" height="500"></canvas>
-      <div class="canvas-hint">🖱️ Arraste para rotacionar · Scroll para zoom</div>
-    </div>
-
-    <div class="sidebar">
-
-      <div class="sidebar-section">
-        <div class="section-title">Arte / Estampa</div>
-        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
-          ⬆️ Carregar Imagem
-        </button>
-        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp" />
-        <div class="art-preview" id="artPreview">
-          <img id="artThumb" src="" alt="preview" />
-          <span id="artPlaceholder">Nenhuma arte carregada</span>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="section-title">Ajustar Arte</div>
-        <div class="control-row"><div class="control-label"><span>Posição Horizontal</span><span id="valOffsetX">0</span></div><input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" /></div>
-        <div class="control-row"><div class="control-label"><span>Posição Vertical</span><span id="valOffsetY">0</span></div><input type="range" id="offsetY" min="-1" max="1" step="0.01" value="0" /></div>
-        <div class="control-row"><div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div><input type="range" id="artScale" min="10" max="300" step="1" value="100" /></div>
-        <div class="control-row"><div class="control-label"><span>Rotação</span><span id="valRotation">0°</span></div><input type="range" id="artRotation" min="0" max="360" step="1" value="0" /></div>
-        <div class="control-row"><div class="control-label"><span>Opacidade</span><span id="valOpacity">100%</span></div><input type="range" id="artOpacity" min="0" max="100" step="1" value="100" /></div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="section-title">Cor da Caneca</div>
-        <div class="mug-colors" id="mugColors">
-          <div class="color-dot active" data-color="#ffffff" style="background:#ffffff; border-color:#e0e0e0;"></div>
-          <div class="color-dot" data-color="#000000" style="background:#000000;"></div>
-          <div class="color-dot" data-color="#ef4444" style="background:#ef4444;"></div>
-          <div class="color-dot" data-color="#3b82f6" style="background:#3b82f6;"></div>
-          <div class="color-dot" data-color="#22c55e" style="background:#22c55e;"></div>
-          <div class="color-dot" data-color="#f59e0b" style="background:#f59e0b;"></div>
-          <div class="color-dot" data-color="#8b5cf6" style="background:#8b5cf6;"></div>
-          <div class="color-dot" data-color="#ec4899" style="background:#ec4899;"></div>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="section-title">Fundo da Cena</div>
-        <div class="color-options" id="bgColors">
-          <div class="color-dot active" data-bg="#6b2b8e" style="background:#6b2b8e; border-color:#ffffff;"></div>
-          <div class="color-dot" data-bg="#ffffff" style="background:#ffffff; border-color:#e0e0e0;"></div>
-          <div class="color-dot" data-bg="#f0f2f5" style="background:#f0f2f5;"></div>
-          <div class="color-dot" data-bg="#111827" style="background:#111827;"></div>
-          <div class="color-dot" data-bg="#fef9c3" style="background:#fef9c3;"></div>
-          <div class="color-dot" data-bg="#dcfce7" style="background:#dcfce7;"></div>
-          <div class="color-dot custom" style="position:relative;">🎨<input type="color" id="bgColorPicker" value="#6b2b8e" title="Cor personalizada" /></div>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="section-title">Exportar</div>
-        <button class="btn-export" id="btnExport">💾 Baixar PNG</button>
-        <button class="btn-reset" id="btnReset">🔄 Resetar tudo</button>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
-      }
-    }
-  </script>
-
-  <script type="module" src="app.js"></script>
-</body>
-</html>
