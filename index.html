@@ -96,14 +96,56 @@
     .btn-upload { background: #2563eb; color: #fff; }
     .btn-export { background: #16a34a; color: #fff; }
     
-    .color-options, .mug-colors { display: flex; flex-wrap: wrap; gap: 8px; }
-    .color-dot { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid #eee; }
-    .color-dot.active { border-color: #2563eb; transform: scale(1.1); }
-    .color-dot.custom { display: flex; align-items: center; justify-content: center; position: relative; }
-    input[type="color"] { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-
     input[type="range"] { width: 100%; margin: 10px 0; accent-color: #2563eb; }
     .control-label { display: flex; justify-content: space-between; font-size: 0.8rem; }
+
+    /* ── CORES DA CANECA (NOVO LAYOUT EM LISTA 2 COLUNAS) ── */
+    #mugColors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 8px;
+    }
+
+    #mugColors .color-dot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    #mugColors .color-dot:hover {
+      transform: translateX(3px);
+    }
+
+    #mugColors .color-dot .circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1px solid #cbd5e1;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    #mugColors .color-dot.active .circle {
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3b82f6;
+      border-color: transparent;
+    }
+
+    #mugColors .color-dot span {
+      font-size: 12px;
+      color: #475569;
+      font-weight: 600;
+      line-height: 1.1;
+    }
+
+    .paleta-circle {
+      background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
 
     /* ── MEDIA QUERY PARA CELULAR ── */
     @media (max-width: 768px) {
@@ -115,10 +157,10 @@
       header { height: 50px; }
     }
 
-    /* Ajuste para telas muito pequenas */
     @media (max-width: 480px) {
       .sidebar-section { padding: 12px; }
-      .color-dot { width: 28px; height: 28px; }
+      #mugColors .color-dot .circle { width: 22px; height: 22px; } /* Ajuste fino pra celular */
+      #mugColors .color-dot span { font-size: 11px; }
     }
   </style>
 </head>
@@ -132,7 +174,8 @@
   <div class="main">
     <div class="canvas-wrapper">
       <div class="canvas-container">
-        <img src="logo-personalise.png" class="watermark-logo" />
+        <!-- Logo Marca d'água -->
+        <img src="logo-personalise.png" class="watermark-logo" alt="Marca d'água" />
         <canvas id="canvas3d"></canvas>
       </div>
     </div>
@@ -155,13 +198,85 @@
 
       <div class="sidebar-section">
         <div class="section-title">Cores</div>
-        <div class="mug-colors" id="mugColors">
-          <div class="color-dot active" data-color="#ffffff" style="background:#fff"></div>
-          <div class="color-dot" data-color="#1A181C" style="background:#1A181C"></div>
-          <div class="color-dot" data-color="#E24329" style="background:#E24329"></div>
-          <div class="color-dot" data-color="#2386C2" style="background:#2386C2"></div>
-          <div class="color-dot custom">🎨<input type="color" id="mugColorPicker" value="#ffffff"></div>
+        
+        <!-- NOVA LISTA DE CORES EM 2 COLUNAS -->
+        <div id="mugColors">
+            <!-- Branco Padrão -->
+            <div class="color-dot active" data-color="#ffffff">
+                <div class="circle" style="background: #ffffff;"></div>
+                <span>Branco</span>
+            </div>
+            
+            <!-- Rosa Queimado -->
+            <div class="color-dot" data-color="#C57881">
+                <div class="circle" style="background: #C57881;"></div>
+                <span>Rosa Queimado</span>
+            </div>
+            
+            <!-- Preto -->
+            <div class="color-dot" data-color="#1A181C">
+                <div class="circle" style="background: #1A181C;"></div>
+                <span>Preto</span>
+            </div>
+            
+            <!-- Laranja/Vermelho Claro -->
+            <div class="color-dot" data-color="#E24329">
+                <div class="circle" style="background: #E24329;"></div>
+                <span>Laranja Claro</span>
+            </div>
+            
+            <!-- Amarelo -->
+            <div class="color-dot" data-color="#F7D015">
+                <div class="circle" style="background: #F7D015;"></div>
+                <span>Amarelo</span>
+            </div>
+            
+            <!-- Vermelho Clássico -->
+            <div class="color-dot" data-color="#CE2B25">
+                <div class="circle" style="background: #CE2B25;"></div>
+                <span>Vermelho</span>
+            </div>
+            
+            <!-- Azul -->
+            <div class="color-dot" data-color="#2386C2">
+                <div class="circle" style="background: #2386C2;"></div>
+                <span>Azul</span>
+            </div>
+            
+            <!-- Rosa Claro -->
+            <div class="color-dot" data-color="#F0A8B9">
+                <div class="circle" style="background: #F0A8B9;"></div>
+                <span>Rosa Claro</span>
+            </div>
+            
+            <!-- Verde Limão -->
+            <div class="color-dot" data-color="#7FC84F">
+                <div class="circle" style="background: #7FC84F;"></div>
+                <span>Verde Limão</span>
+            </div>
+            
+            <!-- Lilás -->
+            <div class="color-dot" data-color="#AC89C1">
+                <div class="circle" style="background: #AC89C1;"></div>
+                <span>Lilás</span>
+            </div>
+            
+            <!-- Laranja Vibrante -->
+            <div class="color-dot" data-color="#FA5019">
+                <div class="circle" style="background: #FA5019;"></div>
+                <span>Laranja Vivo</span>
+            </div>
+
+            <!-- Seletor Livre de Cores (Paleta) -->
+            <label class="color-dot" style="margin: 0; cursor: pointer;">
+                <div class="circle paleta-circle">
+                    <!-- Mantive o ID 'customMugColor' para funcionar com a modificação no JS -->
+                    <input type="color" id="customMugColor" value="#ffffff" style="opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none;">
+                </div>
+                <span>Paleta Livre</span>
+            </label>
         </div>
+
       </div>
 
       <div class="sidebar-section">
