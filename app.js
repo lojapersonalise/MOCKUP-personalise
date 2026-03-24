@@ -121,20 +121,26 @@ const products = {
       g.add(mCover);
 
       // --- Espiral Wire-O (Na Esquerda) ---
-      const wireMat = new THREE.MeshPhysicalMaterial({ color: 0xdddddd, metalness: 0.9, roughness: 0.2 });
+      // ARAMES MAIS FINOS, BRANCOS E FOSCOS
+      const wireMat = new THREE.MeshPhysicalMaterial({ 
+        color: 0xffffff, // Cor Branca
+        metalness: 0.05, // Quase sem brilho metálico
+        roughness: 0.8   // Mais fosco/apagado
+      });
       const rings = 16;
       const wireStart = bottom + 0.2;
       const wireRange = h - 0.4;
 
       for(let i=0; i<rings; i++) {
         const ringY = wireStart + i * wireRange / (rings-1);
-        const torusGeo = new THREE.TorusGeometry(0.12, 0.025, 16, 32);
+        // Diminuí o raio da argola (0.10) e deixei o fio mais fino (0.016)
+        const torusGeo = new THREE.TorusGeometry(0.10, 0.016, 16, 32); 
         
         const ring1 = new THREE.Mesh(torusGeo, wireMat);
         ring1.position.set(-w/2, ringY, 0); ring1.rotation.x = Math.PI/2; ring1.castShadow = true; g.add(ring1);
         
         const ring2 = new THREE.Mesh(torusGeo, wireMat);
-        ring2.position.set(-w/2, ringY + 0.05, 0); ring2.rotation.x = Math.PI/2; ring2.castShadow = true; g.add(ring2);
+        ring2.position.set(-w/2, ringY + 0.04, 0); ring2.rotation.x = Math.PI/2; ring2.castShadow = true; g.add(ring2);
       }
       return g;
     },
@@ -163,20 +169,25 @@ const products = {
       g.add(mCover);
 
       // --- Espiral Wire-O (Na Direita) ---
-      const wireMat = new THREE.MeshPhysicalMaterial({ color: 0xdddddd, metalness: 0.9, roughness: 0.2 });
+      // ARAMES MAIS FINOS, BRANCOS E FOSCOS
+      const wireMat = new THREE.MeshPhysicalMaterial({ 
+        color: 0xffffff, 
+        metalness: 0.05, 
+        roughness: 0.8 
+      });
       const rings = 16;
       const wireStart = bottom + 0.2;
       const wireRange = h - 0.4;
 
       for(let i=0; i<rings; i++) {
         const ringY = wireStart + i * wireRange / (rings-1);
-        const torusGeo = new THREE.TorusGeometry(0.12, 0.025, 16, 32);
+        const torusGeo = new THREE.TorusGeometry(0.10, 0.016, 16, 32);
         
         const ring1 = new THREE.Mesh(torusGeo, wireMat);
         ring1.position.set(w/2, ringY, 0); ring1.rotation.x = Math.PI/2; ring1.castShadow = true; g.add(ring1);
         
         const ring2 = new THREE.Mesh(torusGeo, wireMat);
-        ring2.position.set(w/2, ringY + 0.05, 0); ring2.rotation.x = Math.PI/2; ring2.castShadow = true; g.add(ring2);
+        ring2.position.set(w/2, ringY + 0.04, 0); ring2.rotation.x = Math.PI/2; ring2.castShadow = true; g.add(ring2);
       }
       return g;
     }
@@ -263,10 +274,10 @@ function loadProduct(type) {
   // Posicionamento Customizado (Agenda Lado a Lado vs Cilindros Triplos)
   if (config.layout === 'double_agenda') {
     const pLeft = config.createFront();
-    pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; // Levemente virada pra dentro
+    pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
     
     const pRight = config.createBack();
-    pRight.position.x = 1.15; pRight.rotation.y = -0.12; // Levemente virada pra dentro
+    pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
 
     productGroup.add(pLeft, pRight);
   } else {
@@ -289,7 +300,6 @@ function loadProduct(type) {
 
 // ── 6. LÓGICA DE REDESENHO DE ARTE ──
 function redrawArt() {
-  // Redesenha Capa/Caneca
   artCtx.clearRect(0, 0, currentArtW, currentArtH);
   artCtx.fillStyle = '#ffffff';
   artCtx.fillRect(0, 0, currentArtW, currentArtH);
@@ -304,14 +314,13 @@ function redrawArt() {
     artCtx.save();
     artCtx.globalAlpha = art.opacity;
     artCtx.translate(cx, cy);
-    if (currentProductType !== 'agenda') artCtx.scale(-1, 1); // Desfaz espelhamento no 3D pra cilindros
+    if (currentProductType !== 'agenda') artCtx.scale(-1, 1); 
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale);
     artCtx.restore();
   }
   artTex.needsUpdate = true;
 
-  // Redesenha Fundo (Se existir)
   artCtx2.clearRect(0, 0, currentArtW, currentArtH);
   artCtx2.fillStyle = '#ffffff';
   artCtx2.fillRect(0, 0, currentArtW, currentArtH);
@@ -370,11 +379,9 @@ document.getElementById('productSelector')?.addEventListener('click', e => {
   }
 });
 
-// Os botões de zoom e posição controlam simultaneamente a Capa e o Fundo!
 document.getElementById('offsetX')?.addEventListener('input', function() { art.offsetX = parseFloat(this.value); art2.offsetX = parseFloat(this.value); document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
 document.getElementById('artScale')?.addEventListener('input', function() { art.scale = parseFloat(this.value) / 100; art2.scale = parseFloat(this.value) / 100; document.getElementById('valScale').textContent = this.value + '%'; redrawArt(); });
 
-// Upload Arte 1 (Capa / Cilindro)
 document.getElementById('fileInput')?.addEventListener('change', function () {
   const file = this.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -386,7 +393,6 @@ document.getElementById('fileInput')?.addEventListener('change', function () {
   reader.readAsDataURL(file);
 });
 
-// Upload Arte 2 (Fundo da Agenda)
 document.getElementById('fileInput2')?.addEventListener('change', function () {
   const file = this.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -429,7 +435,6 @@ function showToast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// Inicia com a Caneca
 loadProduct('caneca');
 
 // ── 9. LOOP DE ANIMAÇÃO ──
