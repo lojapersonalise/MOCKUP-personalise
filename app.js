@@ -16,7 +16,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0; // Exposição realista
+renderer.toneMappingExposure = 1.0; 
 
 // ── 2. CENA + CÂMERA + LUZES ──
 const scene = new THREE.Scene();
@@ -39,8 +39,8 @@ scene.add(shadowPlane);
 
 
 // ── 3. ESTADO DA APLICAÇÃO (GERENTE DE PALCO) ──
-let activeProduct = 'mug'; // 'mug' ou 'planner'
-let activePart = 'front';  // 'front', 'back', 'spine', 'edges'
+let activeProduct = 'mug'; 
+let activePart = 'front';  
 let currentMugColor = '#ffffff';
 
 const defaultState = () => ({ image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 });
@@ -78,15 +78,13 @@ canvases.mug.tex.repeat.x = -1;
 canvases.mug.tex.wrapS = THREE.RepeatWrapping;
 
 // ── 5. MATERIAIS ──
-const premiumProps = { roughness: 0.02, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.02 }; // Brilho Cerâmica/Capa
-const paperProps = { roughness: 0.9, metalness: 0.0, clearcoat: 0.0 }; // Papel fosco
+const premiumProps = { roughness: 0.02, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.02 }; 
+const paperProps = { roughness: 0.9, metalness: 0.0, clearcoat: 0.0 }; 
 
-// Materiais Caneca
 const mugPrintMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: canvases.mug.tex, side: THREE.FrontSide, ...premiumProps });
 const mugColorMat = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentMugColor), side: THREE.FrontSide, ...premiumProps });
 const mugInsideMat= new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentMugColor), side: THREE.BackSide, ...premiumProps });
 
-// Materiais Agenda
 const plannerMats = {
   front: new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: canvases.planner.front.tex, ...premiumProps }),
   back:  new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: canvases.planner.back.tex, ...premiumProps }),
@@ -102,11 +100,23 @@ const mugGroup = new THREE.Group(); mugGroup.position.y = 0.6; scene.add(mugGrou
 function createMug() {
   const g = new THREE.Group();
   const h = 2.4, r = 1.0, wall = 0.08;
-  const out = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, true).rotateY(-Math.PI/2), mugPrintMat); out.castShadow = true; g.add(out);
+  
+  // CORREÇÃO APLICADA: Rotação indevida removida. Costura volta a ficar escondida na alça.
+  const out = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, true), mugPrintMat); 
+  out.castShadow = true; 
+  g.add(out);
+  
   g.add(new THREE.Mesh(new THREE.CylinderGeometry(r-wall, r-wall, h, 64, 1, true), mugInsideMat));
-  const rim = new THREE.Mesh(new THREE.RingGeometry(r-wall, r, 64), mugColorMat); rim.rotation.x = -Math.PI/2; rim.position.y = h/2; g.add(rim);
-  const bot = new THREE.Mesh(new THREE.CircleGeometry(r, 64), mugColorMat); bot.rotation.x = -Math.PI/2; bot.position.y = -h/2 + wall; g.add(bot);
-  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.16, 32, 64), mugColorMat); handle.position.set(0, 0, r); handle.rotation.y = Math.PI/2; handle.scale.set(0.7, 1.2, 1); handle.castShadow = true; g.add(handle);
+  
+  const rim = new THREE.Mesh(new THREE.RingGeometry(r-wall, r, 64), mugColorMat); 
+  rim.rotation.x = -Math.PI/2; rim.position.y = h/2; g.add(rim);
+  
+  const bot = new THREE.Mesh(new THREE.CircleGeometry(r, 64), mugColorMat); 
+  bot.rotation.x = -Math.PI/2; bot.position.y = -h/2 + wall; g.add(bot);
+  
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.16, 32, 64), mugColorMat); 
+  handle.position.set(0, 0, r); handle.rotation.y = Math.PI/2; handle.scale.set(0.7, 1.2, 1); handle.castShadow = true; g.add(handle);
+  
   return g;
 }
 const m1 = createMug(); m1.position.x = -2.8; m1.rotation.y = -Math.PI / 2 - 0.35;
@@ -119,28 +129,23 @@ mugGroup.add(m1, m2, m3);
 const plannerGroup = new THREE.Group(); plannerGroup.position.y = 0.6; plannerGroup.visible = false; scene.add(plannerGroup);
 function createPlanner() {
   const g = new THREE.Group();
-  const w = 1.50, h = 2.18, coverD = 0.02; // Capas baseadas no seu console
-  const pW = 1.44, pH = 2.12, pD = 0.32;   // Miolo de papel
-  const sW = 0.18;                         // Lombada
+  const w = 1.50, h = 2.18, coverD = 0.02; 
+  const pW = 1.44, pH = 2.12, pD = 0.32;   
+  const sW = 0.18;                         
   const solid = plannerMats.insideCover;
 
-  // MIOLO (Papel)
   const paper = new THREE.Mesh(new THREE.BoxGeometry(pW, pH, pD), [plannerMats.edges, solid, plannerMats.edges, plannerMats.edges, solid, solid]);
   paper.position.set(0, 0, 0); g.add(paper);
 
-  // LOMBADA
   const spine = new THREE.Mesh(new THREE.BoxGeometry(sW, h, pD + coverD*2), [solid, plannerMats.spine, solid, solid, solid, solid]);
   spine.position.set(-pW/2 - sW/2, 0, 0); spine.castShadow = true; g.add(spine);
 
-  // CAPA FRENTE
   const front = new THREE.Mesh(new THREE.BoxGeometry(w, h, coverD), [solid, solid, solid, solid, plannerMats.front, solid]);
   front.position.set((w - pW)/2, 0, pD/2 + coverD/2); front.castShadow = true; g.add(front);
 
-  // CONTRA CAPA
   const back = new THREE.Mesh(new THREE.BoxGeometry(w, h, coverD), [solid, solid, solid, solid, solid, plannerMats.back]);
   back.position.set((w - pW)/2, 0, -(pD/2 + coverD/2)); back.castShadow = true; g.add(back);
 
-  // ELÁSTICO
   const elastic = new THREE.Mesh(new THREE.BoxGeometry(0.08, h + 0.02, pD + coverD*2 + 0.02), plannerMats.elastic);
   elastic.position.set(w/2 - 0.2, 0, 0); elastic.castShadow = true; g.add(elastic);
 
@@ -191,7 +196,6 @@ function drawCanvas() {
   mugInsideMat.color.set(currentMugColor);
 }
 
-// Inicializa todas as texturas em branco
 ['mug', 'front', 'back', 'spine', 'edges'].forEach(part => {
   if(part !== 'mug') activePart = part;
   activeProduct = part === 'mug' ? 'mug' : 'planner';
@@ -200,7 +204,7 @@ function drawCanvas() {
 activeProduct = 'mug'; activePart = 'front'; 
 
 
-// ── 9. ATUALIZADOR DE UI SEGURO (NÃO TRAVA SE FALTAR HTML) ──
+// ── 9. ATUALIZADOR DE UI SEGURO ──
 function updateUI() {
   const s = getActiveState();
   
@@ -224,7 +228,6 @@ function updateUI() {
   else if (thumb && ph) { thumb.src = ''; thumb.style.display = 'none'; ph.style.display = 'block'; }
 }
 
-// Eventos Seguros
 const addEvt = (id, event, fn) => { const el = document.getElementById(id); if(el) el.addEventListener(event, fn); }
 
 addEvt('offsetX', 'input', function() { getActiveState().offsetX = parseFloat(this.value); updateUI(); drawCanvas(); });
@@ -244,7 +247,6 @@ addEvt('fileInput', 'change', function() {
   reader.readAsDataURL(this.files[0]);
 });
 
-// Abas de Produto
 document.querySelectorAll('.product-tab').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.product-tab').forEach(b => { b.style.color = '#6b7280'; b.style.borderBottom = '2px solid transparent'; b.style.background = 'transparent'; b.style.fontWeight = '600'; });
@@ -264,7 +266,6 @@ document.querySelectorAll('.product-tab').forEach(btn => {
   });
 });
 
-// Partes da Agenda
 document.querySelectorAll('.part-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.part-btn').forEach(b => { b.style.background = '#fff'; b.style.color = '#374151'; b.style.borderColor = '#e0e0e0'; });
@@ -274,7 +275,6 @@ document.querySelectorAll('.part-btn').forEach(btn => {
   });
 });
 
-// Cores
 const mugColorsContainer = document.getElementById('mugColors');
 if (mugColorsContainer) {
   mugColorsContainer.addEventListener('click', function (e) {
