@@ -79,14 +79,12 @@ const products = {
     create: function() {
       const g = new THREE.Group();
       const h = 2.4, r = 1.0, wall = 0.08;
-      
       const mOut = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, true), printMaterial); mOut.castShadow = true; g.add(mOut);
       const mIn = new THREE.Mesh(new THREE.CylinderGeometry(r - wall, r - wall, h, 64, 1, true), colorMaterialInside); g.add(mIn);
       const mRim = new THREE.Mesh(new THREE.RingGeometry(r - wall, r, 64), colorMaterial); mRim.rotation.x = -Math.PI/2; mRim.position.y = h/2; mRim.castShadow = true; g.add(mRim);
       const mBotIn = new THREE.Mesh(new THREE.CircleGeometry(r - wall, 64), colorMaterial); mBotIn.rotation.x = -Math.PI/2; mBotIn.position.y = -(h/2) + wall; g.add(mBotIn);
       const mBotOut = new THREE.Mesh(new THREE.CircleGeometry(r, 64), colorMaterial); mBotOut.rotation.x = Math.PI/2; mBotOut.position.y = -h/2; mBotOut.castShadow = true; g.add(mBotOut);
       const mHandle = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.16, 32, 64), colorMaterial); mHandle.position.set(0, 0, r); mHandle.rotation.y = Math.PI/2; mHandle.scale.set(0.7, 1.2, 1); mHandle.castShadow = true; g.add(mHandle);
-      
       return g;
     }
   },
@@ -95,13 +93,11 @@ const products = {
     width: 1240, height: 1754, layout: 'double_agenda',
     createFront: function() {
       const g = new THREE.Group();
-      const w = 2.0, h = 2.828, d = 0.15;
-      const bottom = -1.2; const yOff = bottom + h/2;
+      const w = 2.0, h = 2.828, d = 0.15; const bottom = -1.2; const yOff = bottom + h/2;
       const pageMat = new THREE.MeshPhysicalMaterial({ color: 0xf5f5f5, roughness: 1.0, clearcoat: 0 });
       const materials = [ pageMat, colorMaterial, pageMat, pageMat, printMaterial, colorMaterial ];
       const mCover = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), materials);
       mCover.position.y = yOff; mCover.castShadow = true; g.add(mCover);
-
       const wireMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.05, roughness: 0.8 });
       for(let i=0; i<16; i++) {
         const ringY = (bottom + 0.2) + i * (h - 0.4) / 15;
@@ -113,13 +109,11 @@ const products = {
     },
     createBack: function() {
       const g = new THREE.Group();
-      const w = 2.0, h = 2.828, d = 0.15;
-      const bottom = -1.2; const yOff = bottom + h/2;
+      const w = 2.0, h = 2.828, d = 0.15; const bottom = -1.2; const yOff = bottom + h/2;
       const pageMat = new THREE.MeshPhysicalMaterial({ color: 0xf5f5f5, roughness: 1.0, clearcoat: 0 });
       const materials = [ colorMaterial, pageMat, pageMat, pageMat, printMaterial2, colorMaterial ];
       const mCover = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), materials);
       mCover.position.y = yOff; mCover.castShadow = true; g.add(mCover);
-
       const wireMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.05, roughness: 0.8 });
       for(let i=0; i<16; i++) {
         const ringY = (bottom + 0.2) + i * (h - 0.4) / 15;
@@ -132,50 +126,68 @@ const products = {
   },
 
   necessaire: {
-    width: 1754, height: 2480, // Proporção Exata A4 Retrato
-    layout: 'standard', spacing: 3.5, 
-    rotations: [-Math.PI / 4, 0, Math.PI / 4], // Mostra Ângulos: Lado, Frente, Outro Lado
+    width: 1754, height: 2480,
+    layout: 'standard', spacing: 3.4, 
+    rotations: [-0.45, 0.15, 3.4], // Mostra Lado, Frente, Costas
     create: function() {
       const g = new THREE.Group();
       
-      // Fator de Escala para ficar harmonioso na tela
-      const S = 0.85; 
-      const scaleY = 1.6 * S;
-      const scaleZ = 1.3 * S;
-      
-      // PERFIL 2D DA NECESSAIRE (Z é profundidade, Y é altura)
+      // Escala e Proporções
+      const S = 0.9; 
+      const scaleY = 1.35 * S;
+      const scaleZ = 1.25 * S;
+      const w = 3.6 * S;
+      const yOff = -1.1; // Crava a base no chão
+
+      // Perfil da Costura (Base)
       const ptsRaw = [
-          new THREE.Vector2(0, 1.4),       // 0: Zíper Topo Costas (v=0)
-          new THREE.Vector2(-0.25, 1.2),   
+          new THREE.Vector2(0, 1.15),      // Zíper Costas
+          new THREE.Vector2(-0.2, 1.05),   // Curva ombro costas
           new THREE.Vector2(-0.55, 0.6),   // Barriga Costas
-          new THREE.Vector2(-0.6, 0.15),   
-          new THREE.Vector2(-0.4, 0.0),    // Base Costas
-          new THREE.Vector2(0.0, 0.0),     // Centro do Chão Perfeito (v=0.5)
-          new THREE.Vector2(0.4, 0.0),     // Base Frente
-          new THREE.Vector2(0.6, 0.15),    
+          new THREE.Vector2(-0.5, 0.15),   // Curva para a base
+          new THREE.Vector2(-0.35, 0.0),   // Fim da base reta
+          new THREE.Vector2(0.0, 0.0),     // Centro (fundo)
+          new THREE.Vector2(0.35, 0.0),    // Início da base frente
+          new THREE.Vector2(0.5, 0.15),    // Curva base frente
           new THREE.Vector2(0.55, 0.6),    // Barriga Frente
-          new THREE.Vector2(0.25, 1.2),    
-          new THREE.Vector2(0, 1.4)        // Zíper Topo Frente (v=1)
+          new THREE.Vector2(0.2, 1.05),    // Curva ombro frente
+          new THREE.Vector2(0, 1.15)       // Zíper Frente
       ];
       const pts = ptsRaw.map(p => new THREE.Vector2(p.x * scaleZ, p.y * scaleY));
       const spline = new THREE.SplineCurve(pts);
 
-      const totalLength = spline.getLength(); 
-      const w = 3.6 * S; 
-      const yOff = -1.2; // Alinha cravado com a sombra no chão
+      // Função Mágica de Escultura (Cria as dobras e curvas 3D)
+      function getShapePoint(u, v) {
+          let nx = (u - 0.5) * 2; // de -1 (Esquerda) até 1 (Direita)
+          let pt = spline.getPointAt(v);
+          let x = nx * (w/2);
+          let y = pt.y;
+          let z = pt.x;
 
-      // --- 1. LONA PRINCIPAL (ARTE IMPRESSA) ---
-      const geo = new THREE.PlaneGeometry(w, totalLength, 64, 64);
+          // 1. Curva do Zíper (Cai nas laterais)
+          let topness = Math.pow(Math.abs(v - 0.5) * 2, 2.0);
+          let dip = nx * nx * 0.3; // Quantidade de queda nas pontas
+          y -= dip * topness;
+
+          // 2. Afunilamento do Topo (Aperta as pontas perto do zíper)
+          let pinch = nx * nx * 0.25;
+          z *= (1.0 - pinch * topness);
+
+          // 3. Arredondamento das bordas verticais (Sensação fofinha)
+          let barrel = Math.pow(Math.abs(nx), 2) * 0.1;
+          z -= Math.sign(z) * barrel;
+
+          return new THREE.Vector3(x, y + yOff, z);
+      }
+
+      // --- CORPO DA NECESSAIRE (LONA A4) ---
+      const geo = new THREE.PlaneGeometry(w, spline.getLength(), 64, 64);
       const pos = geo.attributes.position;
       const uvs = geo.attributes.uv;
 
       for(let i=0; i<pos.count; i++) {
-          const px = pos.getX(i);
-          const v = uvs.getY(i); 
-          const t = v; // v=1 (Topo do Canvas) = Frente da necessaire
-          
-          const pt = spline.getPointAt(t);
-          pos.setXYZ(i, px, pt.y + yOff, pt.x);
+          let p3 = getShapePoint(uvs.getX(i), uvs.getY(i));
+          pos.setXYZ(i, p3.x, p3.y, p3.z);
       }
       geo.computeVertexNormals();
 
@@ -183,48 +195,66 @@ const products = {
       mBody.castShadow = true;
       g.add(mBody);
 
-      // --- 2. TAMPAS LATERAIS (COR SÓLIDA) ---
-      const splinePts = spline.getSpacedPoints(64); 
+      // --- TAMPAS LATERAIS ---
+      // Criamos um material com DoubleSide para evitar que os normais fiquem pretos nas curvas
+      const doubleColorMat = colorMaterial.clone();
+      doubleColorMat.side = THREE.DoubleSide;
 
-      // Tampa Esquerda (-X)
-      const shapeL = new THREE.Shape();
-      shapeL.moveTo(splinePts[0].x, splinePts[0].y + yOff);
-      for(let i=1; i<splinePts.length; i++) {
-          shapeL.lineTo(splinePts[i].x, splinePts[i].y + yOff);
+      const sidePts = [];
+      for(let i=0; i<=32; i++) {
+          let p3 = getShapePoint(1, i/32); // u=1 capta exatamento o contorno da lateral
+          sidePts.push(new THREE.Vector2(p3.z, p3.y - yOff));
       }
-      const geoL = new THREE.ShapeGeometry(shapeL);
-      const mSideL = new THREE.Mesh(geoL, colorMaterial);
-      mSideL.rotation.y = -Math.PI/2; mSideL.position.x = -w/2; mSideL.castShadow = true;
-      g.add(mSideL);
-
-      // Tampa Direita (+X)
-      const shapeR = new THREE.Shape();
-      shapeR.moveTo(-splinePts[0].x, splinePts[0].y + yOff);
-      for(let i=1; i<splinePts.length; i++) {
-          shapeR.lineTo(-splinePts[i].x, splinePts[i].y + yOff);
-      }
-      const geoR = new THREE.ShapeGeometry(shapeR);
-      const mSideR = new THREE.Mesh(geoR, colorMaterial);
-      mSideR.rotation.y = Math.PI/2; mSideR.position.x = w/2; mSideR.castShadow = true;
+      const sideShape = new THREE.Shape(sidePts);
+      const sideGeo = new THREE.ShapeGeometry(sideShape);
+      
+      const mSideR = new THREE.Mesh(sideGeo, doubleColorMat);
+      mSideR.position.set(w/2, yOff, 0);
+      mSideR.rotation.y = Math.PI/2;
+      mSideR.castShadow = true;
       g.add(mSideR);
 
-      // --- 3. ACABAMENTOS DO ZÍPER ---
-      const topY = splinePts[0].y + yOff;
-      const zipperGeo = new THREE.CylinderGeometry(0.04, 0.04, w + 0.05, 16);
-      const zipperMat = new THREE.MeshPhysicalMaterial({ color: 0x2a2a2a, roughness: 0.9 });
-      const mZipper = new THREE.Mesh(zipperGeo, zipperMat);
-      mZipper.rotation.z = Math.PI/2; mZipper.position.set(0, topY, 0); mZipper.castShadow = true;
-      g.add(mZipper);
+      const mSideL = new THREE.Mesh(sideGeo, doubleColorMat);
+      mSideL.position.set(-w/2, yOff, 0);
+      mSideL.rotation.y = -Math.PI/2;
+      mSideL.scale.set(-1, 1, 1);
+      mSideL.castShadow = true;
+      g.add(mSideL);
 
-      // Orelhinhas / Puxadores Laterais
-      const earGeo = new THREE.TorusGeometry(0.12, 0.03, 16, 32);
+      // --- ACABAMENTOS DO ZÍPER ---
+      class ZipCurve extends THREE.Curve {
+          getPoint(t) { return getShapePoint(t, 1.0); } // v=1 traça exatamente o topo
+      }
+      const zipPath = new ZipCurve();
       
-      const mEarL = new THREE.Mesh(earGeo, colorMaterial);
-      mEarL.position.set(-w/2 - 0.08, topY - 0.10, 0); mEarL.scale.set(1.5, 0.8, 1); mEarL.castShadow = true;
+      // Fita do Zíper (Branca Grossa)
+      const zipTapeGeo = new THREE.TubeGeometry(zipPath, 32, 0.035, 12, false);
+      const zipTapeMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 1.0 });
+      const mZipTape = new THREE.Mesh(zipTapeGeo, zipTapeMat);
+      mZipTape.castShadow = true;
+      g.add(mZipTape);
+
+      // Dentes do Zíper (Metálico)
+      const zipTeethGeo = new THREE.TubeGeometry(zipPath, 32, 0.015, 8, false);
+      const zipTeethMat = new THREE.MeshStandardMaterial({ color: 0xb0b0b0, metalness: 0.7, roughness: 0.3 });
+      const mZipTeeth = new THREE.Mesh(zipTeethGeo, zipTeethMat);
+      g.add(mZipTeeth);
+
+      // --- Puxadores / Orelhinhas ---
+      const earGeo = new THREE.TorusGeometry(0.09, 0.025, 16, 32);
+      
+      let endL = getShapePoint(0, 1.0); // Ponto extemo Esquerdo do Zíper
+      const mEarL = new THREE.Mesh(earGeo, zipTapeMat);
+      mEarL.position.set(endL.x - 0.05, endL.y, endL.z);
+      mEarL.rotation.set(Math.PI/4, Math.PI/2, 0);
+      mEarL.castShadow = true;
       g.add(mEarL);
 
-      const mEarR = new THREE.Mesh(earGeo, colorMaterial);
-      mEarR.position.set(w/2 + 0.08, topY - 0.10, 0); mEarR.scale.set(1.5, 0.8, 1); mEarR.castShadow = true;
+      let endR = getShapePoint(1, 1.0); // Ponto extemo Direito do Zíper
+      const mEarR = new THREE.Mesh(earGeo, zipTapeMat);
+      mEarR.position.set(endR.x + 0.05, endR.y, endR.z);
+      mEarR.rotation.set(-Math.PI/4, Math.PI/2, 0);
+      mEarR.castShadow = true;
       g.add(mEarR);
 
       return g;
@@ -237,13 +267,10 @@ const products = {
     create: function() {
       const g = new THREE.Group();
       const h = 3.2, r = 0.75; const yOff = 0.4; 
-      
       const mBody = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, false), printMaterial); 
       mBody.position.y = yOff; mBody.castShadow = true; g.add(mBody);
-      
       const mNeck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.85, r, 0.3, 64, 1, false), colorMaterial); 
       mNeck.position.y = h/2 + 0.15 + yOff; mNeck.castShadow = true; g.add(mNeck);
-
       const capMat = new THREE.MeshPhysicalMaterial({ color: 0x111111, roughness: 0.6, clearcoat: 0.1 });
       const mLidBase = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.87, r * 0.87, 0.4, 64), capMat); 
       mLidBase.position.y = h/2 + 0.5 + yOff; mLidBase.castShadow = true; g.add(mLidBase);
@@ -254,7 +281,6 @@ const products = {
       const mLoop = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 16, 32), capMat); 
       mLoop.position.set(0, h/2 + 0.65 + yOff, -0.45); 
       mLoop.rotation.x = Math.PI / 2 - 0.2; mLoop.scale.set(1, 1.2, 1); mLoop.castShadow = true; g.add(mLoop);
-
       return g;
     }
   }
@@ -267,13 +293,12 @@ function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
   
-  // Ajuste Inteligente de Textura dos Materiais (Plástico vs Tecido vs Papel)
   if (type === 'necessaire') {
-    physicalProps.roughness = 0.8; physicalProps.clearcoat = 0.0; // Fosco (Tecido)
+    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; // Tecido bem fosco
   } else if (type === 'agenda') {
-    physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; // Papel Cartão
+    physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
   } else {
-    physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; // Cerâmica/Alumínio brilhante
+    physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
   }
   
   [printMaterial, printMaterial2, colorMaterial, colorMaterialInside].forEach(mat => {
@@ -297,7 +322,6 @@ function loadProduct(type) {
   
   printMaterial.map = artTex; printMaterial2.map = artTex2;
   
-  // Atualiza Textos da Interface
   if (type === 'agenda') {
     document.getElementById('sectionUpload2').style.display = 'block';
     document.getElementById('titleUpload1').textContent = 'Capa (Esquerda)';
@@ -315,7 +339,6 @@ function loadProduct(type) {
     productGroup.remove(child); 
   }
   
-  // Organiza as posições de acordo com o produto
   if (config.layout === 'double_agenda') {
     const pLeft = config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
     const pRight = config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
