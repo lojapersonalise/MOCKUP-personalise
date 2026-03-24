@@ -4,165 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Mockup 360º - Loja Personalise</title>
-  <style>
-    /* ── BASE ── */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f2f5;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 0 20px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      z-index: 10;
-    }
-    .logo { font-size: 1.1rem; font-weight: 700; color: #2563eb; }
-    .logo span { color: #111; }
-
-    /* ── LAYOUT RESPONSIVO ── */
-    .main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      flex-direction: row; /* Padrão Desktop */
-    }
-
-    .canvas-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #e8eaf0;
-      position: relative;
-      padding: 10px;
-    }
-
-    .canvas-container {
-      position: relative;
-      width: 100%;
-      max-width: 800px; /* Limite no Desktop */
-      aspect-ratio: 8 / 5; /* Mantém a proporção do Rapid Mockup */
-      background: #6b2b8e;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      overflow: hidden;
-    }
-
-    #canvas3d {
-      width: 100% !important;
-      height: 100% !important;
-      display: block;
-    }
-
-    .watermark-logo {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      width: clamp(80px, 15vw, 120px); /* Logo diminui no celular */
-      opacity: 0.6;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    /* ── SIDEBAR RESPONSIVA ── */
-    .sidebar {
-      width: 320px;
-      background: #ffffff;
-      border-left: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-
-    .sidebar-section { padding: 15px; border-bottom: 1px solid #f0f0f0; }
-    .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #9ca3af; margin-bottom: 12px; }
-
-    /* ── CONTROLES ── */
-    .btn-upload, .btn-export { 
-      width: 100%; padding: 12px; border-radius: 8px; border: none; 
-      font-weight: 600; cursor: pointer; margin-bottom: 10px;
-    }
-    .btn-upload { background: #2563eb; color: #fff; }
-    .btn-export { background: #16a34a; color: #fff; }
-    
-    input[type="range"] { width: 100%; margin: 10px 0; accent-color: #2563eb; }
-    .control-label { display: flex; justify-content: space-between; font-size: 0.8rem; }
-
-    /* ── CORES DA CANECA (NOVO LAYOUT EM LISTA 2 COLUNAS) ── */
-    #mugColors {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 8px;
-    }
-
-    #mugColors .color-dot {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    #mugColors .color-dot:hover {
-      transform: translateX(3px);
-    }
-
-    #mugColors .color-dot .circle {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      border: 1px solid #cbd5e1;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-
-    #mugColors .color-dot.active .circle {
-      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3b82f6;
-      border-color: transparent;
-    }
-
-    #mugColors .color-dot span {
-      font-size: 12px;
-      color: #475569;
-      font-weight: 600;
-      line-height: 1.1;
-    }
-
-    .paleta-circle {
-      background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    /* ── MEDIA QUERY PARA CELULAR ── */
-    @media (max-width: 768px) {
-      body { overflow-y: auto; height: auto; }
-      .main { flex-direction: column; overflow: visible; }
-      .sidebar { width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
-      .canvas-wrapper { padding: 0; }
-      .canvas-container { border-radius: 0; max-width: 100%; }
-      header { height: 50px; }
-    }
-
-    @media (max-width: 480px) {
-      .sidebar-section { padding: 12px; }
-      #mugColors .color-dot .circle { width: 22px; height: 22px; } /* Ajuste fino pra celular */
-      #mugColors .color-dot span { font-size: 11px; }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -174,12 +16,24 @@
   <div class="main">
     <div class="canvas-wrapper">
       <div class="canvas-container">
-        <img src="logo-personalise.png" class="watermark-logo" alt="Marca d'água" />
+        <!-- Logo Marca d'água -->
+        <img src="logo-personalise.png" class="watermark-logo" alt="Marca d'água" onerror="this.style.display='none'" />
         <canvas id="canvas3d"></canvas>
       </div>
     </div>
 
     <div class="sidebar">
+      
+      <!-- NOVO: SELETOR DE PRODUTOS -->
+      <div class="sidebar-section">
+        <div class="section-title">Produto</div>
+        <div class="product-selector" id="productSelector">
+          <button class="prod-btn active" data-product="caneca">Caneca</button>
+          <button class="prod-btn" data-product="longdrink">Long Drink</button>
+          <button class="prod-btn" data-product="squeeze">Squeeze</button>
+        </div>
+      </div>
+
       <div class="sidebar-section">
         <div class="section-title">Arte</div>
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
@@ -196,72 +50,29 @@
       </div>
 
       <div class="sidebar-section">
-        <div class="section-title">Cores</div>
+        <div class="section-title">Cores do Produto</div>
         
-        <div id="mugColors">
-            <div class="color-dot active" data-color="#ffffff">
-                <div class="circle" style="background: #ffffff;"></div>
-                <span>Branco</span>
-            </div>
-            
-            <div class="color-dot" data-color="#C57881">
-                <div class="circle" style="background: #C57881;"></div>
-                <span>Rosa Queimado</span>
-            </div>
-            
-            <div class="color-dot" data-color="#1A181C">
-                <div class="circle" style="background: #1A181C;"></div>
-                <span>Preto</span>
-            </div>
-            
-            <div class="color-dot" data-color="#E24329">
-                <div class="circle" style="background: #E24329;"></div>
-                <span>Laranja Claro</span>
-            </div>
-            
-            <div class="color-dot" data-color="#F7D015">
-                <div class="circle" style="background: #F7D015;"></div>
-                <span>Amarelo</span>
-            </div>
-            
-            <div class="color-dot" data-color="#CE2B25">
-                <div class="circle" style="background: #CE2B25;"></div>
-                <span>Vermelho</span>
-            </div>
-            
-            <div class="color-dot" data-color="#2386C2">
-                <div class="circle" style="background: #2386C2;"></div>
-                <span>Azul</span>
-            </div>
-            
-            <div class="color-dot" data-color="#F0A8B9">
-                <div class="circle" style="background: #F0A8B9;"></div>
-                <span>Rosa Claro</span>
-            </div>
-            
-            <div class="color-dot" data-color="#7FC84F">
-                <div class="circle" style="background: #7FC84F;"></div>
-                <span>Verde Limão</span>
-            </div>
-            
-            <div class="color-dot" data-color="#AC89C1">
-                <div class="circle" style="background: #AC89C1;"></div>
-                <span>Lilás</span>
-            </div>
-            
-            <div class="color-dot" data-color="#FA5019">
-                <div class="circle" style="background: #FA5019;"></div>
-                <span>Laranja Vivo</span>
-            </div>
+        <!-- Lista de cores generalizada para "Qualquer Produto" -->
+        <div id="productColors">
+            <div class="color-dot active" data-color="#ffffff"><div class="circle" style="background: #ffffff;"></div><span>Branco</span></div>
+            <div class="color-dot" data-color="#C57881"><div class="circle" style="background: #C57881;"></div><span>Rosa Queimado</span></div>
+            <div class="color-dot" data-color="#1A181C"><div class="circle" style="background: #1A181C;"></div><span>Preto</span></div>
+            <div class="color-dot" data-color="#E24329"><div class="circle" style="background: #E24329;"></div><span>Laranja Claro</span></div>
+            <div class="color-dot" data-color="#F7D015"><div class="circle" style="background: #F7D015;"></div><span>Amarelo</span></div>
+            <div class="color-dot" data-color="#CE2B25"><div class="circle" style="background: #CE2B25;"></div><span>Vermelho</span></div>
+            <div class="color-dot" data-color="#2386C2"><div class="circle" style="background: #2386C2;"></div><span>Azul</span></div>
+            <div class="color-dot" data-color="#F0A8B9"><div class="circle" style="background: #F0A8B9;"></div><span>Rosa Claro</span></div>
+            <div class="color-dot" data-color="#7FC84F"><div class="circle" style="background: #7FC84F;"></div><span>Verde Limão</span></div>
+            <div class="color-dot" data-color="#AC89C1"><div class="circle" style="background: #AC89C1;"></div><span>Lilás</span></div>
+            <div class="color-dot" data-color="#FA5019"><div class="circle" style="background: #FA5019;"></div><span>Laranja Vivo</span></div>
 
             <label class="color-dot" style="margin: 0; cursor: pointer;">
                 <div class="circle paleta-circle">
-                    <input type="color" id="customMugColor" value="#ffffff" style="opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none;">
+                    <input type="color" id="customColor" value="#ffffff" style="opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none;">
                 </div>
                 <span>Paleta Livre</span>
             </label>
         </div>
-
       </div>
 
       <div class="sidebar-section">
