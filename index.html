@@ -168,7 +168,7 @@
 
   <header>
     <div class="logo">Loja <span>Personalise</span></div>
-    <div style="font-size:0.75rem; color:#9ca3af;">Simulador 360º</div>
+    <div style="font-size:0.75rem; color:#9ca3af;">Mockup 360º</div>
   </header>
 
   <div class="main">
@@ -180,31 +180,10 @@
     </div>
 
     <div class="sidebar">
-
-      <div style="display: flex; background: #fafafa; border-bottom: 1px solid #e0e0e0; flex-shrink: 0;">
-        <button id="tabMug" class="product-tab" data-product="mug" style="flex:1; padding:15px; border:none; background:#fff; font-weight:700; cursor:pointer; border-bottom: 2px solid #2563eb; color: #2563eb;">☕ Caneca</button>
-        <button id="tabPlanner" class="product-tab" data-product="planner" style="flex:1; padding:15px; border:none; background:transparent; font-weight:600; cursor:pointer; color: #6b7280; border-bottom: 2px solid transparent;">📖 Agenda</button>
-      </div>
-
-      <div class="sidebar-section" id="sectionPlannerParts" style="display: none; background: #f8fafc; border-bottom: 1px solid #e0e0e0;">
-        <div class="section-title" style="color:#2563eb;">Alvo da Arte (Agenda)</div>
-        <div style="display: flex; gap: 4px;">
-          <button class="part-btn" data-part="front" style="flex:1; padding:8px 2px; font-size:0.65rem; font-weight:600; border:1px solid #2563eb; background:#2563eb; color:#fff; border-radius:4px; cursor:pointer;">Capa</button>
-          <button class="part-btn" data-part="back" style="flex:1; padding:8px 2px; font-size:0.65rem; font-weight:600; border:1px solid #e0e0e0; background:#fff; color:#374151; border-radius:4px; cursor:pointer;">Verso</button>
-          <button class="part-btn" data-part="spine" style="flex:1; padding:8px 2px; font-size:0.65rem; font-weight:600; border:1px solid #e0e0e0; background:#fff; color:#374151; border-radius:4px; cursor:pointer;">Lombada</button>
-          <button class="part-btn" data-part="edges" style="flex:1; padding:8px 2px; font-size:0.65rem; font-weight:600; border:1px solid #e0e0e0; background:#fff; color:#374151; border-radius:4px; cursor:pointer;">Miolo</button>
-        </div>
-      </div>
-
       <div class="sidebar-section">
         <div class="section-title">Arte</div>
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
         <input type="file" id="fileInput" style="display:none" accept="image/*" />
-        
-        <div class="art-preview" id="artPreview" style="display:none;">
-          <img id="artThumb" src="" alt="preview" />
-          <span id="artPlaceholder"></span>
-        </div>
       </div>
 
       <div class="sidebar-section">
@@ -212,18 +191,12 @@
         <div class="control-label"><span>Horizontal</span><span id="valOffsetX">0</span></div>
         <input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" />
         
-        <div class="control-label"><span>Vertical</span><span id="valOffsetY">0</span></div>
-        <input type="range" id="offsetY" min="-1" max="1" step="0.01" value="0" />
-        
         <div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div>
         <input type="range" id="artScale" min="10" max="300" step="1" value="100" />
-        
-        <div class="control-label"><span>Rotação</span><span id="valRotation">0°</span></div>
-        <input type="range" id="artRotation" min="0" max="360" step="1" value="0" />
       </div>
 
-      <div class="sidebar-section" id="sectionMugColors">
-        <div class="section-title">Cores da Caneca</div>
+      <div class="sidebar-section">
+        <div class="section-title">Cores</div>
         
         <div id="mugColors">
             <div class="color-dot active" data-color="#ffffff">
@@ -288,6 +261,7 @@
                 <span>Paleta Livre</span>
             </label>
         </div>
+
       </div>
 
       <div class="sidebar-section">
@@ -295,8 +269,6 @@
       </div>
     </div>
   </div>
-
-  <div class="toast" id="toast"></div>
 
   <script type="importmap">
     { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
