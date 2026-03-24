@@ -24,24 +24,32 @@
 
     <div class="sidebar">
       
-      <!-- NOVO: SELETOR DE PRODUTOS -->
+      <!-- SELETOR DE PRODUTOS -->
       <div class="sidebar-section">
         <div class="section-title">Produto</div>
         <div class="product-selector" id="productSelector">
           <button class="prod-btn active" data-product="caneca">Caneca</button>
-          <button class="prod-btn" data-product="longdrink">Long Drink</button>
+          <button class="prod-btn" data-product="agenda">Agenda A4</button>
           <button class="prod-btn" data-product="squeeze">Squeeze</button>
         </div>
       </div>
 
+      <!-- ÁREA DE UPLOAD DE ARTES -->
       <div class="sidebar-section">
-        <div class="section-title">Arte</div>
+        <div class="section-title" id="titleUpload1">Arte Principal</div>
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
         <input type="file" id="fileInput" style="display:none" accept="image/*" />
+
+        <!-- UPLOAD DA CONTRA-CAPA (SÓ APARECE NA AGENDA) -->
+        <div id="sectionUpload2" style="display:none; margin-top: 20px;">
+          <div class="section-title">Fundo (Direita)</div>
+          <button class="btn-upload" style="background: #8b5cf6;" onclick="document.getElementById('fileInput2').click()">⬆️ Carregar Fundo</button>
+          <input type="file" id="fileInput2" style="display:none" accept="image/*" />
+        </div>
       </div>
 
       <div class="sidebar-section">
-        <div class="section-title">Ajustes</div>
+        <div class="section-title">Ajustes da Arte</div>
         <div class="control-label"><span>Horizontal</span><span id="valOffsetX">0</span></div>
         <input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" />
         
@@ -51,8 +59,6 @@
 
       <div class="sidebar-section">
         <div class="section-title">Cores do Produto</div>
-        
-        <!-- Lista de cores generalizada para "Qualquer Produto" -->
         <div id="productColors">
             <div class="color-dot active" data-color="#ffffff"><div class="circle" style="background: #ffffff;"></div><span>Branco</span></div>
             <div class="color-dot" data-color="#C57881"><div class="circle" style="background: #C57881;"></div><span>Rosa Queimado</span></div>
