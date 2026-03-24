@@ -92,22 +92,57 @@ const products = {
     width: 2200, height: 1200,
     create: function() {
       const g = new THREE.Group();
-      const h = 2.8, r = 0.85;
+      // Proporções mais fiéis à garrafa da foto (mais alta e estreita)
+      const h = 3.2, r = 0.75; 
       
       // Corpo onde vai a arte
-      const mBody = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, false), printMaterial); mBody.castShadow = true; g.add(mBody);
-      // Pescoço da garrafa (Pega a cor escolhida)
-      const mNeck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.4, r, 0.6, 64, 1, false), colorMaterial); mNeck.position.y = h/2 + 0.3; mNeck.castShadow = true; g.add(mNeck);
-      // Tampa plástica preta texturizada
-      const capMat = new THREE.MeshPhysicalMaterial({color: 0x1a1a1a, roughness: 0.8});
-      const mCap = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.42, r * 0.42, 0.3, 32), capMat); mCap.position.y = h/2 + 0.6 + 0.15; mCap.castShadow = true; g.add(mCap);
-      // Argola/Bico da tampa
-      const mLoop = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 16, 32), capMat); mLoop.position.set(0, h/2 + 0.75, r * 0.3); mLoop.castShadow = true; g.add(mLoop);
+      const mBody = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, false), printMaterial); 
+      mBody.castShadow = true; 
+      g.add(mBody);
+      
+      // Pescoço da garrafa (Pega a cor escolhida - a curvinha de metal no topo)
+      const mNeck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.85, r, 0.3, 64, 1, false), colorMaterial); 
+      mNeck.position.y = h/2 + 0.15; 
+      mNeck.castShadow = true; 
+      g.add(mNeck);
+
+      // --- CONSTRUÇÃO DA TAMPA FLIP (PLÁSTICO PRETO) ---
+      const capMat = new THREE.MeshPhysicalMaterial({
+        color: 0x111111, // Preto bem escuro
+        roughness: 0.6,  // Levemente fosco como plástico
+        clearcoat: 0.1
+      });
+
+      // 1. Base principal da tampa
+      const mLidBase = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.87, r * 0.87, 0.4, 64), capMat); 
+      mLidBase.position.y = h/2 + 0.5; 
+      mLidBase.castShadow = true; 
+      g.add(mLidBase);
+
+      // 2. Bico do Flip (Na frente)
+      const mSpout = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.25, 32), capMat);
+      mSpout.position.set(0, h/2 + 0.8, 0.35); // Eixo Z positivo = Frente
+      mSpout.castShadow = true;
+      g.add(mSpout);
+
+      // 3. Mini tampinha em cima do bico (fechada)
+      const mSpoutCap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.05, 32), capMat);
+      mSpoutCap.position.set(0, h/2 + 0.93, 0.35);
+      g.add(mSpoutCap);
+
+      // 4. Alça traseira (Aquele arco para pendurar)
+      // Usamos um Torus (anel) esticado e inclinado
+      const mLoop = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 16, 32), capMat); 
+      mLoop.position.set(0, h/2 + 0.65, -0.45); // Eixo Z negativo = Trás
+      mLoop.rotation.x = Math.PI / 2 - 0.2; // Deita o anel e inclina um pouco
+      mLoop.scale.set(1, 1.2, 1); // Estica para ficar ovalado
+      mLoop.castShadow = true; 
+      g.add(mLoop);
 
       return g;
     }
   }
-};
+
 
 // ── 5. CARREGADOR DE PRODUTO DILÂMICO ──
 function loadProduct(type) {
