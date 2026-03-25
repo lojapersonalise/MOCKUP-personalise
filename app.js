@@ -91,7 +91,6 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            // Mantido no tamanho de 5.5 conforme seu código
             const scale = maxDim > 0 ? (5.5 / maxDim) : 1; 
             
             const wrapper = new THREE.Group();
@@ -105,7 +104,8 @@ const products = {
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
                 
-                if (nome.includes('alca') || nome.includes('handle') || nome.includes('dentro') || nome.includes('inside') || nome.includes('in')) {
+                // CORREÇÃO: Removido o filtro solto de 'in' que impedia o corpo de receber a arte!
+                if (nome.includes('alca') || nome.includes('handle') || nome.includes('dentro') || nome.includes('inside')) {
                   child.material = colorMaterial;
                 } else {
                   child.material = printMaterial;
@@ -425,7 +425,6 @@ async function loadProduct(type) {
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'caneca') {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
-    // CORREÇÃO: Força renderizar a textura em ambas as faces (interna/externa) da malha para corrigir arquivos .obj invertidos
     printMaterial.side = THREE.DoubleSide; 
   } else {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
@@ -446,8 +445,8 @@ async function loadProduct(type) {
   
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
   
-  // CORREÇÃO: Adicionamos a 'caneca' na regra noFlip para respeitar o UV map natural do seu arquivo 3D
-  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro' || type === 'caneca');
+  // CORREÇÃO: A caneca foi retirada dessa lista para voltar à lógica de espelhamento que funcionava no seu código base.
+  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro');
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -534,8 +533,8 @@ function redrawArt() {
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
     
-    // CORREÇÃO: Caneca removida do sistema de inversão, mapeamento limpo 1:1
-    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro' || currentProductType === 'caneca');
+    // CORREÇÃO: Caneca retornou ao isNormal antigo (ou seja, receberá o scale -1 padrão para ela)
+    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
     if (!isNormal) artCtx.scale(-1, 1); 
     
     artCtx.rotate((art.rotation * Math.PI) / 180);
@@ -551,7 +550,7 @@ function redrawArt() {
 
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
     
-    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro' || currentProductType === 'caneca');
+    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
     if (!isNormal) artCtx2.scale(-1, 1);
     
     artCtx2.rotate((art2.rotation * Math.PI) / 180);
