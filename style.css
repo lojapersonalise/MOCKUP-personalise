@@ -30,8 +30,8 @@ header { background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 0 24px;
 .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 14px; }
 
 /* --- NOVO: BOTÕES DE PRODUTO --- */
-.product-selector { display: flex; gap: 8px; }
-.prod-btn { flex: 1; padding: 10px 4px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
+.product-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+.prod-btn { flex: auto; padding: 10px 4px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
 .prod-btn:hover { background: #e2e8f0; }
 .prod-btn.active { background: #2563eb; color: #ffffff; border-color: #2563eb; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); }
 
