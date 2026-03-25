@@ -75,7 +75,6 @@ scene.add(productGroup);
 
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
-  // CANECA COM O NOVO LAYOUT SINGLE (Arquivo 3D já possui 3 canecas)
   caneca: {
     width: 2618, height: 1000,
     layout: 'single', 
@@ -92,13 +91,13 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            // Ajustamos a escala (5.5) para que o conjunto todo fique em bom tamanho na tela
+            // Mantido no tamanho de 5.5 conforme seu código
             const scale = maxDim > 0 ? (5.5 / maxDim) : 1; 
             
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = 0.0; // Altura ajustada
+            wrapper.position.y = 0.0;
 
             object.traverse(function (child) {
               if (child.isMesh) {
@@ -349,7 +348,6 @@ const products = {
     }
   },
 
-  // NOVO: ALMOCHAVEIRO
   almochaveiro: {
     width: 2000, height: 2000,
     layout: 'single', 
@@ -366,7 +364,6 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            // Um pouco menor que a almofada na tela por ser um chaveiro
             const scale = maxDim > 0 ? (3.0 / maxDim) : 1; 
             
             const wrapper = new THREE.Group();
@@ -380,7 +377,6 @@ const products = {
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
                 
-                // Lógica igual à almofada para corrigir o espelho e aplicar materiais
                 if (nome.includes('costa') || nome.includes('back')) {
                   child.material = printMaterial2; 
                   const uv = child.geometry.attributes.uv;
@@ -389,7 +385,6 @@ const products = {
                     uv.needsUpdate = true;
                   }
                 } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('argola') || nome.includes('ring') || nome.includes('metal')) {
-                  // Argola ou costura pegam a cor que o cliente escolher no seletor de cor
                   child.material = zipperMaterial; 
                 } else {
                   child.material = printMaterial; 
@@ -419,7 +414,6 @@ async function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
   
-  // Define o material (fosco vs brilhoso)
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide; 
@@ -429,6 +423,10 @@ async function loadProduct(type) {
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
     printMaterial.side = THREE.FrontSide;
+  } else if (type === 'caneca') {
+    physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
+    // CORREÇÃO: Força renderizar a textura em ambas as faces (interna/externa) da malha para corrigir arquivos .obj invertidos
+    printMaterial.side = THREE.DoubleSide; 
   } else {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
     printMaterial.side = THREE.FrontSide;
@@ -448,15 +446,14 @@ async function loadProduct(type) {
   
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
   
-  // Impede espelhamento da arte globalmente (inclusive para o almochaveiro)
-  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro');
+  // CORREÇÃO: Adicionamos a 'caneca' na regra noFlip para respeitar o UV map natural do seu arquivo 3D
+  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro' || type === 'caneca');
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
   
   printMaterial.map = artTex; printMaterial2.map = artTex2;
   
-  // BLINDAGEM DA UI: Verifica se o elemento existe no HTML antes de tentar alterar, evitando que o site trave
   const secUp2 = document.getElementById('sectionUpload2');
   const titleUp1 = document.getElementById('titleUpload1');
   const sec2 = document.querySelector('#sectionUpload2 .section-title');
@@ -483,7 +480,6 @@ async function loadProduct(type) {
     if (titleUp1) titleUp1.textContent = 'Arte do Mousepad';
 
   } else {
-    // Caneca e Squeeze
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte Principal';
   }
@@ -494,16 +490,16 @@ async function loadProduct(type) {
     productGroup.remove(child); 
   }
   
-  // Comportamento inicial da Câmera dependendo do produto
   if (type === 'mousepad') {
     rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'almofada' || type === 'almochaveiro') {
     rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5; 
+  } else if (type === 'caneca') {
+    rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
   }
 
-  // Gera o Layout de Exibição
   if (config.layout === 'double_agenda') {
     const pLeft = await config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
     const pRight = await config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
@@ -537,7 +533,11 @@ function redrawArt() {
     const cx = currentArtW / 2 - art.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art.offsetY * currentArtH * 0.3;
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada' && currentProductType !== 'almochaveiro') artCtx.scale(-1, 1); 
+    
+    // CORREÇÃO: Caneca removida do sistema de inversão, mapeamento limpo 1:1
+    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro' || currentProductType === 'caneca');
+    if (!isNormal) artCtx.scale(-1, 1); 
+    
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx.restore();
   }
@@ -550,7 +550,10 @@ function redrawArt() {
     const cx = currentArtW / 2 - art2.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art2.offsetY * currentArtH * 0.3;
 
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada' && currentProductType !== 'almochaveiro') artCtx2.scale(-1, 1);
+    
+    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro' || currentProductType === 'caneca');
+    if (!isNormal) artCtx2.scale(-1, 1);
+    
     artCtx2.rotate((art2.rotation * Math.PI) / 180);
     artCtx2.drawImage(art2.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx2.restore();
   }
