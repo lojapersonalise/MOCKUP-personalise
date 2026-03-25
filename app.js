@@ -362,17 +362,29 @@ async function loadProduct(productId) {
     camera.position.set(0, 0, 10);
     controls.target.set(0, 0, 0);
     
-    // Atualiza botões visuais
+    // Atualiza botões visuais (Protegido contra erros)
     document.querySelectorAll('.btn-product').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`[onclick="loadProduct('${productId}')"]`).classList.add('active');
+    try {
+        const btnAtivo = document.querySelector(`[onclick*="${productId}"]`);
+        if (btnAtivo) btnAtivo.classList.add('active');
+    } catch(e) {}
     
-    // Mostra/esconde botão de carregar Costas baseado no produto
-    const costasBtn = document.getElementById('btn-costas').parentElement;
-    if (productId === 'almofada' || productId === 'necessaire') {
-        costasBtn.style.display = 'block';
-    } else {
-        costasBtn.style.display = 'none';
-        currentTexture2 = null; // Limpa textura das costas ao mudar de produto
+    // CORREÇÃO: Mostra/esconde botão de carregar Costas de forma segura
+    try {
+        const inputCostas = document.getElementById('upload-costas');
+        if (inputCostas) {
+            // Tenta esconder a div que envolve o botão
+            const containerCostas = inputCostas.parentElement.parentElement || inputCostas.parentElement;
+            
+            if (productId === 'almofada' || productId === 'necessaire') {
+                containerCostas.style.display = 'block';
+            } else {
+                containerCostas.style.display = 'none';
+                currentTexture2 = null; // Limpa textura das costas ao mudar de produto
+            }
+        }
+    } catch(e) {
+        console.log("Aviso: Botão de costas não encontrado na interface.");
     }
 
     // Cria o novo modelo
@@ -382,7 +394,6 @@ async function loadProduct(productId) {
     // Reaplica texturas e cores se existirem
     updateTexture();
 }
-
 // Atualizar Textura (Mapeamento)
 function updateTexture() {
     if (!currentTexture && !currentTexture2) return;
