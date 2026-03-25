@@ -1,12 +1,3 @@
-{"thought": "CRITICAL INSTRUCTION 1: You may have access to a variety of tools at your disposal. Some tools may be for a specific task such as 'view_file' (for viewing contents of a file). Others may be very broadly applicable such as the ability to run a command on a terminal. Always prioritize using the most specific tool you can for the task at hand. Here are some rules:\n(a) NEVER run cat inside a bash command to create a new file or append to an existing file if custom tools exist.\n(b) ALWAYS use custom grep tools if available instead of running grep inside a bash command unless absolutely needed.\n(c) DO NOT use ls for listing, cat for viewing, grep for finding, sed for replacing if custom tools that perform these functionalities are available.\nCRITICAL INSTRUCTION 2: Before making tool calls T, think and explicitly list out any related tools for the task at hand. You can only execute a set of tools T if all other tools in the list are either more generic or cannot be used for the task at hand.\n\nThe user wants me to generate the complete code for their `app.js` file, incorporating the `almofada.obj` with the mirrored back image fix.\n\nThe user provided the working base code.\nI just need to find the `almofada: { ... }` object within the `products` dictionary, replace it with the new OBJ loading logic (including the URL `https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj` since they're using GitHub Pages, or just `'almofada.obj'` if it's local, but looking at the `necessaire` they are fetching from raw github link `https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj`, so I should probably use `'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj'` or just `'almofada.obj'`). Wait, the user said \"coloque o arquivo almofada.obj espelhando a imagem nas costas\" (put the almofada.obj file mirroring the image on the back).\n\nLet's integrate the OBJLoader logic into the user's provided code for `almofada`.\n\nThe provided `almofada` code in the user's snippet uses `BoxGeometry` to create the pillow procedurally:\n```javascript\n  almofada: {\n    width: 2000, height: 2000, // Imagem Quadrada\n    layout: 'single', \n    create: async function() {\n      const g = new THREE.Group();\n      // ... procedural geometry ...\n      const pillow = new THREE.Mesh(geo, materials);\n      // ...\n      g.add(pillow);\n      return g;\n    }\n  }\n```\n\nI need to replace this with the OBJLoader code that:\n1. Loads `almofada.obj`.\n2. Applies the materials (front, back, zipper/seam).\n3. Reverses the UV mapping for the back (`printMaterial2`) to fix the mirroring.\n\nLet's adapt the user's `almofada` object:\n```javascript\n  almofada: {\n    width: 2000, height: 2000,\n    layout: 'single',\n    create: async function() {\n      const g = new THREE.Group();\n      return new Promise((resolve) => {\n        const loader = new OBJLoader();\n        // Using the raw GitHub URL just like the necessaire uses, or simply 'almofada.obj' as instructed earlier.\n        // \"coloque o arquivo almofada.obj espelhando a imagem nas costas\"\n        // Let's use 'almofada.obj' or the full URL. Let's use 'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj' to be safe since necessaire uses it, but wait, the user previously had success with 'almofada.obj' local or relative. Let's use the URL since necessaire does, or just 'almofada.obj'. I'll use 'almofada.obj' as the user wrote in the prompt \"coloque o arquivo almofada.obj\". But let's look at necessaire:\n        // 'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj'\n        // I'll use the same raw link format: 'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj' or just 'almofada.obj'. Let's use 'almofada.obj' as a default, or the full link to avoid CORS/Path issues.\n        loader.load(\n          'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj', // It's safer to use the raw link if it's hosted there\n          function (object) {\n            const box = new THREE.Box3().setFromObject(object);\n            const center = box.getCenter(new THREE.Vector3());\n            object.position.set(-center.x, -center.y, -center.z);\n\n            const size = box.getSize(new THREE.Vector3());\n            const maxDim = Math.max(size.x, size.y, size.z);\n            const scale = 3.6 / maxDim;\n            \n            const wrapper = new THREE.Group();\n            wrapper.add(object);\n            wrapper.scale.set(scale, scale, scale);\n            wrapper.position.y = 0.2; // Adjust based on scene\n\n            object.traverse(function (child) {\n              if (child.isMesh) {\n                child.castShadow = true;\n                child.receiveShadow = true;\n                \n                const nome = child.name.toLowerCase();\n                \n                if (nome.includes('costa') || nome.includes('back')) {\n                  child.material = printMaterial2;\n                  \n                  const uv = child.geometry.attributes.uv;\n                  if (uv) {\n                    for (let i = 0; i < uv.count; i++) {\n                      uv.setX(i, 1 - uv.getX(i));\n                    }\n                    uv.needsUpdate = true;\n                  }\n                } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {\n                  child.material = zipperMaterial;\n                } else {\n                  child.material = printMaterial;\n                }\n              }\n            });\n\n            g.add(wrapper);\n            resolve(g);\n          },\n          undefined,\n          function (error) {\n            console.error('Ops, erro ao carregar a almofada:', error);\n            resolve(g);\n          }\n        );\n      });\n    }\n  }\n```\nWait, previously I suggested using just `'almofada.obj'`. I will use `'almofada.obj'` and add a comment that if it fails they can use the raw URL, or I can just use the raw URL directly since they use it for necessaire. I will use the raw URL to be 100% safe. Wait! I should just use `'almofada.obj'` if they host it in the same repo, but the raw URL is foolproof.\n\nLet's put the full code together.\nI'll replace the procedural almofada with the OBJLoader almofada.\n\nCode analysis:\n```javascript\n// NOVO: SISTEMA DA ALMOFADA (Fofa, realista e com cantos arredondados)\n  almofada: {\n    width: 2000, height: 2000, // Imagem Quadrada\n    layout: 'single', \n    create: async function() {\n        // ... replacing this ...\n    }\n  }\n```\n\nWait, I should check the user's code for any specific materials used in their new code. They define `printMaterial`, `printMaterial2`, `colorMaterial`, `colorMaterialInside`, `zipperMaterial` at the top. So the material assignment is identical.\n\nLet's prepare the final block."}```Que bom que você conseguiu recuperar a versão original, Thales! O botão de "Histórico" (History) do GitHub é um verdadeiro salva-vidas nessas horas.
-
-Eu peguei exatamente o código que você me enviou aqui em cima e fiz **apenas uma alteração**: removi a almofada "procedural" (que o código tentava desenhar do zero) e coloquei o carregamento do arquivo **`almofada.obj`** junto com o **espelhamento da imagem das costas** (ajustando a coordenada UV).
-
-Também coloquei o link direto do GitHub (`raw.githubusercontent...`) igualzinho você já estava fazendo com a necessaire, para garantir 100% que ele vai achar o arquivo sem dar erro de pasta.
-
-Pode copiar tudo aqui embaixo e colar por cima do seu `app.js` atual:
-
-```javascript
 // ══════════════════════════════════════════
 //   APP.JS — Sistema Multi-Produtos 3D
 // ══════════════════════════════════════════
@@ -263,7 +254,7 @@ const products = {
     }
   },
 
-  // NOVO SISTEMA DA ALMOFADA COM OBJLOADER E CORREÇÃO DE ESPELHO
+  // NOVO SISTEMA DA ALMOFADA COM OBJLOADER LOCAL E CORREÇÃO DE ESPELHO
   almofada: {
     width: 2000, height: 2000,
     layout: 'single', 
@@ -272,11 +263,11 @@ const products = {
       return new Promise((resolve) => {
         const loader = new OBJLoader();
         
-        // Carrega o arquivo almofada.obj direto do GitHub igual a necessaire
+        // Usa o arquivo local igual estava antes para evitar erro 404 de GitHub
         loader.load(
-          'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj',
+          'almofada.obj',
           function (object) {
-            // Centraliza
+            // Centraliza o modelo
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
             object.position.set(-center.x, -center.y, -center.z);
@@ -284,20 +275,20 @@ const products = {
             // Ajusta o tamanho da almofada automaticamente
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 3.6 / maxDim; 
+            const scale = maxDim > 0 ? (3.6 / maxDim) : 1; 
             
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
             wrapper.position.y = 0.2; // Altura no cenário
 
-            // Aplica os materiais
+            // Aplica os materiais e corrige o espelhamento
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 
-                const nome = child.name.toLowerCase();
+                const nome = (child.name || '').toLowerCase();
                 
                 // ARTE DAS COSTAS
                 if (nome.includes('costa') || nome.includes('back')) {
@@ -328,7 +319,8 @@ const products = {
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a almofada:', error);
+            console.error('Ops, arquivo almofada.obj não encontrado na pasta.', error);
+            alert('Aviso: O arquivo almofada.obj não foi encontrado. Verifique se ele está na mesma pasta do seu site.');
             resolve(g);
           }
         );
@@ -349,7 +341,7 @@ async function loadProduct(type) {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide; 
   } else if (type === 'almofada' || type === 'mousepad') {
-    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; // Tecido / Fosco
+    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; 
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
@@ -381,33 +373,35 @@ async function loadProduct(type) {
   
   printMaterial.map = artTex; printMaterial2.map = artTex2;
   
-  // DINÂMICA DA INTERFACE DE UPLOAD
+  // BLINDAGEM DA UI: Verifica se o elemento existe no HTML antes de tentar alterar, evitando que o site trave!
+  const secUp2 = document.getElementById('sectionUpload2');
+  const titleUp1 = document.getElementById('titleUpload1');
+  const sec2 = document.querySelector('#sectionUpload2 .section-title');
+  const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
+
   if (type === 'agenda') {
-    document.getElementById('sectionUpload2').style.display = 'block';
-    document.getElementById('titleUpload1').textContent = 'Capa (Esquerda)';
-    const sec2 = document.querySelector('#sectionUpload2 .section-title');
-    if(sec2) sec2.textContent = 'Fundo (Direita)';
-    const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
-    if(btn2) btn2.innerHTML = '⬆️ Carregar Fundo';
+    if (secUp2) secUp2.style.display = 'block';
+    if (titleUp1) titleUp1.textContent = 'Capa (Esquerda)';
+    if (sec2) sec2.textContent = 'Fundo (Direita)';
+    if (btn2) btn2.innerHTML = '⬆️ Carregar Fundo';
 
   } else if (type === 'almofada') {
-    document.getElementById('sectionUpload2').style.display = 'block';
-    document.getElementById('titleUpload1').textContent = 'Frente (Quadrada)';
-    // Muda os textos para falar de "Frente" e "Costas"
-    const sec2 = document.querySelector('#sectionUpload2 .section-title');
-    if(sec2) sec2.textContent = 'Costas (Quadrada)';
-    const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
-    if(btn2) btn2.innerHTML = '⬆️ Carregar Costas';
+    if (secUp2) secUp2.style.display = 'block';
+    if (titleUp1) titleUp1.textContent = 'Frente (Quadrada)';
+    if (sec2) sec2.textContent = 'Costas (Quadrada)';
+    if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
 
   } else if (type === 'necessaire') {
-    document.getElementById('sectionUpload2').style.display = 'none';
-    document.getElementById('titleUpload1').textContent = 'Arte Completa (A4)';
+    if (secUp2) secUp2.style.display = 'none';
+    if (titleUp1) titleUp1.textContent = 'Arte Completa (A4)';
+
   } else if (type === 'mousepad') {
-    document.getElementById('sectionUpload2').style.display = 'none';
-    document.getElementById('titleUpload1').textContent = 'Arte do Mousepad';
+    if (secUp2) secUp2.style.display = 'none';
+    if (titleUp1) titleUp1.textContent = 'Arte do Mousepad';
+
   } else {
-    document.getElementById('sectionUpload2').style.display = 'none';
-    document.getElementById('titleUpload1').textContent = 'Arte Principal';
+    if (secUp2) secUp2.style.display = 'none';
+    if (titleUp1) titleUp1.textContent = 'Arte Principal';
   }
 
   while(productGroup.children.length > 0){ 
@@ -420,7 +414,7 @@ async function loadProduct(type) {
   if (type === 'mousepad') {
     rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'almofada') {
-    rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5; // Começa levemente de lado igual na sua foto
+    rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5; 
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
   }
