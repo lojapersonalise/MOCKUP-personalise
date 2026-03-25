@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════
 
 import * as THREE from 'three';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'; // <-- IMPORTAÇÃO NOVA!
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
 window.addEventListener('error', function(e) {
   console.error('ERRO JS: ' + e.message);
@@ -64,6 +64,9 @@ const printMaterial = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: art
 const printMaterial2 = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: artTex2, side: THREE.FrontSide, ...physicalProps });
 const colorMaterial = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.FrontSide, ...physicalProps });
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.BackSide, ...physicalProps });
+
+// NOVO: Criamos um material exclusivo para o zíper e detalhes (com um leve brilho para destacar do tecido)
+const zipperMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(currentColor), roughness: 0.4, metalness: 0.2 });
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 const art2 = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
@@ -129,35 +132,30 @@ const products = {
   necessaire: {
     width: 1754, height: 2480,
     layout: 'standard', spacing: 3.4, 
-    rotations: [-0.45, 0.15, 3.4], // Mostra Lado, Frente, Costas
+    rotations: [-0.45, 0.15, 3.4], 
     
-    // Transformamos a função em Promise/Async para carregar o modelo 3D antes de exibir
     create: async function() {
       const g = new THREE.Group();
       
       return new Promise((resolve) => {
         const loader = new OBJLoader();
         loader.load(
-          // URL do seu arquivo cru no GitHub
           'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj',
           function (object) {
             
-            // 1. Auto-Centralização (corrige se o modelo não estiver no eixo zero do Blender)
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
             object.position.set(-center.x, -center.y, -center.z);
 
-            // 2. Auto-Escala (calcula o tamanho para encaixar perfeitamente na nossa tela)
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 3.5 / maxDim; // 3.5 é a medida visual parecida com as canecas/agendas
+            const scale = 3.5 / maxDim; 
             
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = -0.6; // Ajusta a altura na cena
+            wrapper.position.y = -0.6; 
 
-            // 3. Aplicação dos Materiais nos pedaços certos
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
@@ -166,25 +164,20 @@ const products = {
                 const name = child.name.toLowerCase();
                 
                 if (name.includes('body')) {
-                  // O Corpo recebe a arte (printMaterial)
+                  // O Corpo recebe a arte do cliente
                   child.material = printMaterial;
-                } else if (name.includes('zipper')) {
-                  // O Zíper recebe um cinza/metálico claro
-                  child.material = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.4, metalness: 0.5 });
-                } else if (name.includes('handle')) {
-                  // As alças recebem uma cor sólida
-                  child.material = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 });
                 } else {
-                  // Qualquer outro pedaço usa a cor base do produto
-                  child.material = colorMaterial;
+                  // ATUALIZAÇÃO: Tudo que não for corpo (zíper, alças, pingentes)
+                  // vai receber o nosso novo material dinâmico de zíper!
+                  child.material = zipperMaterial;
                 }
               }
             });
 
             g.add(wrapper);
-            resolve(g); // Terminou!
+            resolve(g);
           },
-          undefined, // Progresso
+          undefined,
           function (error) {
             console.error('Ops, erro ao carregar a necessaire:', error);
             resolve(g);
@@ -219,7 +212,7 @@ const products = {
   }
 };
 
-// ── 5. CARREGADOR DE PRODUTO DINÂMICO (AGORA ASSÍNCRONO) ──
+// ── 5. CARREGADOR DE PRODUTO DINÂMICO ──
 async function loadProduct(type) {
   currentProductType = type;
   const config = products[type];
@@ -227,8 +220,8 @@ async function loadProduct(type) {
   currentArtH = config.height;
   
   if (type === 'necessaire') {
-    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; // Tecido fosco
-    printMaterial.side = THREE.DoubleSide; // Garante que a malha não suma por dentro
+    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
+    printMaterial.side = THREE.DoubleSide; 
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
     printMaterial.side = THREE.FrontSide;
@@ -275,7 +268,6 @@ async function loadProduct(type) {
     productGroup.remove(child); 
   }
   
-  // Como loadProduct agora é async, usamos 'await' para aguardar os objetos serem gerados ou baixados
   if (config.layout === 'double_agenda') {
     const pLeft = await config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
     const pRight = await config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
@@ -325,7 +317,10 @@ function redrawArt() {
   }
   artTex2.needsUpdate = true;
 
-  colorMaterial.color.set(currentColor); colorMaterialInside.color.set(currentColor);
+  // ATUALIZAÇÃO: Quando você muda a cor no menu, ele avisa os 3 materiais!
+  colorMaterial.color.set(currentColor); 
+  colorMaterialInside.color.set(currentColor);
+  zipperMaterial.color.set(currentColor); // <-- O zíper muda de cor aqui!
 }
 
 // ── 7. CONTROLES MOUSE/TOUCH ──
