@@ -104,7 +104,6 @@ const products = {
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
                 
-                // Lógica final baseada no nome "print" descoberto
                 if (nome.includes('print')) {
                   child.material = printMaterial;
                 } else {
@@ -158,6 +157,55 @@ const products = {
         const torusGeo = new THREE.TorusGeometry(0.10, 0.016, 16, 32);
         const ring1 = new THREE.Mesh(torusGeo, wireMat); ring1.position.set(w/2, ringY, 0); ring1.rotation.x = Math.PI/2; ring1.castShadow = true; g.add(ring1);
         const ring2 = new THREE.Mesh(torusGeo, wireMat); ring2.position.set(w/2, ringY + 0.04, 0); ring2.rotation.x = Math.PI/2; ring2.castShadow = true; g.add(ring2);
+      }
+      return g;
+    }
+  },
+
+  // === NOVO: INTERIOR DA AGENDA ===
+  agenda_aberta: {
+    width: 1240, height: 1754, 
+    layout: 'single', 
+    create: async function() {
+      const g = new THREE.Group();
+      const w = 2.0, h = 2.828, d = 0.04;
+      const bottom = -1.2;
+      const yOff = bottom + h/2;
+      
+      // Papel fosco e sem brilho
+      const pageMat = new THREE.MeshPhysicalMaterial({ color: 0xfafafa, roughness: 0.9, clearcoat: 0 });
+      
+      // Bloco Esquerdo (Upload 1 fica na face da Frente [índice 4])
+      const matLeft = [ pageMat, pageMat, pageMat, pageMat, printMaterial, pageMat ];
+      const mLeft = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matLeft);
+      mLeft.position.set(-w/2 - 0.02, yOff, 0); // Desloca para a esquerda
+      mLeft.castShadow = true; mLeft.receiveShadow = true;
+      g.add(mLeft);
+
+      // Bloco Direito (Upload 2 fica na face da Frente [índice 4])
+      const matRight = [ pageMat, pageMat, pageMat, pageMat, printMaterial2, pageMat ];
+      const mRight = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matRight);
+      mRight.position.set(w/2 + 0.02, yOff, 0); // Desloca para a direita
+      mRight.castShadow = true; mRight.receiveShadow = true;
+      g.add(mRight);
+
+      // Espiral Perfurando no centro exato (X = 0)
+      const wireMat = new THREE.MeshPhysicalMaterial({ color: 0xdddddd, metalness: 0.5, roughness: 0.5 });
+      for(let i=0; i<16; i++) {
+        const ringY = (bottom + 0.2) + i * (h - 0.4) / 15;
+        const torusGeo = new THREE.TorusGeometry(0.06, 0.012, 16, 32);
+        
+        const ring1 = new THREE.Mesh(torusGeo, wireMat);
+        ring1.position.set(0, ringY, 0);
+        ring1.rotation.x = Math.PI/2;
+        ring1.castShadow = true;
+        g.add(ring1);
+        
+        const ring2 = new THREE.Mesh(torusGeo, wireMat);
+        ring2.position.set(0, ringY + 0.03, 0);
+        ring2.rotation.x = Math.PI/2;
+        ring2.castShadow = true;
+        g.add(ring2);
       }
       return g;
     }
@@ -417,7 +465,7 @@ async function loadProduct(type) {
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide; 
-  } else if (type === 'almofada' || type === 'mousepad' || type === 'almochaveiro') {
+  } else if (type === 'almofada' || type === 'mousepad' || type === 'almochaveiro' || type === 'agenda_aberta') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; 
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'agenda') {
@@ -445,7 +493,8 @@ async function loadProduct(type) {
   
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
   
-  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro');
+  // Adicionado a agenda_aberta no bloco que não inverte a arte horizontalmente
+  const noFlip = (type === 'agenda' || type === 'agenda_aberta' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro');
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -462,6 +511,12 @@ async function loadProduct(type) {
     if (titleUp1) titleUp1.textContent = 'Capa (Esquerda)';
     if (sec2) sec2.textContent = 'Fundo (Direita)';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Fundo';
+
+  } else if (type === 'agenda_aberta') {
+    if (secUp2) secUp2.style.display = 'block';
+    if (titleUp1) titleUp1.textContent = 'Página Esquerda';
+    if (sec2) sec2.textContent = 'Página Direita';
+    if (btn2) btn2.innerHTML = '⬆️ Carregar Direita';
 
   } else if (type === 'almofada' || type === 'almochaveiro') {
     if (secUp2) secUp2.style.display = 'block';
@@ -492,6 +547,9 @@ async function loadProduct(type) {
     rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'almofada' || type === 'almochaveiro') {
     rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5; 
+  } else if (type === 'agenda_aberta') {
+    // Nova perspectiva focada mais de cima para ver as folhas
+    rot.x = 0.35; rot.y = 0; targetZoom = 8.5; 
   } else if (type === 'caneca') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
@@ -532,7 +590,7 @@ function redrawArt() {
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
     
-    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
+    const isNormal = (currentProductType === 'agenda' || currentProductType === 'agenda_aberta' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
     if (!isNormal) artCtx.scale(-1, 1); 
     
     artCtx.rotate((art.rotation * Math.PI) / 180);
@@ -548,7 +606,7 @@ function redrawArt() {
 
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
     
-    const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
+    const isNormal = (currentProductType === 'agenda' || currentProductType === 'agenda_aberta' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
     if (!isNormal) artCtx2.scale(-1, 1);
     
     artCtx2.rotate((art2.rotation * Math.PI) / 180);
