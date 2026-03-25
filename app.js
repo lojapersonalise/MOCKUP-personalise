@@ -75,10 +75,10 @@ scene.add(productGroup);
 
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
-  // ATUALIZADO: CANECA COM OBJLOADER
+  // CANECA COM O NOVO LAYOUT SINGLE (Arquivo 3D já possui 3 canecas)
   caneca: {
     width: 2618, height: 1000,
-    layout: 'standard', spacing: 2.8, rotations: [-Math.PI / 2 - 0.35, Math.PI, Math.PI / 2 + 0.35],
+    layout: 'single', 
     create: async function() {
       const g = new THREE.Group();
       return new Promise((resolve) => {
@@ -92,12 +92,13 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = maxDim > 0 ? (2.8 / maxDim) : 1; 
+            // Ajustamos a escala (5.5) para que o conjunto todo fique em bom tamanho na tela
+            const scale = maxDim > 0 ? (5.5 / maxDim) : 1; 
             
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = 0.2; 
+            wrapper.position.y = 0.0; // Altura ajustada
 
             object.traverse(function (child) {
               if (child.isMesh) {
@@ -105,7 +106,6 @@ const products = {
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
                 
-                // Se o 3D estiver separado, tenta aplicar cor sólida na alça/dentro e arte fora
                 if (nome.includes('alca') || nome.includes('handle') || nome.includes('dentro') || nome.includes('inside') || nome.includes('in')) {
                   child.material = colorMaterial;
                 } else {
