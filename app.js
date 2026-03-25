@@ -75,19 +75,56 @@ scene.add(productGroup);
 
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
+  // ATUALIZADO: CANECA COM OBJLOADER
   caneca: {
     width: 2618, height: 1000,
     layout: 'standard', spacing: 2.8, rotations: [-Math.PI / 2 - 0.35, Math.PI, Math.PI / 2 + 0.35],
     create: async function() {
       const g = new THREE.Group();
-      const h = 2.4, r = 1.0, wall = 0.08;
-      const mOut = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, true), printMaterial); mOut.castShadow = true; g.add(mOut);
-      const mIn = new THREE.Mesh(new THREE.CylinderGeometry(r - wall, r - wall, h, 64, 1, true), colorMaterialInside); g.add(mIn);
-      const mRim = new THREE.Mesh(new THREE.RingGeometry(r - wall, r, 64), colorMaterial); mRim.rotation.x = -Math.PI/2; mRim.position.y = h/2; mRim.castShadow = true; g.add(mRim);
-      const mBotIn = new THREE.Mesh(new THREE.CircleGeometry(r - wall, 64), colorMaterial); mBotIn.rotation.x = -Math.PI/2; mBotIn.position.y = -(h/2) + wall; g.add(mBotIn);
-      const mBotOut = new THREE.Mesh(new THREE.CircleGeometry(r, 64), colorMaterial); mBotOut.rotation.x = Math.PI/2; mBotOut.position.y = -h/2; mBotOut.castShadow = true; g.add(mBotOut);
-      const mHandle = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.16, 32, 64), colorMaterial); mHandle.position.set(0, 0, r); mHandle.rotation.y = Math.PI/2; mHandle.scale.set(0.7, 1.2, 1); mHandle.castShadow = true; g.add(mHandle);
-      return g;
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'canecas.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (2.8 / maxDim) : 1; 
+            
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.2; 
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+                
+                // Se o 3D estiver separado, tenta aplicar cor sólida na alça/dentro e arte fora
+                if (nome.includes('alca') || nome.includes('handle') || nome.includes('dentro') || nome.includes('inside') || nome.includes('in')) {
+                  child.material = colorMaterial;
+                } else {
+                  child.material = printMaterial;
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a caneca:', error);
+            alert('Aviso: Arquivo canecas.obj não encontrado.');
+            resolve(g);
+          }
+        );
+      });
     }
   },
   
@@ -137,7 +174,7 @@ const products = {
       return new Promise((resolve) => {
         const loader = new OBJLoader();
         loader.load(
-          'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj',
+          'necessaire.obj',
           function (object) {
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
@@ -254,7 +291,6 @@ const products = {
     }
   },
 
-  // NOVO SISTEMA DA ALMOFADA COM OBJLOADER LOCAL E CORREÇÃO DE ESPELHO
   almofada: {
     width: 2000, height: 2000,
     layout: 'single', 
@@ -262,17 +298,13 @@ const products = {
       const g = new THREE.Group();
       return new Promise((resolve) => {
         const loader = new OBJLoader();
-        
-        // Usa o arquivo local igual estava antes para evitar erro 404 de GitHub
         loader.load(
           'almofada.obj',
           function (object) {
-            // Centraliza o modelo
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
             object.position.set(-center.x, -center.y, -center.z);
 
-            // Ajusta o tamanho da almofada automaticamente
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
             const scale = maxDim > 0 ? (3.6 / maxDim) : 1; 
@@ -280,35 +312,24 @@ const products = {
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = 0.2; // Altura no cenário
+            wrapper.position.y = 0.2; 
 
-            // Aplica os materiais e corrige o espelhamento
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
-                
                 const nome = (child.name || '').toLowerCase();
                 
-                // ARTE DAS COSTAS
                 if (nome.includes('costa') || nome.includes('back')) {
                   child.material = printMaterial2; 
-                  
-                  // 👇 A MÁGICA DO ESPELHO: Inverte a coordenada X (UV Mapping) das costas
                   const uv = child.geometry.attributes.uv;
                   if (uv) {
-                    for (let i = 0; i < uv.count; i++) {
-                      uv.setX(i, 1 - uv.getX(i)); 
-                    }
+                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); 
                     uv.needsUpdate = true;
                   }
-                } 
-                // COSTURA / ZÍPER
-                else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {
+                } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {
                   child.material = zipperMaterial; 
-                } 
-                // ARTE DA FRENTE
-                else {
+                } else {
                   child.material = printMaterial; 
                 }
               }
@@ -319,8 +340,70 @@ const products = {
           },
           undefined,
           function (error) {
-            console.error('Ops, arquivo almofada.obj não encontrado na pasta.', error);
-            alert('Aviso: O arquivo almofada.obj não foi encontrado. Verifique se ele está na mesma pasta do seu site.');
+            console.error('Ops, erro ao carregar a almofada:', error);
+            alert('Aviso: O arquivo almofada.obj não foi encontrado.');
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
+  // NOVO: ALMOCHAVEIRO
+  almochaveiro: {
+    width: 2000, height: 2000,
+    layout: 'single', 
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'almochaveiro.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            // Um pouco menor que a almofada na tela por ser um chaveiro
+            const scale = maxDim > 0 ? (3.0 / maxDim) : 1; 
+            
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.2; 
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+                
+                // Lógica igual à almofada para corrigir o espelho e aplicar materiais
+                if (nome.includes('costa') || nome.includes('back')) {
+                  child.material = printMaterial2; 
+                  const uv = child.geometry.attributes.uv;
+                  if (uv) {
+                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); 
+                    uv.needsUpdate = true;
+                  }
+                } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('argola') || nome.includes('ring') || nome.includes('metal')) {
+                  // Argola ou costura pegam a cor que o cliente escolher no seletor de cor
+                  child.material = zipperMaterial; 
+                } else {
+                  child.material = printMaterial; 
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar o almochaveiro:', error);
+            alert('Aviso: O arquivo almochaveiro.obj não foi encontrado.');
             resolve(g);
           }
         );
@@ -340,7 +423,7 @@ async function loadProduct(type) {
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide; 
-  } else if (type === 'almofada' || type === 'mousepad') {
+  } else if (type === 'almofada' || type === 'mousepad' || type === 'almochaveiro') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; 
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'agenda') {
@@ -365,15 +448,15 @@ async function loadProduct(type) {
   
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
   
-  // Impede espelhamento da arte
-  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada');
+  // Impede espelhamento da arte globalmente (inclusive para o almochaveiro)
+  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro');
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
   
   printMaterial.map = artTex; printMaterial2.map = artTex2;
   
-  // BLINDAGEM DA UI: Verifica se o elemento existe no HTML antes de tentar alterar, evitando que o site trave!
+  // BLINDAGEM DA UI: Verifica se o elemento existe no HTML antes de tentar alterar, evitando que o site trave
   const secUp2 = document.getElementById('sectionUpload2');
   const titleUp1 = document.getElementById('titleUpload1');
   const sec2 = document.querySelector('#sectionUpload2 .section-title');
@@ -385,7 +468,7 @@ async function loadProduct(type) {
     if (sec2) sec2.textContent = 'Fundo (Direita)';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Fundo';
 
-  } else if (type === 'almofada') {
+  } else if (type === 'almofada' || type === 'almochaveiro') {
     if (secUp2) secUp2.style.display = 'block';
     if (titleUp1) titleUp1.textContent = 'Frente (Quadrada)';
     if (sec2) sec2.textContent = 'Costas (Quadrada)';
@@ -400,6 +483,7 @@ async function loadProduct(type) {
     if (titleUp1) titleUp1.textContent = 'Arte do Mousepad';
 
   } else {
+    // Caneca e Squeeze
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte Principal';
   }
@@ -413,7 +497,7 @@ async function loadProduct(type) {
   // Comportamento inicial da Câmera dependendo do produto
   if (type === 'mousepad') {
     rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
-  } else if (type === 'almofada') {
+  } else if (type === 'almofada' || type === 'almochaveiro') {
     rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5; 
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
@@ -453,7 +537,7 @@ function redrawArt() {
     const cx = currentArtW / 2 - art.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art.offsetY * currentArtH * 0.3;
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada') artCtx.scale(-1, 1); 
+    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada' && currentProductType !== 'almochaveiro') artCtx.scale(-1, 1); 
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx.restore();
   }
@@ -466,7 +550,7 @@ function redrawArt() {
     const cx = currentArtW / 2 - art2.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art2.offsetY * currentArtH * 0.3;
 
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada') artCtx2.scale(-1, 1);
+    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada' && currentProductType !== 'almochaveiro') artCtx2.scale(-1, 1);
     artCtx2.rotate((art2.rotation * Math.PI) / 180);
     artCtx2.drawImage(art2.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx2.restore();
   }
