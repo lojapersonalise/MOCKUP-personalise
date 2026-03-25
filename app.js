@@ -254,51 +254,68 @@ const products = {
     }
   },
 
-  // NOVO: SISTEMA DA ALMOFADA (Fofa e realista gerada 100% via matemática)
+    // NOVO: SISTEMA DA ALMOFADA (Fofa, realista e com cantos arredondados)
   almofada: {
     width: 2000, height: 2000, // Imagem Quadrada
     layout: 'single', 
     create: async function() {
       const g = new THREE.Group();
       
-      const w = 3.2; const h = 3.2; const d = 0.15; // D = grossura da costura
-      // Criamos um cubo com muitas divisões para podermos "amassar"
-      const geo = new THREE.BoxGeometry(w, h, d, 48, 48, 2);
+      const w = 3.2; const h = 3.2; const d = 0.15; 
+      // Aumentei os polígonos (64x64) para a curva do canto ficar com alta resolução e bem suave
+      const geo = new THREE.BoxGeometry(w, h, d, 64, 64, 4);
       const pos = geo.attributes.position;
       
-      // Matemática para estufar o centro e puxar os cantos (Mágica da Almofada)
+      const raioCanto = 0.45; // <-- Tamanho do arredondamento do canto (mágica acontece aqui)
+
       for(let i=0; i<pos.count; i++) {
         let px = pos.getX(i);
         let py = pos.getY(i);
         let pz = pos.getZ(i);
         
+        // Posição percentual original (-1 a 1) para referência do tecido
         let nx = px / (w/2);
         let ny = py / (h/2);
         
-        // Cria a "barriga" da almofada (maior no centro, menor nas bordas)
-        let bulge = Math.cos(nx * Math.PI / 2) * Math.cos(ny * Math.PI / 2);
+        // 1. ARREDONDAMENTO DOS CANTOS
+        let limiteX = (w/2) - raioCanto;
+        let limiteY = (h/2) - raioCanto;
         
-        // Empurra a frente para frente e as costas para trás
-        if (pz > 0.01) pz += bulge * 0.65; 
-        else if (pz < -0.01) pz -= bulge * 0.65; 
+        if (Math.abs(px) > limiteX && Math.abs(py) > limiteY) {
+            let dx = Math.abs(px) - limiteX;
+            let dy = Math.abs(py) - limiteY;
+            let distancia = Math.sqrt(dx*dx + dy*dy);
+            
+            // Puxa o "bico" do quadrado para dentro, formando um círculo perfeito no canto
+            if (distancia > raioCanto) {
+                let proporcao = raioCanto / distancia;
+                px = Math.sign(px) * (limiteX + dx * proporcao);
+                py = Math.sign(py) * (limiteY + dy * proporcao);
+            }
+        }
         
-        // Simula a tensão do tecido e a costura repuxada nos cantos
+        // 2. ESTUFAR A ALMOFADA (Deixando gordinha no meio)
+        let bulge = Math.pow(Math.cos(nx * Math.PI / 2) * Math.cos(ny * Math.PI / 2), 0.6);
+        if (pz > 0.01) pz += bulge * 0.75; 
+        else if (pz < -0.01) pz -= bulge * 0.75; 
+        
+        // 3. ACHATAR A COSTURA NAS BORDAS
         let edgeDist = Math.max(Math.abs(nx), Math.abs(ny));
-        let pinch = Math.pow(edgeDist, 3) * 0.12; 
+        pz *= (1.0 - Math.pow(edgeDist, 3)); 
         
+        // 4. "PINCH" SIMULANDO A TENSÃO DA LINHA NA COSTURA
+        let pinch = Math.pow(edgeDist, 4) * 0.08; 
         px *= (1 - pinch);
         py *= (1 - pinch);
         
         pos.setXYZ(i, px, py, pz);
       }
-      geo.computeVertexNormals(); // Recalcula a luz batendo nas curvas
       
-      // Mapeamento dos materiais do cubo: Direita, Esquerda, Cima, Baixo, Frente, Costas
-      // Usamos a 'colorMaterial' nas bordas para que a costura lateral mude de cor se o cliente quiser!
+      geo.computeVertexNormals(); // Recalcula luz e sombra nas novas curvas
       const materials = [colorMaterial, colorMaterial, colorMaterial, colorMaterial, printMaterial, printMaterial2];
       
       const pillow = new THREE.Mesh(geo, materials);
-      pillow.position.y = 0.2; // Faz ela flutuar suavemente acima do chão
+      pillow.position.y = 0.2; 
       pillow.castShadow = true;
       pillow.receiveShadow = true;
       
