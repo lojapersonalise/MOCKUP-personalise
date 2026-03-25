@@ -3,6 +3,7 @@
 // ══════════════════════════════════════════
 
 import * as THREE from 'three';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'; // <-- IMPORTAÇÃO NOVA!
 
 window.addEventListener('error', function(e) {
   console.error('ERRO JS: ' + e.message);
@@ -129,135 +130,67 @@ const products = {
     width: 1754, height: 2480,
     layout: 'standard', spacing: 3.4, 
     rotations: [-0.45, 0.15, 3.4], // Mostra Lado, Frente, Costas
-    create: function() {
+    
+    // Transformamos a função em Promise/Async para carregar o modelo 3D antes de exibir
+    create: async function() {
       const g = new THREE.Group();
       
-      // Escala e Proporções
-      const S = 0.9; 
-      const scaleY = 1.35 * S;
-      const scaleZ = 1.25 * S;
-      const w = 3.6 * S;
-      const yOff = -1.1; // Crava a base no chão
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          // URL do seu arquivo cru no GitHub
+          'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj',
+          function (object) {
+            
+            // 1. Auto-Centralização (corrige se o modelo não estiver no eixo zero do Blender)
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
 
-      // Perfil da Costura (Base)
-      const ptsRaw = [
-          new THREE.Vector2(0, 1.15),      // Zíper Costas
-          new THREE.Vector2(-0.2, 1.05),   // Curva ombro costas
-          new THREE.Vector2(-0.55, 0.6),   // Barriga Costas
-          new THREE.Vector2(-0.5, 0.15),   // Curva para a base
-          new THREE.Vector2(-0.35, 0.0),   // Fim da base reta
-          new THREE.Vector2(0.0, 0.0),     // Centro (fundo)
-          new THREE.Vector2(0.35, 0.0),    // Início da base frente
-          new THREE.Vector2(0.5, 0.15),    // Curva base frente
-          new THREE.Vector2(0.55, 0.6),    // Barriga Frente
-          new THREE.Vector2(0.2, 1.05),    // Curva ombro frente
-          new THREE.Vector2(0, 1.15)       // Zíper Frente
-      ];
-      const pts = ptsRaw.map(p => new THREE.Vector2(p.x * scaleZ, p.y * scaleY));
-      const spline = new THREE.SplineCurve(pts);
+            // 2. Auto-Escala (calcula o tamanho para encaixar perfeitamente na nossa tela)
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 3.5 / maxDim; // 3.5 é a medida visual parecida com as canecas/agendas
+            
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = -0.6; // Ajusta a altura na cena
 
-      // Função Mágica de Escultura (Cria as dobras e curvas 3D)
-      function getShapePoint(u, v) {
-          let nx = (u - 0.5) * 2; // de -1 (Esquerda) até 1 (Direita)
-          let pt = spline.getPointAt(v);
-          let x = nx * (w/2);
-          let y = pt.y;
-          let z = pt.x;
+            // 3. Aplicação dos Materiais nos pedaços certos
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
 
-          // 1. Curva do Zíper (Cai nas laterais)
-          let topness = Math.pow(Math.abs(v - 0.5) * 2, 2.0);
-          let dip = nx * nx * 0.3; // Quantidade de queda nas pontas
-          y -= dip * topness;
+                const name = child.name.toLowerCase();
+                
+                if (name.includes('body')) {
+                  // O Corpo recebe a arte (printMaterial)
+                  child.material = printMaterial;
+                } else if (name.includes('zipper')) {
+                  // O Zíper recebe um cinza/metálico claro
+                  child.material = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.4, metalness: 0.5 });
+                } else if (name.includes('handle')) {
+                  // As alças recebem uma cor sólida
+                  child.material = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 });
+                } else {
+                  // Qualquer outro pedaço usa a cor base do produto
+                  child.material = colorMaterial;
+                }
+              }
+            });
 
-          // 2. Afunilamento do Topo (Aperta as pontas perto do zíper)
-          let pinch = nx * nx * 0.25;
-          z *= (1.0 - pinch * topness);
-
-          // 3. Arredondamento das bordas verticais (Sensação fofinha)
-          let barrel = Math.pow(Math.abs(nx), 2) * 0.1;
-          z -= Math.sign(z) * barrel;
-
-          return new THREE.Vector3(x, y + yOff, z);
-      }
-
-      // --- CORPO DA NECESSAIRE (LONA A4) ---
-      const geo = new THREE.PlaneGeometry(w, spline.getLength(), 64, 64);
-      const pos = geo.attributes.position;
-      const uvs = geo.attributes.uv;
-
-      for(let i=0; i<pos.count; i++) {
-          let p3 = getShapePoint(uvs.getX(i), uvs.getY(i));
-          pos.setXYZ(i, p3.x, p3.y, p3.z);
-      }
-      geo.computeVertexNormals();
-
-      const mBody = new THREE.Mesh(geo, printMaterial);
-      mBody.castShadow = true;
-      g.add(mBody);
-
-      // --- TAMPAS LATERAIS ---
-      // Criamos um material com DoubleSide para evitar que os normais fiquem pretos nas curvas
-      const doubleColorMat = colorMaterial.clone();
-      doubleColorMat.side = THREE.DoubleSide;
-
-      const sidePts = [];
-      for(let i=0; i<=32; i++) {
-          let p3 = getShapePoint(1, i/32); // u=1 capta exatamento o contorno da lateral
-          sidePts.push(new THREE.Vector2(p3.z, p3.y - yOff));
-      }
-      const sideShape = new THREE.Shape(sidePts);
-      const sideGeo = new THREE.ShapeGeometry(sideShape);
-      
-      const mSideR = new THREE.Mesh(sideGeo, doubleColorMat);
-      mSideR.position.set(w/2, yOff, 0);
-      mSideR.rotation.y = Math.PI/2;
-      mSideR.castShadow = true;
-      g.add(mSideR);
-
-      const mSideL = new THREE.Mesh(sideGeo, doubleColorMat);
-      mSideL.position.set(-w/2, yOff, 0);
-      mSideL.rotation.y = -Math.PI/2;
-      mSideL.scale.set(-1, 1, 1);
-      mSideL.castShadow = true;
-      g.add(mSideL);
-
-      // --- ACABAMENTOS DO ZÍPER ---
-      class ZipCurve extends THREE.Curve {
-          getPoint(t) { return getShapePoint(t, 1.0); } // v=1 traça exatamente o topo
-      }
-      const zipPath = new ZipCurve();
-      
-      // Fita do Zíper (Branca Grossa)
-      const zipTapeGeo = new THREE.TubeGeometry(zipPath, 32, 0.035, 12, false);
-      const zipTapeMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 1.0 });
-      const mZipTape = new THREE.Mesh(zipTapeGeo, zipTapeMat);
-      mZipTape.castShadow = true;
-      g.add(mZipTape);
-
-      // Dentes do Zíper (Metálico)
-      const zipTeethGeo = new THREE.TubeGeometry(zipPath, 32, 0.015, 8, false);
-      const zipTeethMat = new THREE.MeshStandardMaterial({ color: 0xb0b0b0, metalness: 0.7, roughness: 0.3 });
-      const mZipTeeth = new THREE.Mesh(zipTeethGeo, zipTeethMat);
-      g.add(mZipTeeth);
-
-      // --- Puxadores / Orelhinhas ---
-      const earGeo = new THREE.TorusGeometry(0.09, 0.025, 16, 32);
-      
-      let endL = getShapePoint(0, 1.0); // Ponto extemo Esquerdo do Zíper
-      const mEarL = new THREE.Mesh(earGeo, zipTapeMat);
-      mEarL.position.set(endL.x - 0.05, endL.y, endL.z);
-      mEarL.rotation.set(Math.PI/4, Math.PI/2, 0);
-      mEarL.castShadow = true;
-      g.add(mEarL);
-
-      let endR = getShapePoint(1, 1.0); // Ponto extemo Direito do Zíper
-      const mEarR = new THREE.Mesh(earGeo, zipTapeMat);
-      mEarR.position.set(endR.x + 0.05, endR.y, endR.z);
-      mEarR.rotation.set(-Math.PI/4, Math.PI/2, 0);
-      mEarR.castShadow = true;
-      g.add(mEarR);
-
-      return g;
+            g.add(wrapper);
+            resolve(g); // Terminou!
+          },
+          undefined, // Progresso
+          function (error) {
+            console.error('Ops, erro ao carregar a necessaire:', error);
+            resolve(g);
+          }
+        );
+      });
     }
   },
 
@@ -286,19 +219,22 @@ const products = {
   }
 };
 
-// ── 5. CARREGADOR DE PRODUTO DINÂMICO ──
-function loadProduct(type) {
+// ── 5. CARREGADOR DE PRODUTO DINÂMICO (AGORA ASSÍNCRONO) ──
+async function loadProduct(type) {
   currentProductType = type;
   const config = products[type];
   currentArtW = config.width;
   currentArtH = config.height;
   
   if (type === 'necessaire') {
-    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; // Tecido bem fosco
+    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; // Tecido fosco
+    printMaterial.side = THREE.DoubleSide; // Garante que a malha não suma por dentro
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
+    printMaterial.side = THREE.FrontSide;
   } else {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
+    printMaterial.side = THREE.FrontSide;
   }
   
   [printMaterial, printMaterial2, colorMaterial, colorMaterialInside].forEach(mat => {
@@ -339,12 +275,13 @@ function loadProduct(type) {
     productGroup.remove(child); 
   }
   
+  // Como loadProduct agora é async, usamos 'await' para aguardar os objetos serem gerados ou baixados
   if (config.layout === 'double_agenda') {
-    const pLeft = config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
-    const pRight = config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
+    const pLeft = await config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
+    const pRight = await config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
     productGroup.add(pLeft, pRight);
   } else {
-    const master = config.create();
+    const master = await config.create();
     const space = config.spacing; const rots = config.rotations;
     const pLeft = master.clone(); pLeft.position.x = -space; pLeft.rotation.y = rots[0];
     const pCenter = master.clone(); pCenter.position.x = 0; pCenter.rotation.y = rots[1];
