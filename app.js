@@ -104,11 +104,11 @@ const products = {
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
                 
-                // CORREÇÃO: Removido o filtro solto de 'in' que impedia o corpo de receber a arte!
-                if (nome.includes('alca') || nome.includes('handle') || nome.includes('dentro') || nome.includes('inside')) {
-                  child.material = colorMaterial;
-                } else {
+                // Lógica final baseada no nome "print" descoberto
+                if (nome.includes('print')) {
                   child.material = printMaterial;
+                } else {
+                  child.material = colorMaterial;
                 }
               }
             });
@@ -445,7 +445,6 @@ async function loadProduct(type) {
   
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
   
-  // CORREÇÃO: A caneca foi retirada dessa lista para voltar à lógica de espelhamento que funcionava no seu código base.
   const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro');
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -533,7 +532,6 @@ function redrawArt() {
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
     
-    // CORREÇÃO: Caneca retornou ao isNormal antigo (ou seja, receberá o scale -1 padrão para ela)
     const isNormal = (currentProductType === 'agenda' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
     if (!isNormal) artCtx.scale(-1, 1); 
     
