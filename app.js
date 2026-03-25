@@ -134,13 +134,11 @@ const products = {
     
     create: async function() {
       const g = new THREE.Group();
-      
       return new Promise((resolve) => {
         const loader = new OBJLoader();
         loader.load(
           'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj',
           function (object) {
-            
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
             object.position.set(-center.x, -center.y, -center.z);
@@ -158,9 +156,7 @@ const products = {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
-
                 const name = child.name.toLowerCase();
-                
                 if (name.includes('body')) {
                   child.material = printMaterial;
                 } else {
@@ -206,18 +202,13 @@ const products = {
     }
   },
 
-  // NOVO: SISTEMA DO MOUSEPAD E MOUSE
   mousepad: {
-    width: 2480, height: 1984, // Proporção ideal retangular
-    layout: 'single', // Diferente das canecas, ele aparece sozinho no meio
+    width: 2480, height: 1984, 
+    layout: 'single', 
     create: async function() {
       const g = new THREE.Group();
-      
-      const w = 3.8;  // Largura
-      const h = 2.8;  // Altura
-      const r = 0.2;  // Arredondamento dos cantos
+      const w = 3.8; const h = 2.8; const r = 0.2;  
 
-      // 1. Desenha a forma do Mousepad
       const shape = new THREE.Shape();
       shape.moveTo(-w/2 + r, -h/2);
       shape.lineTo(w/2 - r, -h/2);
@@ -229,67 +220,89 @@ const products = {
       shape.lineTo(-w/2, -h/2 + r);
       shape.quadraticCurveTo(-w/2, -h/2, -w/2 + r, -h/2);
 
-      // 2. Cria a camada de cima (Tecido com a Arte)
       const topGeo = new THREE.ShapeGeometry(shape);
       const pos = topGeo.attributes.position;
       const uv = topGeo.attributes.uv;
-      
-      // Ajusta o mapa de imagem (UV) para encaixar certinho nas bordas
       for(let i=0; i<pos.count; i++){
-          let x = pos.getX(i);
-          let y = pos.getY(i);
+          let x = pos.getX(i); let y = pos.getY(i);
           uv.setXY(i, (x + w/2)/w, (y + h/2)/h);
       }
       const padTop = new THREE.Mesh(topGeo, printMaterial);
-      padTop.rotation.x = -Math.PI / 2; // Deita no chão
-      padTop.position.y = 0.051;        // Fica em cima da borracha
-      padTop.castShadow = true;
-      padTop.receiveShadow = true;
-      g.add(padTop);
+      padTop.rotation.x = -Math.PI / 2; padTop.position.y = 0.051;        
+      padTop.castShadow = true; padTop.receiveShadow = true; g.add(padTop);
 
-      // 3. Cria a base emborrachada preta
-      const extrudeSettings = { depth: 0.05, bevelEnabled: false };
-      const baseGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      const baseGeo = new THREE.ExtrudeGeometry(shape, { depth: 0.05, bevelEnabled: false });
       const baseMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
       const padBase = new THREE.Mesh(baseGeo, baseMat);
-      padBase.rotation.x = Math.PI / 2;
-      padBase.position.y = 0.05; 
-      padBase.castShadow = true;
-      padBase.receiveShadow = true;
-      g.add(padBase);
+      padBase.rotation.x = Math.PI / 2; padBase.position.y = 0.05; 
+      padBase.castShadow = true; padBase.receiveShadow = true; g.add(padBase);
 
-      // 4. Cria o Mouse 3D do lado direito
       const mouseGroup = new THREE.Group();
-      
-      // Corpo do Mouse Preto fosco/metálico
       const mouseMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.4 });
-      const bodyGeo = new THREE.SphereGeometry(1, 32, 32);
-      const mouseBody = new THREE.Mesh(bodyGeo, mouseMat);
-      mouseBody.scale.set(0.35, 0.22, 0.65); // Amassa a esfera pra virar um mouse
-      mouseBody.position.y = 0.15; // Afunda um pouco no chão pra base ficar chata
-      mouseBody.castShadow = true;
-      mouseGroup.add(mouseBody);
+      const mouseBody = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), mouseMat);
+      mouseBody.scale.set(0.35, 0.22, 0.65); mouseBody.position.y = 0.15; 
+      mouseBody.castShadow = true; mouseGroup.add(mouseBody);
 
-      // Rodinha do mouse Vermelha
-      const wheelGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.04, 16);
-      const wheelMat = new THREE.MeshStandardMaterial({ color: 0xdd1111, roughness: 0.4 });
-      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(0, 0.33, -0.35); // Posiciona na frente do mouse
-      wheel.castShadow = true;
-      mouseGroup.add(wheel);
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 16), new THREE.MeshStandardMaterial({ color: 0xdd1111, roughness: 0.4 }));
+      wheel.rotation.z = Math.PI / 2; wheel.position.set(0, 0.33, -0.35); 
+      wheel.castShadow = true; mouseGroup.add(wheel);
 
-      // Coloca o Mouse BEM FORA da estampa (do lado direito)
-      mouseGroup.position.set(w/2 + 0.6, 0, 0.3); 
-      mouseGroup.rotation.y = -0.2; // Vira ele um pouquinho de lado pra dar charme
-
+      mouseGroup.position.set(w/2 + 0.6, 0, 0.3); mouseGroup.rotation.y = -0.2; 
       g.add(mouseGroup);
+      g.position.x = -0.3; g.position.y = -1.18; 
+      return g;
+    }
+  },
 
-      // Move tudo levemente para a esquerda para a câmera focar no meio dos dois objetos
-      g.position.x = -0.3;
-      // Crava no chão da cena
-      g.position.y = -1.18; 
-
+  // NOVO: SISTEMA DA ALMOFADA (Fofa e realista gerada 100% via matemática)
+  almofada: {
+    width: 2000, height: 2000, // Imagem Quadrada
+    layout: 'single', 
+    create: async function() {
+      const g = new THREE.Group();
+      
+      const w = 3.2; const h = 3.2; const d = 0.15; // D = grossura da costura
+      // Criamos um cubo com muitas divisões para podermos "amassar"
+      const geo = new THREE.BoxGeometry(w, h, d, 48, 48, 2);
+      const pos = geo.attributes.position;
+      
+      // Matemática para estufar o centro e puxar os cantos (Mágica da Almofada)
+      for(let i=0; i<pos.count; i++) {
+        let px = pos.getX(i);
+        let py = pos.getY(i);
+        let pz = pos.getZ(i);
+        
+        let nx = px / (w/2);
+        let ny = py / (h/2);
+        
+        // Cria a "barriga" da almofada (maior no centro, menor nas bordas)
+        let bulge = Math.cos(nx * Math.PI / 2) * Math.cos(ny * Math.PI / 2);
+        
+        // Empurra a frente para frente e as costas para trás
+        if (pz > 0.01) pz += bulge * 0.65; 
+        else if (pz < -0.01) pz -= bulge * 0.65; 
+        
+        // Simula a tensão do tecido e a costura repuxada nos cantos
+        let edgeDist = Math.max(Math.abs(nx), Math.abs(ny));
+        let pinch = Math.pow(edgeDist, 3) * 0.12; 
+        
+        px *= (1 - pinch);
+        py *= (1 - pinch);
+        
+        pos.setXYZ(i, px, py, pz);
+      }
+      geo.computeVertexNormals(); // Recalcula a luz batendo nas curvas
+      
+      // Mapeamento dos materiais do cubo: Direita, Esquerda, Cima, Baixo, Frente, Costas
+      // Usamos a 'colorMaterial' nas bordas para que a costura lateral mude de cor se o cliente quiser!
+      const materials = [colorMaterial, colorMaterial, colorMaterial, colorMaterial, printMaterial, printMaterial2];
+      
+      const pillow = new THREE.Mesh(geo, materials);
+      pillow.position.y = 0.2; // Faz ela flutuar suavemente acima do chão
+      pillow.castShadow = true;
+      pillow.receiveShadow = true;
+      
+      g.add(pillow);
       return g;
     }
   }
@@ -302,11 +315,12 @@ async function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
   
+  // Define o material (fosco vs brilhoso)
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide; 
-  } else if (type === 'mousepad') {
-    physicalProps.roughness = 0.9; physicalProps.clearcoat = 0.02; // Mousepad é fosco tipo tecido
+  } else if (type === 'almofada' || type === 'mousepad') {
+    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; // Tecido / Fosco
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
@@ -330,17 +344,32 @@ async function loadProduct(type) {
   
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
   
-  // Impede espelhamento da arte no Mousepad também
-  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad');
+  // Impede espelhamento da arte
+  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad' || type === 'almofada');
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
   
   printMaterial.map = artTex; printMaterial2.map = artTex2;
   
+  // DINÂMICA DA INTERFACE DE UPLOAD
   if (type === 'agenda') {
     document.getElementById('sectionUpload2').style.display = 'block';
     document.getElementById('titleUpload1').textContent = 'Capa (Esquerda)';
+    const sec2 = document.querySelector('#sectionUpload2 .section-title');
+    if(sec2) sec2.textContent = 'Fundo (Direita)';
+    const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
+    if(btn2) btn2.innerHTML = '⬆️ Carregar Fundo';
+
+  } else if (type === 'almofada') {
+    document.getElementById('sectionUpload2').style.display = 'block';
+    document.getElementById('titleUpload1').textContent = 'Frente (Quadrada)';
+    // Muda os textos para falar de "Frente" e "Costas"
+    const sec2 = document.querySelector('#sectionUpload2 .section-title');
+    if(sec2) sec2.textContent = 'Costas (Quadrada)';
+    const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
+    if(btn2) btn2.innerHTML = '⬆️ Carregar Costas';
+
   } else if (type === 'necessaire') {
     document.getElementById('sectionUpload2').style.display = 'none';
     document.getElementById('titleUpload1').textContent = 'Arte Completa (A4)';
@@ -358,17 +387,16 @@ async function loadProduct(type) {
     productGroup.remove(child); 
   }
   
-  // Define o comportamento da Câmera (Se for mousepad, levanta para ver de cima)
+  // Comportamento inicial da Câmera dependendo do produto
   if (type === 'mousepad') {
-    rot.x = 0.65; 
-    rot.y = 0;
-    targetZoom = 8.5;
+    rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
+  } else if (type === 'almofada') {
+    rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5; // Começa levemente de lado igual na sua foto
   } else {
-    rot.x = 0.15;
-    rot.y = -0.2;
-    targetZoom = 10.0;
+    rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
   }
 
+  // Gera o Layout de Exibição
   if (config.layout === 'double_agenda') {
     const pLeft = await config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
     const pRight = await config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
@@ -402,7 +430,7 @@ function redrawArt() {
     const cx = currentArtW / 2 - art.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art.offsetY * currentArtH * 0.3;
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad') artCtx.scale(-1, 1); 
+    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada') artCtx.scale(-1, 1); 
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx.restore();
   }
@@ -415,7 +443,7 @@ function redrawArt() {
     const cx = currentArtW / 2 - art2.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art2.offsetY * currentArtH * 0.3;
 
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad') artCtx2.scale(-1, 1);
+    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad' && currentProductType !== 'almofada') artCtx2.scale(-1, 1);
     artCtx2.rotate((art2.rotation * Math.PI) / 180);
     artCtx2.drawImage(art2.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx2.restore();
   }
@@ -435,7 +463,6 @@ window.addEventListener('mouseup', () => mouseDown = false);
 window.addEventListener('mousemove', e => {
   if (!mouseDown) return;
   rot.y += (e.clientX - lastX) * 0.011; rot.x += (e.clientY - lastY) * 0.011;
-  // Expandi o limite máximo do X para permitir olhar o mousepad de cima
   rot.x = Math.max(-0.4, Math.min(1.2, rot.x)); lastX = e.clientX; lastY = e.clientY;
 });
 canvas.addEventListener('touchstart', e => { e.preventDefault(); mouseDown = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }, { passive: false });
