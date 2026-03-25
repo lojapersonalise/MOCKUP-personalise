@@ -265,7 +265,7 @@ const products = {
         
         // 👇 COLOQUE O LINK RAW DO SEU GITHUB AQUI DENTRO DAS ASPAS:
         loader.load(
-          'LINK_DO_SEU_ARQUIVO_AQUI.obj',
+          'almofada.obj',
           function (object) {
             // 1. Centraliza o modelo 3D perfeitamente no eixo
             const box = new THREE.Box3().setFromObject(object);
