@@ -254,75 +254,68 @@ const products = {
     }
   },
 
-    // NOVO: SISTEMA DA ALMOFADA (Fofa, realista e com cantos arredondados)
+      // NOVO: SISTEMA DA ALMOFADA (Usando arquivo .OBJ)
   almofada: {
-    width: 2000, height: 2000, // Imagem Quadrada
+    width: 2000, height: 2000, 
     layout: 'single', 
     create: async function() {
       const g = new THREE.Group();
-      
-      const w = 3.2; const h = 3.2; const d = 0.15; 
-      // Aumentei os polígonos (64x64) para a curva do canto ficar com alta resolução e bem suave
-      const geo = new THREE.BoxGeometry(w, h, d, 64, 64, 4);
-      const pos = geo.attributes.position;
-      
-      const raioCanto = 0.45; // <-- Tamanho do arredondamento do canto (mágica acontece aqui)
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        
+        // 👇 COLOQUE O LINK RAW DO SEU GITHUB AQUI DENTRO DAS ASPAS:
+        loader.load(
+          'LINK_DO_SEU_ARQUIVO_AQUI.obj',
+          function (object) {
+            // 1. Centraliza o modelo 3D perfeitamente no eixo
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
 
-      for(let i=0; i<pos.count; i++) {
-        let px = pos.getX(i);
-        let py = pos.getY(i);
-        let pz = pos.getZ(i);
-        
-        // Posição percentual original (-1 a 1) para referência do tecido
-        let nx = px / (w/2);
-        let ny = py / (h/2);
-        
-        // 1. ARREDONDAMENTO DOS CANTOS
-        let limiteX = (w/2) - raioCanto;
-        let limiteY = (h/2) - raioCanto;
-        
-        if (Math.abs(px) > limiteX && Math.abs(py) > limiteY) {
-            let dx = Math.abs(px) - limiteX;
-            let dy = Math.abs(py) - limiteY;
-            let distancia = Math.sqrt(dx*dx + dy*dy);
+            // 2. Calcula o tamanho automático para não ficar gigante nem minúscula
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 3.6 / maxDim; 
             
-            // Puxa o "bico" do quadrado para dentro, formando um círculo perfeito no canto
-            if (distancia > raioCanto) {
-                let proporcao = raioCanto / distancia;
-                px = Math.sign(px) * (limiteX + dx * proporcao);
-                py = Math.sign(py) * (limiteY + dy * proporcao);
-            }
-        }
-        
-        // 2. ESTUFAR A ALMOFADA (Deixando gordinha no meio)
-        let bulge = Math.pow(Math.cos(nx * Math.PI / 2) * Math.cos(ny * Math.PI / 2), 0.6);
-        if (pz > 0.01) pz += bulge * 0.75; 
-        else if (pz < -0.01) pz -= bulge * 0.75; 
-        
-        // 3. ACHATAR A COSTURA NAS BORDAS
-        let edgeDist = Math.max(Math.abs(nx), Math.abs(ny));
-        pz *= (1.0 - Math.pow(edgeDist, 3)); 
-        
-        // 4. "PINCH" SIMULANDO A TENSÃO DA LINHA NA COSTURA
-        let pinch = Math.pow(edgeDist, 4) * 0.08; 
-        px *= (1 - pinch);
-        py *= (1 - pinch);
-        
-        pos.setXYZ(i, px, py, pz);
-      }
-      
-      geo.computeVertexNormals(); // Recalcula luz e sombra nas novas curvas
-      const materials = [colorMaterial, colorMaterial, colorMaterial, colorMaterial, printMaterial, printMaterial2];
-      
-      const pillow = new THREE.Mesh(geo, materials);
-      pillow.position.y = 0.2; 
-      pillow.castShadow = true;
-      pillow.receiveShadow = true;
-      
-      g.add(pillow);
-      return g;
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = -0.5; // Ajuste da altura em relação ao chão
+
+            // 3. Aplica os materiais (Textura)
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                
+                const nome = child.name.toLowerCase();
+                
+                // Tenta aplicar a arte das costas se o arquivo tiver uma parte chamada "costas" ou "back"
+                if (nome.includes('costa') || nome.includes('back')) {
+                  child.material = printMaterial2; // Arte das costas
+                } 
+                // Se o arquivo tiver uma costura/zíper separada
+                else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {
+                  child.material = zipperMaterial; // Segue a cor escolhida na paleta
+                } 
+                // Todo o resto recebe a arte da frente
+                else {
+                  child.material = printMaterial; // Arte da frente
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined, // Progresso do carregamento (não usamos)
+          function (error) {
+            console.error('Ops, erro ao carregar a almofada:', error);
+            resolve(g); // Evita travar a tela se der erro
+          }
+        );
+      });
     }
-  }
 };
 
 // ── 5. CARREGADOR DE PRODUTO DINÂMICO ──
