@@ -1,3 +1,12 @@
+{"thought": "CRITICAL INSTRUCTION 1: You may have access to a variety of tools at your disposal. Some tools may be for a specific task such as 'view_file' (for viewing contents of a file). Others may be very broadly applicable such as the ability to run a command on a terminal. Always prioritize using the most specific tool you can for the task at hand. Here are some rules:\n(a) NEVER run cat inside a bash command to create a new file or append to an existing file if custom tools exist.\n(b) ALWAYS use custom grep tools if available instead of running grep inside a bash command unless absolutely needed.\n(c) DO NOT use ls for listing, cat for viewing, grep for finding, sed for replacing if custom tools that perform these functionalities are available.\nCRITICAL INSTRUCTION 2: Before making tool calls T, think and explicitly list out any related tools for the task at hand. You can only execute a set of tools T if all other tools in the list are either more generic or cannot be used for the task at hand.\n\nThe user wants me to generate the complete code for their `app.js` file, incorporating the `almofada.obj` with the mirrored back image fix.\n\nThe user provided the working base code.\nI just need to find the `almofada: { ... }` object within the `products` dictionary, replace it with the new OBJ loading logic (including the URL `https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj` since they're using GitHub Pages, or just `'almofada.obj'` if it's local, but looking at the `necessaire` they are fetching from raw github link `https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj`, so I should probably use `'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj'` or just `'almofada.obj'`). Wait, the user said \"coloque o arquivo almofada.obj espelhando a imagem nas costas\" (put the almofada.obj file mirroring the image on the back).\n\nLet's integrate the OBJLoader logic into the user's provided code for `almofada`.\n\nThe provided `almofada` code in the user's snippet uses `BoxGeometry` to create the pillow procedurally:\n```javascript\n  almofada: {\n    width: 2000, height: 2000, // Imagem Quadrada\n    layout: 'single', \n    create: async function() {\n      const g = new THREE.Group();\n      // ... procedural geometry ...\n      const pillow = new THREE.Mesh(geo, materials);\n      // ...\n      g.add(pillow);\n      return g;\n    }\n  }\n```\n\nI need to replace this with the OBJLoader code that:\n1. Loads `almofada.obj`.\n2. Applies the materials (front, back, zipper/seam).\n3. Reverses the UV mapping for the back (`printMaterial2`) to fix the mirroring.\n\nLet's adapt the user's `almofada` object:\n```javascript\n  almofada: {\n    width: 2000, height: 2000,\n    layout: 'single',\n    create: async function() {\n      const g = new THREE.Group();\n      return new Promise((resolve) => {\n        const loader = new OBJLoader();\n        // Using the raw GitHub URL just like the necessaire uses, or simply 'almofada.obj' as instructed earlier.\n        // \"coloque o arquivo almofada.obj espelhando a imagem nas costas\"\n        // Let's use 'almofada.obj' or the full URL. Let's use 'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj' to be safe since necessaire uses it, but wait, the user previously had success with 'almofada.obj' local or relative. Let's use the URL since necessaire does, or just 'almofada.obj'. I'll use 'almofada.obj' as the user wrote in the prompt \"coloque o arquivo almofada.obj\". But let's look at necessaire:\n        // 'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/necessaire.obj'\n        // I'll use the same raw link format: 'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj' or just 'almofada.obj'. Let's use 'almofada.obj' as a default, or the full link to avoid CORS/Path issues.\n        loader.load(\n          'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj', // It's safer to use the raw link if it's hosted there\n          function (object) {\n            const box = new THREE.Box3().setFromObject(object);\n            const center = box.getCenter(new THREE.Vector3());\n            object.position.set(-center.x, -center.y, -center.z);\n\n            const size = box.getSize(new THREE.Vector3());\n            const maxDim = Math.max(size.x, size.y, size.z);\n            const scale = 3.6 / maxDim;\n            \n            const wrapper = new THREE.Group();\n            wrapper.add(object);\n            wrapper.scale.set(scale, scale, scale);\n            wrapper.position.y = 0.2; // Adjust based on scene\n\n            object.traverse(function (child) {\n              if (child.isMesh) {\n                child.castShadow = true;\n                child.receiveShadow = true;\n                \n                const nome = child.name.toLowerCase();\n                \n                if (nome.includes('costa') || nome.includes('back')) {\n                  child.material = printMaterial2;\n                  \n                  const uv = child.geometry.attributes.uv;\n                  if (uv) {\n                    for (let i = 0; i < uv.count; i++) {\n                      uv.setX(i, 1 - uv.getX(i));\n                    }\n                    uv.needsUpdate = true;\n                  }\n                } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {\n                  child.material = zipperMaterial;\n                } else {\n                  child.material = printMaterial;\n                }\n              }\n            });\n\n            g.add(wrapper);\n            resolve(g);\n          },\n          undefined,\n          function (error) {\n            console.error('Ops, erro ao carregar a almofada:', error);\n            resolve(g);\n          }\n        );\n      });\n    }\n  }\n```\nWait, previously I suggested using just `'almofada.obj'`. I will use `'almofada.obj'` and add a comment that if it fails they can use the raw URL, or I can just use the raw URL directly since they use it for necessaire. I will use the raw URL to be 100% safe. Wait! I should just use `'almofada.obj'` if they host it in the same repo, but the raw URL is foolproof.\n\nLet's put the full code together.\nI'll replace the procedural almofada with the OBJLoader almofada.\n\nCode analysis:\n```javascript\n// NOVO: SISTEMA DA ALMOFADA (Fofa, realista e com cantos arredondados)\n  almofada: {\n    width: 2000, height: 2000, // Imagem Quadrada\n    layout: 'single', \n    create: async function() {\n        // ... replacing this ...\n    }\n  }\n```\n\nWait, I should check the user's code for any specific materials used in their new code. They define `printMaterial`, `printMaterial2`, `colorMaterial`, `colorMaterialInside`, `zipperMaterial` at the top. So the material assignment is identical.\n\nLet's prepare the final block."}```Que bom que você conseguiu recuperar a versão original, Thales! O botão de "Histórico" (History) do GitHub é um verdadeiro salva-vidas nessas horas.
+
+Eu peguei exatamente o código que você me enviou aqui em cima e fiz **apenas uma alteração**: removi a almofada "procedural" (que o código tentava desenhar do zero) e coloquei o carregamento do arquivo **`almofada.obj`** junto com o **espelhamento da imagem das costas** (ajustando a coordenada UV).
+
+Também coloquei o link direto do GitHub (`raw.githubusercontent...`) igualzinho você já estava fazendo com a necessaire, para garantir 100% que ele vai achar o arquivo sem dar erro de pasta.
+
+Pode copiar tudo aqui embaixo e colar por cima do seu `app.js` atual:
+
+```javascript
 // ══════════════════════════════════════════
 //   APP.JS — Sistema Multi-Produtos 3D
 // ══════════════════════════════════════════
@@ -254,73 +263,76 @@ const products = {
     }
   },
 
-    // NOVO: SISTEMA DA ALMOFADA (Fofa, realista e com cantos arredondados)
+  // NOVO SISTEMA DA ALMOFADA COM OBJLOADER E CORREÇÃO DE ESPELHO
   almofada: {
-    width: 2000, height: 2000, // Imagem Quadrada
+    width: 2000, height: 2000,
     layout: 'single', 
     create: async function() {
       const g = new THREE.Group();
-      
-      const w = 3.2; const h = 3.2; const d = 0.15; 
-      // Aumentei os polígonos (64x64) para a curva do canto ficar com alta resolução e bem suave
-      const geo = new THREE.BoxGeometry(w, h, d, 64, 64, 4);
-      const pos = geo.attributes.position;
-      
-      const raioCanto = 0.45; // <-- Tamanho do arredondamento do canto (mágica acontece aqui)
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        
+        // Carrega o arquivo almofada.obj direto do GitHub igual a necessaire
+        loader.load(
+          'https://raw.githubusercontent.com/lojapersonalise/MOCKUP-personalise/main/almofada.obj',
+          function (object) {
+            // Centraliza
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
 
-      for(let i=0; i<pos.count; i++) {
-        let px = pos.getX(i);
-        let py = pos.getY(i);
-        let pz = pos.getZ(i);
-        
-        // Posição percentual original (-1 a 1) para referência do tecido
-        let nx = px / (w/2);
-        let ny = py / (h/2);
-        
-        // 1. ARREDONDAMENTO DOS CANTOS
-        let limiteX = (w/2) - raioCanto;
-        let limiteY = (h/2) - raioCanto;
-        
-        if (Math.abs(px) > limiteX && Math.abs(py) > limiteY) {
-            let dx = Math.abs(px) - limiteX;
-            let dy = Math.abs(py) - limiteY;
-            let distancia = Math.sqrt(dx*dx + dy*dy);
+            // Ajusta o tamanho da almofada automaticamente
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 3.6 / maxDim; 
             
-            // Puxa o "bico" do quadrado para dentro, formando um círculo perfeito no canto
-            if (distancia > raioCanto) {
-                let proporcao = raioCanto / distancia;
-                px = Math.sign(px) * (limiteX + dx * proporcao);
-                py = Math.sign(py) * (limiteY + dy * proporcao);
-            }
-        }
-        
-        // 2. ESTUFAR A ALMOFADA (Deixando gordinha no meio)
-        let bulge = Math.pow(Math.cos(nx * Math.PI / 2) * Math.cos(ny * Math.PI / 2), 0.6);
-        if (pz > 0.01) pz += bulge * 0.75; 
-        else if (pz < -0.01) pz -= bulge * 0.75; 
-        
-        // 3. ACHATAR A COSTURA NAS BORDAS
-        let edgeDist = Math.max(Math.abs(nx), Math.abs(ny));
-        pz *= (1.0 - Math.pow(edgeDist, 3)); 
-        
-        // 4. "PINCH" SIMULANDO A TENSÃO DA LINHA NA COSTURA
-        let pinch = Math.pow(edgeDist, 4) * 0.08; 
-        px *= (1 - pinch);
-        py *= (1 - pinch);
-        
-        pos.setXYZ(i, px, py, pz);
-      }
-      
-      geo.computeVertexNormals(); // Recalcula luz e sombra nas novas curvas
-      const materials = [colorMaterial, colorMaterial, colorMaterial, colorMaterial, printMaterial, printMaterial2];
-      
-      const pillow = new THREE.Mesh(geo, materials);
-      pillow.position.y = 0.2; 
-      pillow.castShadow = true;
-      pillow.receiveShadow = true;
-      
-      g.add(pillow);
-      return g;
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.2; // Altura no cenário
+
+            // Aplica os materiais
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                
+                const nome = child.name.toLowerCase();
+                
+                // ARTE DAS COSTAS
+                if (nome.includes('costa') || nome.includes('back')) {
+                  child.material = printMaterial2; 
+                  
+                  // 👇 A MÁGICA DO ESPELHO: Inverte a coordenada X (UV Mapping) das costas
+                  const uv = child.geometry.attributes.uv;
+                  if (uv) {
+                    for (let i = 0; i < uv.count; i++) {
+                      uv.setX(i, 1 - uv.getX(i)); 
+                    }
+                    uv.needsUpdate = true;
+                  }
+                } 
+                // COSTURA / ZÍPER
+                else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {
+                  child.material = zipperMaterial; 
+                } 
+                // ARTE DA FRENTE
+                else {
+                  child.material = printMaterial; 
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a almofada:', error);
+            resolve(g);
+          }
+        );
+      });
     }
   }
 };
