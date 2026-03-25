@@ -64,8 +64,6 @@ const printMaterial = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: art
 const printMaterial2 = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: artTex2, side: THREE.FrontSide, ...physicalProps });
 const colorMaterial = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.FrontSide, ...physicalProps });
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.BackSide, ...physicalProps });
-
-// NOVO: Criamos um material exclusivo para o zíper e detalhes (com um leve brilho para destacar do tecido)
 const zipperMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(currentColor), roughness: 0.4, metalness: 0.2 });
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
@@ -80,7 +78,7 @@ const products = {
   caneca: {
     width: 2618, height: 1000,
     layout: 'standard', spacing: 2.8, rotations: [-Math.PI / 2 - 0.35, Math.PI, Math.PI / 2 + 0.35],
-    create: function() {
+    create: async function() {
       const g = new THREE.Group();
       const h = 2.4, r = 1.0, wall = 0.08;
       const mOut = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, true), printMaterial); mOut.castShadow = true; g.add(mOut);
@@ -95,7 +93,7 @@ const products = {
   
   agenda: {
     width: 1240, height: 1754, layout: 'double_agenda',
-    createFront: function() {
+    createFront: async function() {
       const g = new THREE.Group();
       const w = 2.0, h = 2.828, d = 0.15; const bottom = -1.2; const yOff = bottom + h/2;
       const pageMat = new THREE.MeshPhysicalMaterial({ color: 0xf5f5f5, roughness: 1.0, clearcoat: 0 });
@@ -111,7 +109,7 @@ const products = {
       }
       return g;
     },
-    createBack: function() {
+    createBack: async function() {
       const g = new THREE.Group();
       const w = 2.0, h = 2.828, d = 0.15; const bottom = -1.2; const yOff = bottom + h/2;
       const pageMat = new THREE.MeshPhysicalMaterial({ color: 0xf5f5f5, roughness: 1.0, clearcoat: 0 });
@@ -164,11 +162,8 @@ const products = {
                 const name = child.name.toLowerCase();
                 
                 if (name.includes('body')) {
-                  // O Corpo recebe a arte do cliente
                   child.material = printMaterial;
                 } else {
-                  // ATUALIZAÇÃO: Tudo que não for corpo (zíper, alças, pingentes)
-                  // vai receber o nosso novo material dinâmico de zíper!
                   child.material = zipperMaterial;
                 }
               }
@@ -190,7 +185,7 @@ const products = {
   squeeze: {
     width: 2200, height: 1200,
     layout: 'standard', spacing: 2.8, rotations: [-Math.PI / 2 - 0.35, Math.PI, Math.PI / 2 + 0.35],
-    create: function() {
+    create: async function() {
       const g = new THREE.Group();
       const h = 3.2, r = 0.75; const yOff = 0.4; 
       const mBody = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, false), printMaterial); 
@@ -209,6 +204,94 @@ const products = {
       mLoop.rotation.x = Math.PI / 2 - 0.2; mLoop.scale.set(1, 1.2, 1); mLoop.castShadow = true; g.add(mLoop);
       return g;
     }
+  },
+
+  // NOVO: SISTEMA DO MOUSEPAD E MOUSE
+  mousepad: {
+    width: 2480, height: 1984, // Proporção ideal retangular
+    layout: 'single', // Diferente das canecas, ele aparece sozinho no meio
+    create: async function() {
+      const g = new THREE.Group();
+      
+      const w = 3.8;  // Largura
+      const h = 2.8;  // Altura
+      const r = 0.2;  // Arredondamento dos cantos
+
+      // 1. Desenha a forma do Mousepad
+      const shape = new THREE.Shape();
+      shape.moveTo(-w/2 + r, -h/2);
+      shape.lineTo(w/2 - r, -h/2);
+      shape.quadraticCurveTo(w/2, -h/2, w/2, -h/2 + r);
+      shape.lineTo(w/2, h/2 - r);
+      shape.quadraticCurveTo(w/2, h/2, w/2 - r, h/2);
+      shape.lineTo(-w/2 + r, h/2);
+      shape.quadraticCurveTo(-w/2, h/2, -w/2, h/2 - r);
+      shape.lineTo(-w/2, -h/2 + r);
+      shape.quadraticCurveTo(-w/2, -h/2, -w/2 + r, -h/2);
+
+      // 2. Cria a camada de cima (Tecido com a Arte)
+      const topGeo = new THREE.ShapeGeometry(shape);
+      const pos = topGeo.attributes.position;
+      const uv = topGeo.attributes.uv;
+      
+      // Ajusta o mapa de imagem (UV) para encaixar certinho nas bordas
+      for(let i=0; i<pos.count; i++){
+          let x = pos.getX(i);
+          let y = pos.getY(i);
+          uv.setXY(i, (x + w/2)/w, (y + h/2)/h);
+      }
+      const padTop = new THREE.Mesh(topGeo, printMaterial);
+      padTop.rotation.x = -Math.PI / 2; // Deita no chão
+      padTop.position.y = 0.051;        // Fica em cima da borracha
+      padTop.castShadow = true;
+      padTop.receiveShadow = true;
+      g.add(padTop);
+
+      // 3. Cria a base emborrachada preta
+      const extrudeSettings = { depth: 0.05, bevelEnabled: false };
+      const baseGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
+      const padBase = new THREE.Mesh(baseGeo, baseMat);
+      padBase.rotation.x = Math.PI / 2;
+      padBase.position.y = 0.05; 
+      padBase.castShadow = true;
+      padBase.receiveShadow = true;
+      g.add(padBase);
+
+      // 4. Cria o Mouse 3D do lado direito
+      const mouseGroup = new THREE.Group();
+      
+      // Corpo do Mouse Preto fosco/metálico
+      const mouseMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.4 });
+      const bodyGeo = new THREE.SphereGeometry(1, 32, 32);
+      const mouseBody = new THREE.Mesh(bodyGeo, mouseMat);
+      mouseBody.scale.set(0.35, 0.22, 0.65); // Amassa a esfera pra virar um mouse
+      mouseBody.position.y = 0.15; // Afunda um pouco no chão pra base ficar chata
+      mouseBody.castShadow = true;
+      mouseGroup.add(mouseBody);
+
+      // Rodinha do mouse Vermelha
+      const wheelGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.04, 16);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0xdd1111, roughness: 0.4 });
+      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(0, 0.33, -0.35); // Posiciona na frente do mouse
+      wheel.castShadow = true;
+      mouseGroup.add(wheel);
+
+      // Coloca o Mouse BEM FORA da estampa (do lado direito)
+      mouseGroup.position.set(w/2 + 0.6, 0, 0.3); 
+      mouseGroup.rotation.y = -0.2; // Vira ele um pouquinho de lado pra dar charme
+
+      g.add(mouseGroup);
+
+      // Move tudo levemente para a esquerda para a câmera focar no meio dos dois objetos
+      g.position.x = -0.3;
+      // Crava no chão da cena
+      g.position.y = -1.18; 
+
+      return g;
+    }
   }
 };
 
@@ -222,6 +305,9 @@ async function loadProduct(type) {
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide; 
+  } else if (type === 'mousepad') {
+    physicalProps.roughness = 0.9; physicalProps.clearcoat = 0.02; // Mousepad é fosco tipo tecido
+    printMaterial.side = THREE.FrontSide;
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
     printMaterial.side = THREE.FrontSide;
@@ -244,7 +330,8 @@ async function loadProduct(type) {
   
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
   
-  const noFlip = (type === 'agenda' || type === 'necessaire');
+  // Impede espelhamento da arte no Mousepad também
+  const noFlip = (type === 'agenda' || type === 'necessaire' || type === 'mousepad');
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -257,6 +344,9 @@ async function loadProduct(type) {
   } else if (type === 'necessaire') {
     document.getElementById('sectionUpload2').style.display = 'none';
     document.getElementById('titleUpload1').textContent = 'Arte Completa (A4)';
+  } else if (type === 'mousepad') {
+    document.getElementById('sectionUpload2').style.display = 'none';
+    document.getElementById('titleUpload1').textContent = 'Arte do Mousepad';
   } else {
     document.getElementById('sectionUpload2').style.display = 'none';
     document.getElementById('titleUpload1').textContent = 'Arte Principal';
@@ -268,10 +358,24 @@ async function loadProduct(type) {
     productGroup.remove(child); 
   }
   
+  // Define o comportamento da Câmera (Se for mousepad, levanta para ver de cima)
+  if (type === 'mousepad') {
+    rot.x = 0.65; 
+    rot.y = 0;
+    targetZoom = 8.5;
+  } else {
+    rot.x = 0.15;
+    rot.y = -0.2;
+    targetZoom = 10.0;
+  }
+
   if (config.layout === 'double_agenda') {
     const pLeft = await config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
     const pRight = await config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
     productGroup.add(pLeft, pRight);
+  } else if (config.layout === 'single') {
+    const master = await config.create();
+    productGroup.add(master);
   } else {
     const master = await config.create();
     const space = config.spacing; const rots = config.rotations;
@@ -298,7 +402,7 @@ function redrawArt() {
     const cx = currentArtW / 2 - art.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art.offsetY * currentArtH * 0.3;
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire') artCtx.scale(-1, 1); 
+    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad') artCtx.scale(-1, 1); 
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx.restore();
   }
@@ -311,16 +415,15 @@ function redrawArt() {
     const cx = currentArtW / 2 - art2.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art2.offsetY * currentArtH * 0.3;
 
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
-    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire') artCtx2.scale(-1, 1);
+    if (currentProductType !== 'agenda' && currentProductType !== 'necessaire' && currentProductType !== 'mousepad') artCtx2.scale(-1, 1);
     artCtx2.rotate((art2.rotation * Math.PI) / 180);
     artCtx2.drawImage(art2.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx2.restore();
   }
   artTex2.needsUpdate = true;
 
-  // ATUALIZAÇÃO: Quando você muda a cor no menu, ele avisa os 3 materiais!
   colorMaterial.color.set(currentColor); 
   colorMaterialInside.color.set(currentColor);
-  zipperMaterial.color.set(currentColor); // <-- O zíper muda de cor aqui!
+  zipperMaterial.color.set(currentColor);
 }
 
 // ── 7. CONTROLES MOUSE/TOUCH ──
@@ -332,14 +435,15 @@ window.addEventListener('mouseup', () => mouseDown = false);
 window.addEventListener('mousemove', e => {
   if (!mouseDown) return;
   rot.y += (e.clientX - lastX) * 0.011; rot.x += (e.clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.4, Math.min(0.5, rot.x)); lastX = e.clientX; lastY = e.clientY;
+  // Expandi o limite máximo do X para permitir olhar o mousepad de cima
+  rot.x = Math.max(-0.4, Math.min(1.2, rot.x)); lastX = e.clientX; lastY = e.clientY;
 });
 canvas.addEventListener('touchstart', e => { e.preventDefault(); mouseDown = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }, { passive: false });
 window.addEventListener('touchend', () => mouseDown = false);
 canvas.addEventListener('touchmove', e => {
   if (!mouseDown) return; e.preventDefault();
   rot.y += (e.touches[0].clientX - lastX) * 0.011; rot.x += (e.touches[0].clientY - lastY) * 0.011;
-  rot.x = Math.max(-0.4, Math.min(0.5, rot.x)); lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  rot.x = Math.max(-0.4, Math.min(1.2, rot.x)); lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
 }, { passive: false });
 canvas.addEventListener('wheel', e => { e.preventDefault(); targetZoom = Math.min(15, Math.max(6.0, targetZoom + e.deltaY * 0.01)); }, { passive: false });
 
