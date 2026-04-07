@@ -66,7 +66,6 @@ const colorMaterial = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(cu
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.BackSide, ...physicalProps });
 const zipperMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(currentColor), roughness: 0.4, metalness: 0.2 });
 
-// Material específico para o corpo da toalha (textura de tecido)
 const towelBodyMaterial = new THREE.MeshStandardMaterial({
   color: new THREE.Color(currentColor),
   roughness: 0.95,
@@ -454,7 +453,6 @@ const products = {
     }
   },
 
-  // ── NOVO: ALMOFADA RETANGULAR ──
   almofadaret: {
     width: 2480, height: 1754,
     layout: 'single',
@@ -513,7 +511,6 @@ const products = {
     }
   },
 
-  // ── NOVO: MOCHILA ──
   mochila: {
     width: 2000, height: 2000,
     layout: 'single',
@@ -524,6 +521,19 @@ const products = {
         loader.load(
           'mochila.obj',
           function (object) {
+            // ── LOG DE DIAGNÓSTICO ──
+            console.log('═══════════════════════════════');
+            console.log('MOCHILA — Meshes encontrados:');
+            const meshList = [];
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                meshList.push(child);
+                console.log(`  [${meshList.length}] nome: "${child.name}" | vértices: ${child.geometry.attributes.position?.count || '?'} | UV: ${child.geometry.attributes.uv ? 'SIM' : 'NÃO'}`);
+              }
+            });
+            console.log(`  TOTAL: ${meshList.length} meshes`);
+            console.log('═══════════════════════════════');
+
             const box = new THREE.Box3().setFromObject(object);
             const center = box.getCenter(new THREE.Vector3());
             object.position.set(-center.x, -center.y, -center.z);
@@ -537,29 +547,12 @@ const products = {
             wrapper.scale.set(scale, scale, scale);
             wrapper.position.y = 0.0;
 
+            // ── Aplica printMaterial em TODOS para diagnóstico visual ──
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
-                const nome = (child.name || '').toLowerCase();
-
-                if (nome.includes('costa') || nome.includes('back')) {
-                  child.material = printMaterial2;
-                  const uv = child.geometry.attributes.uv;
-                  if (uv) {
-                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
-                    uv.needsUpdate = true;
-                  }
-                } else if (
-                  nome.includes('zipper') || nome.includes('ziper') ||
-                  nome.includes('alca') || nome.includes('alça') ||
-                  nome.includes('strap') || nome.includes('metal') ||
-                  nome.includes('costura') || nome.includes('seam')
-                ) {
-                  child.material = zipperMaterial;
-                } else {
-                  child.material = printMaterial;
-                }
+                child.material = printMaterial;
               }
             });
 
@@ -577,7 +570,6 @@ const products = {
     }
   },
 
-  // ── NOVO: TOALHA ──
   toalha: {
     width: 2480, height: 827,
     layout: 'single',
@@ -601,7 +593,6 @@ const products = {
             wrapper.scale.set(scale, scale, scale);
             wrapper.position.y = 0.0;
 
-            // Contagem de meshes para fallback inteligente
             const meshes = [];
             object.traverse(function (child) {
               if (child.isMesh) meshes.push(child);
@@ -613,19 +604,14 @@ const products = {
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
 
-                // Faixa de impressão — identificada pelo nome do mesh
                 if (
                   nome.includes('print') || nome.includes('faixa') ||
                   nome.includes('label') || nome.includes('stamp') ||
                   nome.includes('bordado') || nome.includes('patch')
                 ) {
                   child.material = printMaterial;
-
-                // Se o modelo tiver apenas 2 meshes, o menor é a faixa (fallback)
                 } else if (meshes.length === 2 && child === meshes[1]) {
                   child.material = printMaterial;
-
-                // Corpo da toalha recebe a cor selecionada
                 } else {
                   child.material = towelBodyMaterial;
                 }
@@ -711,37 +697,30 @@ async function loadProduct(type) {
     if (titleUp1) titleUp1.textContent = 'Capa (Esquerda)';
     if (sec2) sec2.textContent = 'Fundo (Direita)';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Fundo';
-
   } else if (type === 'agenda_aberta') {
     if (secUp2) secUp2.style.display = 'block';
     if (titleUp1) titleUp1.textContent = 'Página Esquerda';
     if (sec2) sec2.textContent = 'Página Direita';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Direita';
-
   } else if (type === 'almofada' || type === 'almofadaret' || type === 'almochaveiro') {
     if (secUp2) secUp2.style.display = 'block';
     if (titleUp1) titleUp1.textContent = 'Frente';
     if (sec2) sec2.textContent = 'Costas';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
-
   } else if (type === 'mochila') {
     if (secUp2) secUp2.style.display = 'block';
     if (titleUp1) titleUp1.textContent = 'Frente da Mochila';
     if (sec2) sec2.textContent = 'Costas da Mochila';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
-
   } else if (type === 'necessaire') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte Completa (A4)';
-
   } else if (type === 'mousepad') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte do Mousepad';
-
   } else if (type === 'toalha') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Faixa';
-
   } else {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte Principal';
