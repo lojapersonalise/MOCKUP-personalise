@@ -512,64 +512,72 @@ const products = {
   },
 
   mochila: {
-    width: 2000, height: 2000,
-    layout: 'single',
-    create: async function() {
-      const g = new THREE.Group();
-      return new Promise((resolve) => {
-        const loader = new OBJLoader();
-        loader.load(
-          'mochila.obj',
-          function (object) {
-            // ── LOG DE DIAGNÓSTICO ──
-            console.log('═══════════════════════════════');
-            console.log('MOCHILA — Meshes encontrados:');
-            const meshList = [];
-            object.traverse(function (child) {
-              if (child.isMesh) {
-                meshList.push(child);
-                console.log(`  [${meshList.length}] nome: "${child.name}" | vértices: ${child.geometry.attributes.position?.count || '?'} | UV: ${child.geometry.attributes.uv ? 'SIM' : 'NÃO'}`);
-              }
-            });
-            console.log(`  TOTAL: ${meshList.length} meshes`);
-            console.log('═══════════════════════════════');
+  width: 2000, height: 2000,
+  layout: 'single',
+  create: async function() {
+    const g = new THREE.Group();
+    return new Promise((resolve) => {
+      const loader = new OBJLoader();
+      loader.load(
+        'mochila.obj',
+        function (object) {
+          const box = new THREE.Box3().setFromObject(object);
+          const center = box.getCenter(new THREE.Vector3());
+          object.position.set(-center.x, -center.y, -center.z);
 
-            const box = new THREE.Box3().setFromObject(object);
-            const center = box.getCenter(new THREE.Vector3());
-            object.position.set(-center.x, -center.y, -center.z);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = maxDim > 0 ? (4.0 / maxDim) : 1;
 
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = maxDim > 0 ? (4.0 / maxDim) : 1;
+          const wrapper = new THREE.Group();
+          wrapper.add(object);
+          wrapper.scale.set(scale, scale, scale);
+          wrapper.position.y = 0.0;
 
-            const wrapper = new THREE.Group();
-            wrapper.add(object);
-            wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = 0.0;
+          object.traverse(function (child) {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              const nome = (child.name || '').toLowerCase();
 
-            // ── Aplica printMaterial em TODOS para diagnóstico visual ──
-            object.traverse(function (child) {
-              if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
+              if (nome === 'front') {
+                // Frente da mochila — recebe a arte principal
                 child.material = printMaterial;
+
+              } else if (nome === 'back') {
+                // Costas da mochila — recebe a arte secundária (espelhada)
+                child.material = printMaterial2;
+                const uv = child.geometry.attributes.uv;
+                if (uv) {
+                  for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
+                  uv.needsUpdate = true;
+                }
+
+              } else if (nome === 'support' || nome === 'cords') {
+                // Alças e cordões — recebem a cor sólida
+                child.material = colorMaterial;
+
+              } else {
+                // Qualquer outro mesh inesperado — cor sólida
+                child.material = colorMaterial;
               }
-            });
+            }
+          });
 
-            g.add(wrapper);
-            resolve(g);
-          },
-          undefined,
-          function (error) {
-            console.error('Ops, erro ao carregar a mochila:', error);
-            alert('Aviso: O arquivo mochila.obj não foi encontrado.');
-            resolve(g);
-          }
-        );
-      });
-    }
-  },
-
+          g.add(wrapper);
+          resolve(g);
+        },
+        undefined,
+        function (error) {
+          console.error('Ops, erro ao carregar a mochila:', error);
+          alert('Aviso: O arquivo mochila.obj não foi encontrado.');
+          resolve(g);
+        }
+      );
+    });
+  }
+},
+  
   toalha: {
     width: 2480, height: 827,
     layout: 'single',
