@@ -45,7 +45,7 @@ scene.add(shadowPlane);
 
 // ── 3. MATERIAIS E CANVAS DUPLOS ──
 let currentColor = '#ffffff';
-let currentProductType = 'caneca';
+let currentProductType = 'caneca2';
 
 const physicalProps = { roughness: 0.02, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.02 };
 
@@ -81,6 +81,115 @@ scene.add(productGroup);
 
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
+
+  // ── CANECA 1 (umacaneca.obj) ──
+  caneca1: {
+    width: 2618, height: 1000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'umacaneca.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (5.5 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+                if (nome.includes('print')) {
+                  child.material = printMaterial;
+                } else {
+                  child.material = colorMaterial;
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a caneca 1:', error);
+            alert('Aviso: Arquivo umacaneca.obj não encontrado.');
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
+  // ── CANECA 2 (duascanecas.obj) ──
+  caneca2: {
+    width: 2618, height: 1000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'duascanecas.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (5.5 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+                if (nome.includes('print')) {
+                  // Frente usa printMaterial, verso usa printMaterial2
+                  if (nome.includes('back') || nome.includes('verso') || nome.includes('tras')) {
+                    child.material = printMaterial2;
+                  } else {
+                    child.material = printMaterial;
+                  }
+                } else {
+                  child.material = colorMaterial;
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a caneca 2:', error);
+            alert('Aviso: Arquivo duascanecas.obj não encontrado.');
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
+  // ── CANECA 3 (canecas.obj — original) ──
   caneca: {
     width: 2618, height: 1000,
     layout: 'single',
@@ -122,7 +231,7 @@ const products = {
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a caneca:', error);
+            console.error('Ops, erro ao carregar a caneca 3:', error);
             alert('Aviso: Arquivo canecas.obj não encontrado.');
             resolve(g);
           }
@@ -649,7 +758,7 @@ async function loadProduct(type) {
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1;
     printMaterial.side = THREE.FrontSide;
-  } else if (type === 'caneca') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2') {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0;
     printMaterial.side = THREE.DoubleSide;
   } else {
@@ -703,6 +812,11 @@ async function loadProduct(type) {
     if (titleUp1) titleUp1.textContent = 'Frente';
     if (sec2) sec2.textContent = 'Costas';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
+  } else if (type === 'caneca2') {
+    if (secUp2) secUp2.style.display = 'block';
+    if (titleUp1) titleUp1.textContent = 'Frente';
+    if (sec2) sec2.textContent = 'Verso';
+    if (btn2) btn2.innerHTML = '⬆️ Carregar Verso';
   } else if (type === 'mochila') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Mochila';
@@ -738,7 +852,7 @@ async function loadProduct(type) {
     rot.x = 0.3; rot.y = 0.1; targetZoom = 8.0;
   } else if (type === 'agenda_aberta') {
     rot.x = 0.35; rot.y = 0; targetZoom = 8.5;
-  } else if (type === 'caneca') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
@@ -821,7 +935,7 @@ function redrawArt() {
 }
 
 // ── 7. CONTROLES MOUSE/TOUCH ──
-const rot = { x: 0.15, y: -0.2, smoothX: 0.15, smoothY: -0.2 };
+const rot = { x: 0.15, y: 0, smoothX: 0.15, smoothY: 0 };
 let mouseDown = false, lastX = 0, lastY = 0, targetZoom = 10.0;
 
 canvas.addEventListener('mousedown', e => { mouseDown = true; lastX = e.clientX; lastY = e.clientY; });
@@ -915,22 +1029,17 @@ document.getElementById('customColor')?.addEventListener('input', function () {
 // ── EXPORTAÇÃO COM ALTA QUALIDADE + LOGO D'ÁGUA ──
 document.getElementById('btnExport')?.addEventListener('click', () => {
 
-  // 1. Aumenta o pixelRatio para alta qualidade
   const originalPixelRatio = renderer.getPixelRatio();
   renderer.setPixelRatio(3);
   renderer.setSize(800, 500, false);
 
-  // 2. Renderiza um frame em alta resolução
   renderer.render(scene, camera);
 
-  // 3. Captura o frame WebGL como imagem base
   const webglDataUrl = canvas.toDataURL('image/png');
 
-  // 4. Restaura o pixelRatio original
   renderer.setPixelRatio(originalPixelRatio);
   renderer.setSize(800, 500, false);
 
-  // 5. Cria canvas 2D temporário na mesma resolução do export
   const exportW = 800 * 3;
   const exportH = 500 * 3;
   const exportCanvas = document.createElement('canvas');
@@ -938,12 +1047,10 @@ document.getElementById('btnExport')?.addEventListener('click', () => {
   exportCanvas.height = exportH;
   const exportCtx = exportCanvas.getContext('2d');
 
-  // 6. Desenha o frame 3D no canvas 2D
   const webglImg = new Image();
   webglImg.onload = () => {
     exportCtx.drawImage(webglImg, 0, 0, exportW, exportH);
 
-    // 7. Carrega e desenha a logo marca d'água por cima
     const watermarkEl = document.querySelector('.watermark-logo');
     const logoSrc = watermarkEl ? watermarkEl.src : null;
 
@@ -951,7 +1058,6 @@ document.getElementById('btnExport')?.addEventListener('click', () => {
       const logoImg = new Image();
       logoImg.crossOrigin = 'anonymous';
       logoImg.onload = () => {
-        // Escala proporcional ao canvas de export (140px na tela → ~52px proporcional)
         const logoDisplayW = 140 * 3;
         const logoAspect = logoImg.naturalHeight / logoImg.naturalWidth;
         const logoDrawW = logoDisplayW;
@@ -962,7 +1068,6 @@ document.getElementById('btnExport')?.addEventListener('click', () => {
         exportCtx.drawImage(logoImg, margin, margin, logoDrawW, logoDrawH);
         exportCtx.globalAlpha = 1.0;
 
-        // 8. Gera o download
         const a = document.createElement('a');
         a.href = exportCanvas.toDataURL('image/png');
         a.download = 'mockup-personalise.png';
@@ -970,7 +1075,6 @@ document.getElementById('btnExport')?.addEventListener('click', () => {
         showToast('💾 Imagem salva em alta qualidade!');
       };
       logoImg.onerror = () => {
-        // Se falhar ao carregar logo, exporta sem ela
         const a = document.createElement('a');
         a.href = exportCanvas.toDataURL('image/png');
         a.download = 'mockup-personalise.png';
@@ -979,7 +1083,6 @@ document.getElementById('btnExport')?.addEventListener('click', () => {
       };
       logoImg.src = logoSrc;
     } else {
-      // Sem logo, exporta direto
       const a = document.createElement('a');
       a.href = exportCanvas.toDataURL('image/png');
       a.download = 'mockup-personalise.png';
@@ -998,7 +1101,7 @@ function showToast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-loadProduct('caneca');
+loadProduct('caneca2');
 
 // ── 9. LOOP DE ANIMAÇÃO ──
 (function animate() {
