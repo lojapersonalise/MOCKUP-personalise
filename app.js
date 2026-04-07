@@ -511,83 +511,73 @@ const products = {
     }
   },
 
+  // ── MOCHILA — CORRIGIDO ──
+  // O OBJ tem apenas 2 meshes reais:
+  //   [0] "back"  → é a frente VISUAL da mochila → printMaterial
+  //   [1] "cords" → são os cordões               → colorMaterial
   mochila: {
-  width: 2000, height: 2000,
-  layout: 'single',
-  create: async function() {
-    const g = new THREE.Group();
-    return new Promise((resolve) => {
-      const loader = new OBJLoader();
-      loader.load(
-        'mochila.obj',
-        function (object) {
-          const box = new THREE.Box3().setFromObject(object);
-          const center = box.getCenter(new THREE.Vector3());
-          object.position.set(-center.x, -center.y, -center.z);
+    width: 2000, height: 2000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'mochila.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
 
-          const size = box.getSize(new THREE.Vector3());
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = maxDim > 0 ? (4.0 / maxDim) : 1;
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (4.0 / maxDim) : 1;
 
-          const wrapper = new THREE.Group();
-          wrapper.add(object);
-          wrapper.scale.set(scale, scale, scale);
-          wrapper.position.y = 0.0;
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
 
-          // Coleta todos os meshes em ordem
-const meshList = [];
-object.traverse(function (child) {
-  if (child.isMesh) meshList.push(child);
-});
+            // Coleta meshes em ordem de aparição no OBJ
+            const meshList = [];
+            object.traverse(function (child) {
+              if (child.isMesh) meshList.push(child);
+            });
 
-console.log('Total meshes:', meshList.length);
-meshList.forEach((m, i) => console.log(`[${i}] "${m.name}"`));
+            console.log('Total meshes mochila:', meshList.length);
+            meshList.forEach((m, i) => console.log(`[${i}] "${m.name}"`));
 
-// Mapeia por índice (ordem do OBJ: support, front, back, cords)
-meshList.forEach(function (child, index) {
-  child.castShadow = true;
-  child.receiveShadow = true;
+            meshList.forEach(function (child, index) {
+              child.castShadow = true;
+              child.receiveShadow = true;
 
-  if (index === 0) {
-    // support — alça/base
-    child.material = colorMaterial;
+              if (index === 0) {
+                // "back" no OBJ = corpo principal / frente visual
+                child.material = printMaterial;
 
-  } else if (index === 1) {
-    // front — frente da mochila
-    child.material = printMaterial;
+              } else if (index === 1) {
+                // "cords" = alças e cordões
+                child.material = colorMaterial;
 
-  } else if (index === 2) {
-    // back — costas da mochila
-    child.material = printMaterial2;
-    const uv = child.geometry.attributes.uv;
-    if (uv) {
-      for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
-      uv.needsUpdate = true;
+              } else {
+                child.material = colorMaterial;
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a mochila:', error);
+            alert('Aviso: O arquivo mochila.obj não foi encontrado.');
+            resolve(g);
+          }
+        );
+      });
     }
+  },
 
-  } else if (index === 3) {
-    // cords — cordões
-    child.material = colorMaterial;
-
-  } else {
-    child.material = colorMaterial;
-  }
-});
-          
-          g.add(wrapper);
-          resolve(g);
-        },
-        undefined,
-        function (error) {
-          console.error('Ops, erro ao carregar a mochila:', error);
-          alert('Aviso: O arquivo mochila.obj não foi encontrado.');
-          resolve(g);
-        }
-      );
-    });
-  }
-},
-  
   toalha: {
     width: 2480, height: 827,
     layout: 'single',
@@ -726,10 +716,8 @@ async function loadProduct(type) {
     if (sec2) sec2.textContent = 'Costas';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
   } else if (type === 'mochila') {
-    if (secUp2) secUp2.style.display = 'block';
-    if (titleUp1) titleUp1.textContent = 'Frente da Mochila';
-    if (sec2) sec2.textContent = 'Costas da Mochila';
-    if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
+    if (secUp2) secUp2.style.display = 'none'; // ← desabilitado pois só há 1 face imprimível
+    if (titleUp1) titleUp1.textContent = 'Arte da Mochila';
   } else if (type === 'necessaire') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte Completa (A4)';
