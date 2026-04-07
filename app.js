@@ -106,14 +106,19 @@ const products = {
             wrapper.scale.set(scale, scale, scale);
             wrapper.position.y = 0.0;
 
+            // ✅ CORREÇÃO: mapeamento correto por nome de mesh
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-                if (nome.includes('print')) {
+
+                if (nome === 'print' || nome === 'decal') {
                   child.material = printMaterial;
+                } else if (nome === 'inside') {
+                  child.material = colorMaterialInside;
                 } else {
+                  // handle, other, bottom
                   child.material = colorMaterial;
                 }
               }
@@ -163,7 +168,6 @@ const products = {
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
                 if (nome.includes('print')) {
-                  // Frente usa printMaterial, verso usa printMaterial2
                   if (nome.includes('back') || nome.includes('verso') || nome.includes('tras')) {
                     child.material = printMaterial2;
                   } else {
@@ -791,6 +795,7 @@ async function loadProduct(type) {
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
   printMaterial.map = artTex; printMaterial2.map = artTex2;
+  printMaterial.needsUpdate = true; printMaterial2.needsUpdate = true; // ✅ força atualização do material
 
   const secUp2 = document.getElementById('sectionUpload2');
   const titleUp1 = document.getElementById('titleUpload1');
