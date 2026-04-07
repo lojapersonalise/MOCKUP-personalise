@@ -510,68 +510,61 @@ const products = {
       });
     }
   },
-  
-mochila: {
-  width: 2000, height: 2000,
-  layout: 'single',
-  create: async function() {
-    const g = new THREE.Group();
-    return new Promise((resolve) => {
-      const loader = new OBJLoader();
-      loader.load(
-        'mochila.obj',
-        function (object) {
-          const box = new THREE.Box3().setFromObject(object);
-          const center = box.getCenter(new THREE.Vector3());
-          object.position.set(-center.x, -center.y, -center.z);
 
-          const size = box.getSize(new THREE.Vector3());
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = maxDim > 0 ? (4.0 / maxDim) : 1;
+  mochila: {
+    width: 2000, height: 2000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'mochila.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
 
-          const wrapper = new THREE.Group();
-          wrapper.add(object);
-          wrapper.scale.set(scale, scale, scale);
-          wrapper.position.y = 0.0;
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (4.0 / maxDim) : 1;
 
-          const meshList = [];
-          object.traverse(function (child) {
-            if (child.isMesh) meshList.push(child);
-          });
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
 
-          console.log('Total meshes mochila:', meshList.length);
-          meshList.forEach((m, i) => console.log(`[${i}] "${m.name}"`));
+            const meshList = [];
+            object.traverse(function (child) {
+              if (child.isMesh) meshList.push(child);
+            });
 
-          meshList.forEach(function (child, index) {
-            child.castShadow = true;
-            child.receiveShadow = true;
+            console.log('Total meshes mochila:', meshList.length);
+            meshList.forEach((m, i) => console.log(`[${i}] "${m.name}"`));
 
-            if (index === 0) {
-              // "support" = corpo principal da mochila → recebe a arte
-              child.material = printMaterial;
+            meshList.forEach(function (child, index) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              if (index === 0) {
+                child.material = printMaterial;
+              } else {
+                child.material = colorMaterial;
+              }
+            });
 
-            } else if (index === 1) {
-              // "cords" = cordões → recebe a cor
-              child.material = colorMaterial;
-
-            } else {
-              child.material = colorMaterial;
-            }
-          });
-
-          g.add(wrapper);
-          resolve(g);
-        },
-        undefined,
-        function (error) {
-          console.error('Ops, erro ao carregar a mochila:', error);
-          alert('Aviso: O arquivo mochila.obj não foi encontrado.');
-          resolve(g);
-        }
-      );
-    });
-  }
-},
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a mochila:', error);
+            alert('Aviso: O arquivo mochila.obj não foi encontrado.');
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
 
   toalha: {
     width: 2480, height: 827,
@@ -711,7 +704,7 @@ async function loadProduct(type) {
     if (sec2) sec2.textContent = 'Costas';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
   } else if (type === 'mochila') {
-    if (secUp2) secUp2.style.display = 'none'; // ← desabilitado pois só há 1 face imprimível
+    if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Mochila';
   } else if (type === 'necessaire') {
     if (secUp2) secUp2.style.display = 'none';
@@ -848,11 +841,29 @@ canvas.addEventListener('touchmove', e => {
 canvas.addEventListener('wheel', e => { e.preventDefault(); targetZoom = Math.min(15, Math.max(6.0, targetZoom + e.deltaY * 0.01)); }, { passive: false });
 
 // ── 8. EVENTOS DA INTERFACE (UI) ──
+
+// Botões fixos (Caneca, Agenda A4, Interior Agenda)
 document.getElementById('productSelector')?.addEventListener('click', e => {
   if (e.target.classList.contains('prod-btn')) {
+    // Desmarca botões
     document.querySelectorAll('.prod-btn').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active'); loadProduct(e.target.dataset.product); showToast('📦 Produto alterado!');
+    // Reseta o select
+    const sel = document.getElementById('productSelectExtra');
+    if (sel) sel.value = '';
+    // Ativa o botão clicado
+    e.target.classList.add('active');
+    loadProduct(e.target.dataset.product);
+    showToast('📦 Produto alterado!');
   }
+});
+
+// Select dropdown (demais produtos)
+document.getElementById('productSelectExtra')?.addEventListener('change', function() {
+  if (!this.value) return;
+  // Desmarca todos os botões fixos
+  document.querySelectorAll('.prod-btn').forEach(b => b.classList.remove('active'));
+  loadProduct(this.value);
+  showToast('📦 Produto alterado!');
 });
 
 document.getElementById('offsetX')?.addEventListener('input', function() {
