@@ -17,7 +17,6 @@
   <div class="main">
     <div class="canvas-wrapper">
       <div class="canvas-container">
-        <!-- Logo Marca d'água -->
         <img src="logo-personalise.png" class="watermark-logo" alt="Marca d'água" onerror="this.style.display='none'" />
         <canvas id="canvas3d"></canvas>
       </div>
@@ -29,7 +28,7 @@
       <div class="sidebar-section">
         <div class="section-title">Produto</div>
         <div class="product-selector" id="productSelector">
-          <button class="prod-btn active" data-product="caneca">Caneca</button>
+          <button class="prod-btn active" data-product="caneca2">2 Canecas</button>
           <button class="prod-btn" data-product="agenda">Agenda A4</button>
           <button class="prod-btn" data-product="agenda_aberta">Interior Agenda</button>
         </div>
@@ -37,6 +36,8 @@
         <!-- SELECT DROPDOWN PARA DEMAIS PRODUTOS -->
         <select id="productSelectExtra">
           <option value="">— Outros produtos —</option>
+          <option value="caneca1">1 Caneca</option>
+          <option value="caneca">3 Canecas</option>
           <option value="squeeze">Squeeze</option>
           <option value="necessaire">Necessaire</option>
           <option value="mousepad">Mousepad</option>
@@ -54,7 +55,6 @@
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
         <input type="file" id="fileInput" style="display:none" accept="image/*" />
 
-        <!-- UPLOAD DA CONTRA-CAPA (SÓ APARECE EM PRODUTOS DUPLOS) -->
         <div id="sectionUpload2" style="display:none; margin-top: 20px;">
           <div class="section-title">Fundo (Direita)</div>
           <button class="btn-upload" style="background: #8b5cf6;" onclick="document.getElementById('fileInput2').click()">⬆️ Carregar Fundo</button>
