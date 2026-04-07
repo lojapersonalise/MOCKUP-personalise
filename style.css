@@ -7,8 +7,8 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; 
 /* ══════════════════════════════════════════
    HEADER & LAYOUT
 ══════════════════════════════════════════ */
-header { background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); z-index: 10; }
-.logo { font-size: 1.2rem; font-weight: 700; color: #2563eb; letter-spacing: -0.5px; }
+header { background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 0 24px; height: 50px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); z-index: 10; }
+.logo { font-size: 1.1rem; font-weight: 700; color: #2563eb; letter-spacing: -0.5px; }
 .logo span { color: #111; }
 .main { display: flex; flex: 1; overflow: hidden; }
 
@@ -19,31 +19,44 @@ header { background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 0 24px;
 .canvas-container { position: relative; width: 800px; height: 500px; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); overflow: hidden; background: #6b2b8e; }
 #canvas3d { display: block; background: transparent; cursor: grab; width: 100% !important; height: 100% !important; }
 #canvas3d:active { cursor: grabbing; }
-.watermark-logo { position: absolute; top: 24px; left: 24px; width: 140px; opacity: 0.65; pointer-events: none; z-index: 5; }
+.watermark-logo { position: absolute; top: 24px; left: 24px; width: 130px; opacity: 0.65; pointer-events: none; z-index: 5; }
 
 /* ══════════════════════════════════════════
    SIDEBAR & BOTÕES
 ══════════════════════════════════════════ */
-.sidebar { width: 320px; background: #ffffff; border-left: 1px solid #e0e0e0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
-.sidebar-section { padding: 20px; border-bottom: 1px solid #f0f0f0; }
+.sidebar {
+  width: 300px;
+  background: #ffffff;
+  border-left: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  /* ✅ Solução 1: sidebar rola sozinha, página não */
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+}
+
+/* ✅ Solução 2: seções mais compactas */
+.sidebar-section { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
 .sidebar-section:last-child { border-bottom: none; }
-.section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 14px; }
+.section-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 10px; }
 
 /* --- BOTÕES DE PRODUTO FIXOS (3 botões) --- */
-.product-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.prod-btn { flex: auto; padding: 10px 4px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
+.product-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.prod-btn { flex: auto; padding: 7px 4px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 7px; font-size: 0.7rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
 .prod-btn:hover { background: #e2e8f0; }
 .prod-btn.active { background: #2563eb; color: #ffffff; border-color: #2563eb; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); }
 
 /* --- SELECT DROPDOWN OUTROS PRODUTOS --- */
 #productSelectExtra {
   width: 100%;
-  padding: 10px 36px 10px 12px;
-  border-radius: 8px;
+  padding: 8px 36px 8px 12px;
+  border-radius: 7px;
   border: 1px solid #cbd5e1;
   background-color: #f8fafc;
   color: #475569;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
   outline: none;
@@ -59,8 +72,8 @@ header { background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 0 24px;
 #productSelectExtra option { background-color: #ffffff; color: #475569; font-weight: 600; }
 
 /* --- BOTÃO UPLOAD & EXPORT --- */
-.btn-upload, .btn-export { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; color: #fff; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-.btn-upload { background: #2563eb; margin-bottom: 10px; }
+.btn-upload, .btn-export { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 9px; color: #fff; border: none; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.btn-upload { background: #2563eb; margin-bottom: 8px; }
 .btn-upload:hover { background: #1d4ed8; }
 .btn-export { background: #16a34a; }
 .btn-export:hover { background: #15803d; }
@@ -68,34 +81,41 @@ header { background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 0 24px;
 /* ══════════════════════════════════════════
    SLIDERS / CONTROLES
 ══════════════════════════════════════════ */
-.control-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #374151; font-weight: 500; margin-top: 10px; }
-input[type="range"] { width: 100%; accent-color: #2563eb; margin-top: 5px; cursor: pointer; }
+.control-label { display: flex; justify-content: space-between; font-size: 0.72rem; color: #374151; font-weight: 500; margin-top: 8px; }
+input[type="range"] { width: 100%; accent-color: #2563eb; margin-top: 4px; cursor: pointer; }
 
 /* ══════════════════════════════════════════
    LISTA DE CORES
 ══════════════════════════════════════════ */
-#productColors { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; }
-#productColors .color-dot { display: flex; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s; }
+#productColors { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 6px; }
+#productColors .color-dot { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: transform 0.2s; }
 #productColors .color-dot:hover { transform: translateX(3px); }
-#productColors .color-dot .circle { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #cbd5e1; flex-shrink: 0; transition: all 0.2s; }
+#productColors .color-dot .circle { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #cbd5e1; flex-shrink: 0; transition: all 0.2s; }
 #productColors .color-dot.active .circle { box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3b82f6; border-color: transparent; }
-#productColors .color-dot span { font-size: 12px; color: #475569; font-weight: 600; line-height: 1.1; }
+#productColors .color-dot span { font-size: 11px; color: #475569; font-weight: 600; line-height: 1.1; }
 .paleta-circle { background: conic-gradient(from 90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); display: flex; align-items: center; justify-content: center; position: relative; }
 
 /* ══════════════════════════════════════════
-   TOAST & RESPONSIVIDADE
+   SCROLLBAR SIDEBAR
 ══════════════════════════════════════════ */
-.toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 999; }
-.toast.show { opacity: 1; transform: translateY(0); }
 .sidebar::-webkit-scrollbar { width: 4px; }
 .sidebar::-webkit-scrollbar-track { background: transparent; }
 .sidebar::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
 
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+.toast { position: fixed; bottom: 24px; right: 24px; background: #111827; color: #fff; padding: 9px 16px; border-radius: 8px; font-size: 0.78rem; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 999; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ══════════════════════════════════════════
+   RESPONSIVIDADE
+══════════════════════════════════════════ */
 @media (max-width: 768px) {
   body { overflow-y: auto; height: auto; }
   .main { flex-direction: column; overflow: visible; }
-  .sidebar { width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
+  .sidebar { width: 100%; height: auto; border-left: none; border-top: 1px solid #e0e0e0; overflow-y: visible; }
   .canvas-wrapper { padding: 0; }
   .canvas-container { border-radius: 0; max-width: 100%; height: 350px; }
-  #productSelectExtra { font-size: 0.85rem; padding: 12px 36px 12px 12px; }
+  #productSelectExtra { font-size: 0.85rem; padding: 10px 36px 10px 12px; }
 }
