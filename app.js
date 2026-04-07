@@ -17,7 +17,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0; 
+renderer.toneMappingExposure = 1.0;
 if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
@@ -66,6 +66,13 @@ const colorMaterial = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(cu
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.BackSide, ...physicalProps });
 const zipperMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(currentColor), roughness: 0.4, metalness: 0.2 });
 
+// Material específico para o corpo da toalha (textura de tecido)
+const towelBodyMaterial = new THREE.MeshStandardMaterial({
+  color: new THREE.Color(currentColor),
+  roughness: 0.95,
+  metalness: 0.0
+});
+
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 const art2 = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 
@@ -77,7 +84,7 @@ scene.add(productGroup);
 const products = {
   caneca: {
     width: 2618, height: 1000,
-    layout: 'single', 
+    layout: 'single',
     create: async function() {
       const g = new THREE.Group();
       return new Promise((resolve) => {
@@ -91,8 +98,8 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = maxDim > 0 ? (5.5 / maxDim) : 1; 
-            
+            const scale = maxDim > 0 ? (5.5 / maxDim) : 1;
+
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
@@ -103,7 +110,6 @@ const products = {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-                
                 if (nome.includes('print')) {
                   child.material = printMaterial;
                 } else {
@@ -125,7 +131,7 @@ const products = {
       });
     }
   },
-  
+
   agenda: {
     width: 1240, height: 1754, layout: 'double_agenda',
     createFront: async function() {
@@ -162,45 +168,40 @@ const products = {
     }
   },
 
-  // === NOVO: INTERIOR DA AGENDA ===
   agenda_aberta: {
-    width: 1240, height: 1754, 
-    layout: 'single', 
+    width: 1240, height: 1754,
+    layout: 'single',
     create: async function() {
       const g = new THREE.Group();
       const w = 2.0, h = 2.828, d = 0.04;
       const bottom = -1.2;
       const yOff = bottom + h/2;
-      
-      // Papel fosco e sem brilho
+
       const pageMat = new THREE.MeshPhysicalMaterial({ color: 0xfafafa, roughness: 0.9, clearcoat: 0 });
-      
-      // Bloco Esquerdo (Upload 1 fica na face da Frente [índice 4])
+
       const matLeft = [ pageMat, pageMat, pageMat, pageMat, printMaterial, pageMat ];
       const mLeft = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matLeft);
-      mLeft.position.set(-w/2 - 0.02, yOff, 0); // Desloca para a esquerda
+      mLeft.position.set(-w/2 - 0.02, yOff, 0);
       mLeft.castShadow = true; mLeft.receiveShadow = true;
       g.add(mLeft);
 
-      // Bloco Direito (Upload 2 fica na face da Frente [índice 4])
       const matRight = [ pageMat, pageMat, pageMat, pageMat, printMaterial2, pageMat ];
       const mRight = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matRight);
-      mRight.position.set(w/2 + 0.02, yOff, 0); // Desloca para a direita
+      mRight.position.set(w/2 + 0.02, yOff, 0);
       mRight.castShadow = true; mRight.receiveShadow = true;
       g.add(mRight);
 
-      // Espiral Perfurando no centro exato (X = 0)
       const wireMat = new THREE.MeshPhysicalMaterial({ color: 0xdddddd, metalness: 0.5, roughness: 0.5 });
       for(let i=0; i<16; i++) {
         const ringY = (bottom + 0.2) + i * (h - 0.4) / 15;
         const torusGeo = new THREE.TorusGeometry(0.06, 0.012, 16, 32);
-        
+
         const ring1 = new THREE.Mesh(torusGeo, wireMat);
         ring1.position.set(0, ringY, 0);
         ring1.rotation.x = Math.PI/2;
         ring1.castShadow = true;
         g.add(ring1);
-        
+
         const ring2 = new THREE.Mesh(torusGeo, wireMat);
         ring2.position.set(0, ringY + 0.03, 0);
         ring2.rotation.x = Math.PI/2;
@@ -213,9 +214,8 @@ const products = {
 
   necessaire: {
     width: 1754, height: 2480,
-    layout: 'standard', spacing: 3.4, 
-    rotations: [-0.45, 0.15, 3.4], 
-    
+    layout: 'standard', spacing: 3.4,
+    rotations: [-0.45, 0.15, 3.4],
     create: async function() {
       const g = new THREE.Group();
       return new Promise((resolve) => {
@@ -229,12 +229,12 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 3.5 / maxDim; 
-            
+            const scale = 3.5 / maxDim;
+
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = -0.6; 
+            wrapper.position.y = -0.6;
 
             object.traverse(function (child) {
               if (child.isMesh) {
@@ -267,31 +267,31 @@ const products = {
     layout: 'standard', spacing: 2.8, rotations: [-Math.PI / 2 - 0.35, Math.PI, Math.PI / 2 + 0.35],
     create: async function() {
       const g = new THREE.Group();
-      const h = 3.2, r = 0.75; const yOff = 0.4; 
-      const mBody = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, false), printMaterial); 
+      const h = 3.2, r = 0.75; const yOff = 0.4;
+      const mBody = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 64, 1, false), printMaterial);
       mBody.position.y = yOff; mBody.castShadow = true; g.add(mBody);
-      const mNeck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.85, r, 0.3, 64, 1, false), colorMaterial); 
+      const mNeck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.85, r, 0.3, 64, 1, false), colorMaterial);
       mNeck.position.y = h/2 + 0.15 + yOff; mNeck.castShadow = true; g.add(mNeck);
       const capMat = new THREE.MeshPhysicalMaterial({ color: 0x111111, roughness: 0.6, clearcoat: 0.1 });
-      const mLidBase = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.87, r * 0.87, 0.4, 64), capMat); 
+      const mLidBase = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.87, r * 0.87, 0.4, 64), capMat);
       mLidBase.position.y = h/2 + 0.5 + yOff; mLidBase.castShadow = true; g.add(mLidBase);
       const mSpout = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.25, 32), capMat);
       mSpout.position.set(0, h/2 + 0.8 + yOff, 0.35); mSpout.castShadow = true; g.add(mSpout);
       const mSpoutCap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.05, 32), capMat);
       mSpoutCap.position.set(0, h/2 + 0.93 + yOff, 0.35); g.add(mSpoutCap);
-      const mLoop = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 16, 32), capMat); 
-      mLoop.position.set(0, h/2 + 0.65 + yOff, -0.45); 
+      const mLoop = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 16, 32), capMat);
+      mLoop.position.set(0, h/2 + 0.65 + yOff, -0.45);
       mLoop.rotation.x = Math.PI / 2 - 0.2; mLoop.scale.set(1, 1.2, 1); mLoop.castShadow = true; g.add(mLoop);
       return g;
     }
   },
 
   mousepad: {
-    width: 2480, height: 1984, 
-    layout: 'single', 
+    width: 2480, height: 1984,
+    layout: 'single',
     create: async function() {
       const g = new THREE.Group();
-      const w = 3.8; const h = 2.8; const r = 0.2;  
+      const w = 3.8; const h = 2.8; const r = 0.2;
 
       const shape = new THREE.Shape();
       shape.moveTo(-w/2 + r, -h/2);
@@ -308,39 +308,39 @@ const products = {
       const pos = topGeo.attributes.position;
       const uv = topGeo.attributes.uv;
       for(let i=0; i<pos.count; i++){
-          let x = pos.getX(i); let y = pos.getY(i);
-          uv.setXY(i, (x + w/2)/w, (y + h/2)/h);
+        let x = pos.getX(i); let y = pos.getY(i);
+        uv.setXY(i, (x + w/2)/w, (y + h/2)/h);
       }
       const padTop = new THREE.Mesh(topGeo, printMaterial);
-      padTop.rotation.x = -Math.PI / 2; padTop.position.y = 0.051;        
+      padTop.rotation.x = -Math.PI / 2; padTop.position.y = 0.051;
       padTop.castShadow = true; padTop.receiveShadow = true; g.add(padTop);
 
       const baseGeo = new THREE.ExtrudeGeometry(shape, { depth: 0.05, bevelEnabled: false });
       const baseMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
       const padBase = new THREE.Mesh(baseGeo, baseMat);
-      padBase.rotation.x = Math.PI / 2; padBase.position.y = 0.05; 
+      padBase.rotation.x = Math.PI / 2; padBase.position.y = 0.05;
       padBase.castShadow = true; padBase.receiveShadow = true; g.add(padBase);
 
       const mouseGroup = new THREE.Group();
       const mouseMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.4 });
       const mouseBody = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), mouseMat);
-      mouseBody.scale.set(0.35, 0.22, 0.65); mouseBody.position.y = 0.15; 
+      mouseBody.scale.set(0.35, 0.22, 0.65); mouseBody.position.y = 0.15;
       mouseBody.castShadow = true; mouseGroup.add(mouseBody);
 
       const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 16), new THREE.MeshStandardMaterial({ color: 0xdd1111, roughness: 0.4 }));
-      wheel.rotation.z = Math.PI / 2; wheel.position.set(0, 0.33, -0.35); 
+      wheel.rotation.z = Math.PI / 2; wheel.position.set(0, 0.33, -0.35);
       wheel.castShadow = true; mouseGroup.add(wheel);
 
-      mouseGroup.position.set(w/2 + 0.6, 0, 0.3); mouseGroup.rotation.y = -0.2; 
+      mouseGroup.position.set(w/2 + 0.6, 0, 0.3); mouseGroup.rotation.y = -0.2;
       g.add(mouseGroup);
-      g.position.x = -0.3; g.position.y = -1.18; 
+      g.position.x = -0.3; g.position.y = -1.18;
       return g;
     }
   },
 
   almofada: {
     width: 2000, height: 2000,
-    layout: 'single', 
+    layout: 'single',
     create: async function() {
       const g = new THREE.Group();
       return new Promise((resolve) => {
@@ -354,30 +354,30 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = maxDim > 0 ? (3.6 / maxDim) : 1; 
-            
+            const scale = maxDim > 0 ? (3.6 / maxDim) : 1;
+
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = 0.2; 
+            wrapper.position.y = 0.2;
 
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-                
+
                 if (nome.includes('costa') || nome.includes('back')) {
-                  child.material = printMaterial2; 
+                  child.material = printMaterial2;
                   const uv = child.geometry.attributes.uv;
                   if (uv) {
-                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); 
+                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
                     uv.needsUpdate = true;
                   }
                 } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {
-                  child.material = zipperMaterial; 
+                  child.material = zipperMaterial;
                 } else {
-                  child.material = printMaterial; 
+                  child.material = printMaterial;
                 }
               }
             });
@@ -398,7 +398,7 @@ const products = {
 
   almochaveiro: {
     width: 2000, height: 2000,
-    layout: 'single', 
+    layout: 'single',
     create: async function() {
       const g = new THREE.Group();
       return new Promise((resolve) => {
@@ -412,30 +412,30 @@ const products = {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = maxDim > 0 ? (3.0 / maxDim) : 1; 
-            
+            const scale = maxDim > 0 ? (3.0 / maxDim) : 1;
+
             const wrapper = new THREE.Group();
             wrapper.add(object);
             wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = 0.2; 
+            wrapper.position.y = 0.2;
 
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-                
+
                 if (nome.includes('costa') || nome.includes('back')) {
-                  child.material = printMaterial2; 
+                  child.material = printMaterial2;
                   const uv = child.geometry.attributes.uv;
                   if (uv) {
-                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); 
+                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
                     uv.needsUpdate = true;
                   }
                 } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('argola') || nome.includes('ring') || nome.includes('metal')) {
-                  child.material = zipperMaterial; 
+                  child.material = zipperMaterial;
                 } else {
-                  child.material = printMaterial; 
+                  child.material = printMaterial;
                 }
               }
             });
@@ -452,6 +452,198 @@ const products = {
         );
       });
     }
+  },
+
+  // ── NOVO: ALMOFADA RETANGULAR ──
+  almofadaret: {
+    width: 2480, height: 1754,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'almofadaret.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (4.2 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.2;
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+
+                if (nome.includes('costa') || nome.includes('back')) {
+                  child.material = printMaterial2;
+                  const uv = child.geometry.attributes.uv;
+                  if (uv) {
+                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
+                    uv.needsUpdate = true;
+                  }
+                } else if (nome.includes('costura') || nome.includes('seam') || nome.includes('zipper')) {
+                  child.material = zipperMaterial;
+                } else {
+                  child.material = printMaterial;
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a almofada retangular:', error);
+            alert('Aviso: O arquivo almofadaret.obj não foi encontrado.');
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
+  // ── NOVO: MOCHILA ──
+  mochila: {
+    width: 2000, height: 2000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'mochila.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (4.0 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+
+                if (nome.includes('costa') || nome.includes('back')) {
+                  child.material = printMaterial2;
+                  const uv = child.geometry.attributes.uv;
+                  if (uv) {
+                    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
+                    uv.needsUpdate = true;
+                  }
+                } else if (
+                  nome.includes('zipper') || nome.includes('ziper') ||
+                  nome.includes('alca') || nome.includes('alça') ||
+                  nome.includes('strap') || nome.includes('metal') ||
+                  nome.includes('costura') || nome.includes('seam')
+                ) {
+                  child.material = zipperMaterial;
+                } else {
+                  child.material = printMaterial;
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a mochila:', error);
+            alert('Aviso: O arquivo mochila.obj não foi encontrado.');
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
+  // ── NOVO: TOALHA ──
+  toalha: {
+    width: 2480, height: 827,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'toalha.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (5.0 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            // Contagem de meshes para fallback inteligente
+            const meshes = [];
+            object.traverse(function (child) {
+              if (child.isMesh) meshes.push(child);
+            });
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+
+                // Faixa de impressão — identificada pelo nome do mesh
+                if (
+                  nome.includes('print') || nome.includes('faixa') ||
+                  nome.includes('label') || nome.includes('stamp') ||
+                  nome.includes('bordado') || nome.includes('patch')
+                ) {
+                  child.material = printMaterial;
+
+                // Se o modelo tiver apenas 2 meshes, o menor é a faixa (fallback)
+                } else if (meshes.length === 2 && child === meshes[1]) {
+                  child.material = printMaterial;
+
+                // Corpo da toalha recebe a cor selecionada
+                } else {
+                  child.material = towelBodyMaterial;
+                }
+              }
+            });
+
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Ops, erro ao carregar a toalha:', error);
+            alert('Aviso: O arquivo toalha.obj não foi encontrado.');
+            resolve(g);
+          }
+        );
+      });
+    }
   }
 };
 
@@ -461,46 +653,54 @@ async function loadProduct(type) {
   const config = products[type];
   currentArtW = config.width;
   currentArtH = config.height;
-  
+
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
-    printMaterial.side = THREE.DoubleSide; 
-  } else if (type === 'almofada' || type === 'mousepad' || type === 'almochaveiro' || type === 'agenda_aberta') {
-    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0; 
+    printMaterial.side = THREE.DoubleSide;
+  } else if (
+    type === 'almofada' || type === 'almofadaret' ||
+    type === 'mousepad' || type === 'almochaveiro' ||
+    type === 'agenda_aberta' || type === 'mochila' || type === 'toalha'
+  ) {
+    physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'agenda') {
-    physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1; 
+    physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1;
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'caneca') {
-    physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
-    printMaterial.side = THREE.DoubleSide; 
+    physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0;
+    printMaterial.side = THREE.DoubleSide;
   } else {
-    physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0; 
+    physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0;
     printMaterial.side = THREE.FrontSide;
   }
-  
+
   [printMaterial, printMaterial2, colorMaterial, colorMaterialInside].forEach(mat => {
     mat.roughness = physicalProps.roughness; mat.clearcoat = physicalProps.clearcoat;
   });
-  
+
   artTex.dispose(); artTex2.dispose();
-  
+
   artCanvas.width = currentArtW; artCanvas.height = currentArtH;
   artCanvas2.width = currentArtW; artCanvas2.height = currentArtH;
-  
+
   artTex = new THREE.CanvasTexture(artCanvas);
   artTex2 = new THREE.CanvasTexture(artCanvas2);
-  
+
   if (THREE.SRGBColorSpace) { artTex.colorSpace = THREE.SRGBColorSpace; artTex2.colorSpace = THREE.SRGBColorSpace; }
-  
-  // Adicionado a agenda_aberta no bloco que não inverte a arte horizontalmente
-  const noFlip = (type === 'agenda' || type === 'agenda_aberta' || type === 'necessaire' || type === 'mousepad' || type === 'almofada' || type === 'almochaveiro');
+
+  const noFlip = (
+    type === 'agenda' || type === 'agenda_aberta' ||
+    type === 'necessaire' || type === 'mousepad' ||
+    type === 'almofada' || type === 'almofadaret' ||
+    type === 'almochaveiro' || type === 'mochila' || type === 'toalha'
+  );
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  
+
   printMaterial.map = artTex; printMaterial2.map = artTex2;
-  
+
   const secUp2 = document.getElementById('sectionUpload2');
   const titleUp1 = document.getElementById('titleUpload1');
   const sec2 = document.querySelector('#sectionUpload2 .section-title');
@@ -518,10 +718,16 @@ async function loadProduct(type) {
     if (sec2) sec2.textContent = 'Página Direita';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Direita';
 
-  } else if (type === 'almofada' || type === 'almochaveiro') {
+  } else if (type === 'almofada' || type === 'almofadaret' || type === 'almochaveiro') {
     if (secUp2) secUp2.style.display = 'block';
-    if (titleUp1) titleUp1.textContent = 'Frente (Quadrada)';
-    if (sec2) sec2.textContent = 'Costas (Quadrada)';
+    if (titleUp1) titleUp1.textContent = 'Frente';
+    if (sec2) sec2.textContent = 'Costas';
+    if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
+
+  } else if (type === 'mochila') {
+    if (secUp2) secUp2.style.display = 'block';
+    if (titleUp1) titleUp1.textContent = 'Frente da Mochila';
+    if (sec2) sec2.textContent = 'Costas da Mochila';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Costas';
 
   } else if (type === 'necessaire') {
@@ -532,24 +738,33 @@ async function loadProduct(type) {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte do Mousepad';
 
+  } else if (type === 'toalha') {
+    if (secUp2) secUp2.style.display = 'none';
+    if (titleUp1) titleUp1.textContent = 'Arte da Faixa';
+
   } else {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte Principal';
   }
 
-  while(productGroup.children.length > 0){ 
+  while(productGroup.children.length > 0){
     const child = productGroup.children[0];
     child.traverse(c => { if(c.isMesh) c.geometry.dispose(); });
-    productGroup.remove(child); 
+    productGroup.remove(child);
   }
-  
+
   if (type === 'mousepad') {
     rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'almofada' || type === 'almochaveiro') {
-    rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5; 
+    rot.x = 0.05; rot.y = 0.25; targetZoom = 9.5;
+  } else if (type === 'almofadaret') {
+    rot.x = 0.05; rot.y = 0.25; targetZoom = 8.5;
+  } else if (type === 'mochila') {
+    rot.x = 0.1; rot.y = 0.2; targetZoom = 9.0;
+  } else if (type === 'toalha') {
+    rot.x = 0.3; rot.y = 0.1; targetZoom = 8.0;
   } else if (type === 'agenda_aberta') {
-    // Nova perspectiva focada mais de cima para ver as folhas
-    rot.x = 0.35; rot.y = 0; targetZoom = 8.5; 
+    rot.x = 0.35; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'caneca') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
@@ -557,8 +772,8 @@ async function loadProduct(type) {
   }
 
   if (config.layout === 'double_agenda') {
-    const pLeft = await config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12; 
-    const pRight = await config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12; 
+    const pLeft = await config.createFront(); pLeft.position.x = -1.15; pLeft.rotation.y = 0.12;
+    const pRight = await config.createBack(); pRight.position.x = 1.15; pRight.rotation.y = -0.12;
     productGroup.add(pLeft, pRight);
   } else if (config.layout === 'single') {
     const master = await config.create();
@@ -571,12 +786,12 @@ async function loadProduct(type) {
     const pRight = master.clone(); pRight.position.x = space; pRight.rotation.y = rots[2];
     productGroup.add(pLeft, pCenter, pRight);
   }
-  
+
   art.scale = 1.0; art.offsetX = 0; art.offsetY = 0; art2.scale = 1.0; art2.offsetX = 0; art2.offsetY = 0;
   const sEl = document.getElementById('artScale'); if(sEl) sEl.value = 100;
   const vEl = document.getElementById('valScale'); if(vEl) vEl.textContent = '100%';
   const oX = document.getElementById('offsetX'); if(oX) oX.value = 0;
-  
+
   redrawArt();
 }
 
@@ -589,10 +804,16 @@ function redrawArt() {
     const cx = currentArtW / 2 - art.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art.offsetY * currentArtH * 0.3;
 
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
-    
-    const isNormal = (currentProductType === 'agenda' || currentProductType === 'agenda_aberta' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
-    if (!isNormal) artCtx.scale(-1, 1); 
-    
+
+    const isNormal = (
+      currentProductType === 'agenda' || currentProductType === 'agenda_aberta' ||
+      currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
+      currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
+      currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
+      currentProductType === 'toalha'
+    );
+    if (!isNormal) artCtx.scale(-1, 1);
+
     artCtx.rotate((art.rotation * Math.PI) / 180);
     artCtx.drawImage(art.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx.restore();
   }
@@ -605,18 +826,25 @@ function redrawArt() {
     const cx = currentArtW / 2 - art2.offsetX * currentArtW * 0.3; const cy = currentArtH / 2 + art2.offsetY * currentArtH * 0.3;
 
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
-    
-    const isNormal = (currentProductType === 'agenda' || currentProductType === 'agenda_aberta' || currentProductType === 'necessaire' || currentProductType === 'mousepad' || currentProductType === 'almofada' || currentProductType === 'almochaveiro');
+
+    const isNormal = (
+      currentProductType === 'agenda' || currentProductType === 'agenda_aberta' ||
+      currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
+      currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
+      currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
+      currentProductType === 'toalha'
+    );
     if (!isNormal) artCtx2.scale(-1, 1);
-    
+
     artCtx2.rotate((art2.rotation * Math.PI) / 180);
     artCtx2.drawImage(art2.image, -iw / 2 * fitScale, -ih / 2 * fitScale, iw * fitScale, ih * fitScale); artCtx2.restore();
   }
   artTex2.needsUpdate = true;
 
-  colorMaterial.color.set(currentColor); 
+  colorMaterial.color.set(currentColor);
   colorMaterialInside.color.set(currentColor);
   zipperMaterial.color.set(currentColor);
+  towelBodyMaterial.color.set(currentColor);
 }
 
 // ── 7. CONTROLES MOUSE/TOUCH ──
@@ -647,14 +875,25 @@ document.getElementById('productSelector')?.addEventListener('click', e => {
   }
 });
 
-document.getElementById('offsetX')?.addEventListener('input', function() { art.offsetX = parseFloat(this.value); art2.offsetX = parseFloat(this.value); document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2); redrawArt(); });
-document.getElementById('artScale')?.addEventListener('input', function() { art.scale = parseFloat(this.value) / 100; art2.scale = parseFloat(this.value) / 100; document.getElementById('valScale').textContent = this.value + '%'; redrawArt(); });
+document.getElementById('offsetX')?.addEventListener('input', function() {
+  art.offsetX = parseFloat(this.value); art2.offsetX = parseFloat(this.value);
+  document.getElementById('valOffsetX').textContent = parseFloat(this.value).toFixed(2); redrawArt();
+});
+document.getElementById('artScale')?.addEventListener('input', function() {
+  art.scale = parseFloat(this.value) / 100; art2.scale = parseFloat(this.value) / 100;
+  document.getElementById('valScale').textContent = this.value + '%'; redrawArt();
+});
 
 document.getElementById('fileInput')?.addEventListener('change', function () {
   const file = this.files[0]; if (!file) return; const reader = new FileReader();
   reader.onload = ev => {
     const img = new Image();
-    img.onload = () => { art.image = img; art.scale = 1.0; art2.scale = 1.0; document.getElementById('artScale').value = 100; document.getElementById('valScale').textContent = '100%'; redrawArt(); showToast('✅ Arte carregada!'); };
+    img.onload = () => {
+      art.image = img; art.scale = 1.0; art2.scale = 1.0;
+      document.getElementById('artScale').value = 100;
+      document.getElementById('valScale').textContent = '100%';
+      redrawArt(); showToast('✅ Arte carregada!');
+    };
     img.src = ev.target.result;
   }; reader.readAsDataURL(file);
 });
