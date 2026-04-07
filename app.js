@@ -534,28 +534,46 @@ const products = {
           wrapper.scale.set(scale, scale, scale);
           wrapper.position.y = 0.0;
 
-          object.traverse(function (child) {
-  if (child.isMesh) {
-    child.castShadow = true;
-    child.receiveShadow = true;
-    const nome = (child.name || '').toLowerCase();
-
-    console.log(`Mesh: "${nome}" | UV: ${child.geometry.attributes.uv ? 'SIM' : 'NÃO'} | Faces: ${child.geometry.index ? child.geometry.index.count / 3 : '?'}`);
-
-    if (nome === 'front') {
-      // Teste: material sólido vermelho puro
-      child.material = new THREE.MeshStandardMaterial({ color: 0xff0000, side: THREE.DoubleSide });
-
-    } else if (nome === 'back') {
-      // Teste: material sólido azul puro
-      child.material = new THREE.MeshStandardMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
-
-    } else if (nome === 'support' || nome === 'cords') {
-      child.material = new THREE.MeshStandardMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-    }
-  }
+          // Coleta todos os meshes em ordem
+const meshList = [];
+object.traverse(function (child) {
+  if (child.isMesh) meshList.push(child);
 });
 
+console.log('Total meshes:', meshList.length);
+meshList.forEach((m, i) => console.log(`[${i}] "${m.name}"`));
+
+// Mapeia por índice (ordem do OBJ: support, front, back, cords)
+meshList.forEach(function (child, index) {
+  child.castShadow = true;
+  child.receiveShadow = true;
+
+  if (index === 0) {
+    // support — alça/base
+    child.material = colorMaterial;
+
+  } else if (index === 1) {
+    // front — frente da mochila
+    child.material = printMaterial;
+
+  } else if (index === 2) {
+    // back — costas da mochila
+    child.material = printMaterial2;
+    const uv = child.geometry.attributes.uv;
+    if (uv) {
+      for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
+      uv.needsUpdate = true;
+    }
+
+  } else if (index === 3) {
+    // cords — cordões
+    child.material = colorMaterial;
+
+  } else {
+    child.material = colorMaterial;
+  }
+});
+          
           g.add(wrapper);
           resolve(g);
         },
