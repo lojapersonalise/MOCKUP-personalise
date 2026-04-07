@@ -29,11 +29,34 @@ header { background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 0 24px;
 .sidebar-section:last-child { border-bottom: none; }
 .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 14px; }
 
-/* --- NOVO: BOTÕES DE PRODUTO --- */
-.product-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+/* --- BOTÕES DE PRODUTO FIXOS (3 botões) --- */
+.product-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .prod-btn { flex: auto; padding: 10px 4px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
 .prod-btn:hover { background: #e2e8f0; }
 .prod-btn.active { background: #2563eb; color: #ffffff; border-color: #2563eb; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); }
+
+/* --- SELECT DROPDOWN OUTROS PRODUTOS --- */
+#productSelectExtra {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: all 0.2s;
+}
+#productSelectExtra:hover { background-color: #e2e8f0; border-color: #94a3b8; }
+#productSelectExtra:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); }
+#productSelectExtra option { background-color: #ffffff; color: #475569; font-weight: 600; }
 
 /* --- BOTÃO UPLOAD & EXPORT --- */
 .btn-upload, .btn-export { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px; color: #fff; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
@@ -74,4 +97,5 @@ input[type="range"] { width: 100%; accent-color: #2563eb; margin-top: 5px; curso
   .sidebar { width: 100%; border-left: none; border-top: 1px solid #e0e0e0; }
   .canvas-wrapper { padding: 0; }
   .canvas-container { border-radius: 0; max-width: 100%; height: 350px; }
+  #productSelectExtra { font-size: 0.85rem; padding: 12px 36px 12px 12px; }
 }
