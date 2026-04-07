@@ -24,7 +24,7 @@
     </div>
 
     <div class="sidebar">
-      
+
       <!-- SELETOR DE PRODUTOS -->
       <div class="sidebar-section">
         <div class="section-title">Produto</div>
@@ -37,6 +37,9 @@
           <button class="prod-btn" data-product="mousepad">Mousepad</button>
           <button class="prod-btn" data-product="almofada">Almofada</button>
           <button class="prod-btn" data-product="almochaveiro">Almochaveiro</button>
+          <button class="prod-btn" data-product="almofadaret">Almofada Ret.</button>
+          <button class="prod-btn" data-product="mochila">Mochila</button>
+          <button class="prod-btn" data-product="toalha">Toalha</button>
         </div>
       </div>
 
@@ -46,7 +49,7 @@
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
         <input type="file" id="fileInput" style="display:none" accept="image/*" />
 
-        <!-- UPLOAD DA CONTRA-CAPA (SÓ APARECE NA AGENDA) -->
+        <!-- UPLOAD DA CONTRA-CAPA (SÓ APARECE EM PRODUTOS DUPLOS) -->
         <div id="sectionUpload2" style="display:none; margin-top: 20px;">
           <div class="section-title">Fundo (Direita)</div>
           <button class="btn-upload" style="background: #8b5cf6;" onclick="document.getElementById('fileInput2').click()">⬆️ Carregar Fundo</button>
@@ -58,7 +61,7 @@
         <div class="section-title">Ajustes da Arte</div>
         <div class="control-label"><span>Horizontal</span><span id="valOffsetX">0</span></div>
         <input type="range" id="offsetX" min="-1" max="1" step="0.01" value="0" />
-        
+
         <div class="control-label"><span>Tamanho</span><span id="valScale">100%</span></div>
         <input type="range" id="artScale" min="10" max="300" step="1" value="100" />
       </div>
@@ -66,24 +69,24 @@
       <div class="sidebar-section">
         <div class="section-title">Cores do Produto</div>
         <div id="productColors">
-            <div class="color-dot active" data-color="#ffffff"><div class="circle" style="background: #ffffff;"></div><span>Branco</span></div>
-            <div class="color-dot" data-color="#C57881"><div class="circle" style="background: #C57881;"></div><span>Rosa Queimado</span></div>
-            <div class="color-dot" data-color="#1A181C"><div class="circle" style="background: #1A181C;"></div><span>Preto</span></div>
-            <div class="color-dot" data-color="#E24329"><div class="circle" style="background: #E24329;"></div><span>Laranja Claro</span></div>
-            <div class="color-dot" data-color="#F7D015"><div class="circle" style="background: #F7D015;"></div><span>Amarelo</span></div>
-            <div class="color-dot" data-color="#CE2B25"><div class="circle" style="background: #CE2B25;"></div><span>Vermelho</span></div>
-            <div class="color-dot" data-color="#2386C2"><div class="circle" style="background: #2386C2;"></div><span>Azul</span></div>
-            <div class="color-dot" data-color="#F0A8B9"><div class="circle" style="background: #F0A8B9;"></div><span>Rosa Claro</span></div>
-            <div class="color-dot" data-color="#7FC84F"><div class="circle" style="background: #7FC84F;"></div><span>Verde Limão</span></div>
-            <div class="color-dot" data-color="#AC89C1"><div class="circle" style="background: #AC89C1;"></div><span>Lilás</span></div>
-            <div class="color-dot" data-color="#FA5019"><div class="circle" style="background: #FA5019;"></div><span>Laranja Vivo</span></div>
+          <div class="color-dot active" data-color="#ffffff"><div class="circle" style="background: #ffffff;"></div><span>Branco</span></div>
+          <div class="color-dot" data-color="#C57881"><div class="circle" style="background: #C57881;"></div><span>Rosa Queimado</span></div>
+          <div class="color-dot" data-color="#1A181C"><div class="circle" style="background: #1A181C;"></div><span>Preto</span></div>
+          <div class="color-dot" data-color="#E24329"><div class="circle" style="background: #E24329;"></div><span>Laranja Claro</span></div>
+          <div class="color-dot" data-color="#F7D015"><div class="circle" style="background: #F7D015;"></div><span>Amarelo</span></div>
+          <div class="color-dot" data-color="#CE2B25"><div class="circle" style="background: #CE2B25;"></div><span>Vermelho</span></div>
+          <div class="color-dot" data-color="#2386C2"><div class="circle" style="background: #2386C2;"></div><span>Azul</span></div>
+          <div class="color-dot" data-color="#F0A8B9"><div class="circle" style="background: #F0A8B9;"></div><span>Rosa Claro</span></div>
+          <div class="color-dot" data-color="#7FC84F"><div class="circle" style="background: #7FC84F;"></div><span>Verde Limão</span></div>
+          <div class="color-dot" data-color="#AC89C1"><div class="circle" style="background: #AC89C1;"></div><span>Lilás</span></div>
+          <div class="color-dot" data-color="#FA5019"><div class="circle" style="background: #FA5019;"></div><span>Laranja Vivo</span></div>
 
-            <label class="color-dot" style="margin: 0; cursor: pointer;">
-                <div class="circle paleta-circle">
-                    <input type="color" id="customColor" value="#ffffff" style="opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none;">
-                </div>
-                <span>Paleta Livre</span>
-            </label>
+          <label class="color-dot" style="margin: 0; cursor: pointer;">
+            <div class="circle paleta-circle">
+              <input type="color" id="customColor" value="#ffffff" style="opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none;">
+            </div>
+            <span>Paleta Livre</span>
+          </label>
         </div>
       </div>
 
@@ -94,11 +97,11 @@
   </div>
 
   <script type="importmap">
-    { 
-      "imports": { 
+    {
+      "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-      } 
+      }
     }
   </script>
   <script type="module" src="app.js"></script>
