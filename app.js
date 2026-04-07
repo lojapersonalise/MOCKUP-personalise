@@ -842,25 +842,21 @@ canvas.addEventListener('wheel', e => { e.preventDefault(); targetZoom = Math.mi
 
 // ── 8. EVENTOS DA INTERFACE (UI) ──
 
-// Botões fixos (Caneca, Agenda A4, Interior Agenda)
+// Botões fixos
 document.getElementById('productSelector')?.addEventListener('click', e => {
   if (e.target.classList.contains('prod-btn')) {
-    // Desmarca botões
     document.querySelectorAll('.prod-btn').forEach(b => b.classList.remove('active'));
-    // Reseta o select
     const sel = document.getElementById('productSelectExtra');
     if (sel) sel.value = '';
-    // Ativa o botão clicado
     e.target.classList.add('active');
     loadProduct(e.target.dataset.product);
     showToast('📦 Produto alterado!');
   }
 });
 
-// Select dropdown (demais produtos)
+// Select dropdown
 document.getElementById('productSelectExtra')?.addEventListener('change', function() {
   if (!this.value) return;
-  // Desmarca todos os botões fixos
   document.querySelectorAll('.prod-btn').forEach(b => b.classList.remove('active'));
   loadProduct(this.value);
   showToast('📦 Produto alterado!');
@@ -916,9 +912,82 @@ document.getElementById('customColor')?.addEventListener('input', function () {
   currentColor = this.value; redrawArt();
 });
 
+// ── EXPORTAÇÃO COM ALTA QUALIDADE + LOGO D'ÁGUA ──
 document.getElementById('btnExport')?.addEventListener('click', () => {
+
+  // 1. Aumenta o pixelRatio para alta qualidade
+  const originalPixelRatio = renderer.getPixelRatio();
+  renderer.setPixelRatio(3);
+  renderer.setSize(800, 500, false);
+
+  // 2. Renderiza um frame em alta resolução
   renderer.render(scene, camera);
-  const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = 'mockup-personalise.png'; a.click(); showToast('💾 Imagem salva!');
+
+  // 3. Captura o frame WebGL como imagem base
+  const webglDataUrl = canvas.toDataURL('image/png');
+
+  // 4. Restaura o pixelRatio original
+  renderer.setPixelRatio(originalPixelRatio);
+  renderer.setSize(800, 500, false);
+
+  // 5. Cria canvas 2D temporário na mesma resolução do export
+  const exportW = 800 * 3;
+  const exportH = 500 * 3;
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = exportW;
+  exportCanvas.height = exportH;
+  const exportCtx = exportCanvas.getContext('2d');
+
+  // 6. Desenha o frame 3D no canvas 2D
+  const webglImg = new Image();
+  webglImg.onload = () => {
+    exportCtx.drawImage(webglImg, 0, 0, exportW, exportH);
+
+    // 7. Carrega e desenha a logo marca d'água por cima
+    const watermarkEl = document.querySelector('.watermark-logo');
+    const logoSrc = watermarkEl ? watermarkEl.src : null;
+
+    if (logoSrc) {
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.onload = () => {
+        // Escala proporcional ao canvas de export (140px na tela → ~52px proporcional)
+        const logoDisplayW = 140 * 3;
+        const logoAspect = logoImg.naturalHeight / logoImg.naturalWidth;
+        const logoDrawW = logoDisplayW;
+        const logoDrawH = logoDisplayW * logoAspect;
+        const margin = 24 * 3;
+
+        exportCtx.globalAlpha = 0.65;
+        exportCtx.drawImage(logoImg, margin, margin, logoDrawW, logoDrawH);
+        exportCtx.globalAlpha = 1.0;
+
+        // 8. Gera o download
+        const a = document.createElement('a');
+        a.href = exportCanvas.toDataURL('image/png');
+        a.download = 'mockup-personalise.png';
+        a.click();
+        showToast('💾 Imagem salva em alta qualidade!');
+      };
+      logoImg.onerror = () => {
+        // Se falhar ao carregar logo, exporta sem ela
+        const a = document.createElement('a');
+        a.href = exportCanvas.toDataURL('image/png');
+        a.download = 'mockup-personalise.png';
+        a.click();
+        showToast('💾 Imagem salva!');
+      };
+      logoImg.src = logoSrc;
+    } else {
+      // Sem logo, exporta direto
+      const a = document.createElement('a');
+      a.href = exportCanvas.toDataURL('image/png');
+      a.download = 'mockup-personalise.png';
+      a.click();
+      showToast('💾 Imagem salva!');
+    }
+  };
+  webglImg.src = webglDataUrl;
 });
 
 let toastTimer;
