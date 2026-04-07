@@ -22,6 +22,7 @@
       </div>
     </div>
 
+    <!-- ✅ sidebar sem overflow na página, rola internamente -->
     <div class="sidebar">
 
       <!-- SELETOR DE PRODUTOS -->
@@ -55,13 +56,14 @@
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
         <input type="file" id="fileInput" style="display:none" accept="image/*" />
 
-        <div id="sectionUpload2" style="display:none; margin-top: 20px;">
+        <div id="sectionUpload2" style="display:none; margin-top: 14px;">
           <div class="section-title">Fundo (Direita)</div>
           <button class="btn-upload" style="background: #8b5cf6;" onclick="document.getElementById('fileInput2').click()">⬆️ Carregar Fundo</button>
           <input type="file" id="fileInput2" style="display:none" accept="image/*" />
         </div>
       </div>
 
+      <!-- AJUSTES DA ARTE -->
       <div class="sidebar-section">
         <div class="section-title">Ajustes da Arte</div>
         <div class="control-label"><span>Horizontal</span><span id="valOffsetX">0</span></div>
@@ -71,6 +73,7 @@
         <input type="range" id="artScale" min="10" max="300" step="1" value="100" />
       </div>
 
+      <!-- CORES DO PRODUTO -->
       <div class="sidebar-section">
         <div class="section-title">Cores do Produto</div>
         <div id="productColors">
@@ -95,9 +98,11 @@
         </div>
       </div>
 
+      <!-- EXPORTAR -->
       <div class="sidebar-section">
         <button class="btn-export" id="btnExport">💾 Baixar PNG</button>
       </div>
+
     </div>
   </div>
 
