@@ -535,34 +535,26 @@ const products = {
           wrapper.position.y = 0.0;
 
           object.traverse(function (child) {
-            if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
-              const nome = (child.name || '').toLowerCase();
+  if (child.isMesh) {
+    child.castShadow = true;
+    child.receiveShadow = true;
+    const nome = (child.name || '').toLowerCase();
 
-              if (nome === 'front') {
-                // Frente da mochila — recebe a arte principal
-                child.material = printMaterial;
+    console.log(`Mesh: "${nome}" | UV: ${child.geometry.attributes.uv ? 'SIM' : 'NÃO'} | Faces: ${child.geometry.index ? child.geometry.index.count / 3 : '?'}`);
 
-              } else if (nome === 'back') {
-                // Costas da mochila — recebe a arte secundária (espelhada)
-                child.material = printMaterial2;
-                const uv = child.geometry.attributes.uv;
-                if (uv) {
-                  for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
-                  uv.needsUpdate = true;
-                }
+    if (nome === 'front') {
+      // Teste: material sólido vermelho puro
+      child.material = new THREE.MeshStandardMaterial({ color: 0xff0000, side: THREE.DoubleSide });
 
-              } else if (nome === 'support' || nome === 'cords') {
-                // Alças e cordões — recebem a cor sólida
-                child.material = colorMaterial;
+    } else if (nome === 'back') {
+      // Teste: material sólido azul puro
+      child.material = new THREE.MeshStandardMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
 
-              } else {
-                // Qualquer outro mesh inesperado — cor sólida
-                child.material = colorMaterial;
-              }
-            }
-          });
+    } else if (nome === 'support' || nome === 'cords') {
+      child.material = new THREE.MeshStandardMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+    }
+  }
+});
 
           g.add(wrapper);
           resolve(g);
