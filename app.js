@@ -547,18 +547,36 @@ mochila: {
             child.receiveShadow = true;
 
             if (index === 0) {
-              // "support" = corpo principal da mochila → recebe a arte
-              child.material = printMaterial;
+              child.material = new THREE.MeshStandardMaterial({ 
+                color: 0xff0000, 
+                side: THREE.DoubleSide,
+                wireframe: false 
+              });
 
             } else if (index === 1) {
-              // "cords" = cordões → recebe a cor
-              child.material = colorMaterial;
+              child.material = new THREE.MeshStandardMaterial({ 
+                color: 0x0000ff, 
+                side: THREE.DoubleSide 
+              });
 
             } else {
               child.material = colorMaterial;
             }
           });
 
+          g.add(wrapper);
+          resolve(g);
+        },
+        undefined,
+        function (error) {
+          console.error('Ops, erro ao carregar a mochila:', error);
+          alert('Aviso: O arquivo mochila.obj não foi encontrado.');
+          resolve(g);
+        }
+      );
+    });
+  }
+},
           g.add(wrapper);
           resolve(g);
         },
