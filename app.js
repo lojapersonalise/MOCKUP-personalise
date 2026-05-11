@@ -72,6 +72,18 @@ const towelBodyMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.0
 });
 
+// NOVO: Material de Vidro Jateado (Frosted Glass)
+const glassMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(currentColor),
+  metalness: 0.0,
+  roughness: 0.25,      // O desfoque do vidro jateado
+  transmission: 0.9,    // Transparência estilo vidro
+  ior: 1.5,             // Refração
+  thickness: 0.2,
+  transparent: true,
+  side: THREE.DoubleSide
+});
+
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 const art2 = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
 
@@ -82,9 +94,59 @@ scene.add(productGroup);
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
 
- // ── XÍCARA (xicara.obj) ──
+  // ── CANECA DE VIDRO (vidro330.obj) ──
+  vidro330: {
+    width: 2618, height: 1000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'vidro330.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (5.5 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+                
+                if (nome.includes('print') || nome.includes('decal')) {
+                  child.material = printMaterial;
+                } else {
+                  child.material = glassMaterial; // Aplica o material de vidro jateado no corpo da caneca
+                }
+              }
+            });
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Erro ao carregar vidro330.obj:', error);
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
+  // ── XÍCARA (xicara.obj) ──
   xicara: {
-    width: 2000, height: 500, // Proporção exata para artes de 20x5 cm
+    width: 2000, height: 500, // Ajuste feito anteriormente para arte 20x5
     layout: 'single',
     create: async function() {
       const g = new THREE.Group();
@@ -109,17 +171,12 @@ const products = {
             object.traverse(function (child) {
               if (child.isMesh) {
                 const nome = (child.name || '').toLowerCase();
-
-                // Esconde o pires
                 if (nome.includes('pires') || nome.includes('prato') || nome.includes('saucer') || nome.includes('plate')) {
                   child.visible = false;
                   return; 
                 }
-
                 child.castShadow = true;
                 child.receiveShadow = true;
-                
-                // Aplica arte se o nome tiver 'print' ou 'decal'
                 if (nome.includes('print') || nome.includes('decal')) {
                   child.material = printMaterial;
                 } else if (nome.includes('inside')) {
@@ -782,6 +839,10 @@ async function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
 
+  // Ajuste global para permitir transparência em imagens PNG nas artes
+  printMaterial.transparent = true;
+  printMaterial2.transparent = true;
+
   // Ajustes de propriedades físicas e materiais por tipo
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
@@ -796,7 +857,7 @@ async function loadProduct(type) {
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1;
     printMaterial.side = THREE.FrontSide;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330') {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0;
     printMaterial.side = THREE.DoubleSide;
   } else {
@@ -822,7 +883,7 @@ async function loadProduct(type) {
     type === 'agenda' || type === 'agenda_aberta' ||
     type === 'necessaire' || type === 'mousepad' ||
     type === 'almofada' || type === 'almofadaret' ||
-    type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara'
+    type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara' || type === 'vidro330'
   );
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -860,6 +921,9 @@ async function loadProduct(type) {
   } else if (type === 'xicara') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Xícara';
+  } else if (type === 'vidro330') {
+    if (secUp2) secUp2.style.display = 'none';
+    if (titleUp1) titleUp1.textContent = 'Arte (Uso fundo transparente)';
   } else if (type === 'mochila') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Mochila';
@@ -896,7 +960,7 @@ async function loadProduct(type) {
     rot.x = 0.3; rot.y = 0.1; targetZoom = 8.0;
   } else if (type === 'agenda_aberta') {
     rot.x = 0.35; rot.y = 0; targetZoom = 8.5;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
@@ -928,7 +992,15 @@ async function loadProduct(type) {
 
 // ── 6. LÓGICA DE REDESENHO DE ARTE ──
 function redrawArt() {
-  artCtx.clearRect(0, 0, currentArtW, currentArtH); artCtx.fillStyle = '#ffffff'; artCtx.fillRect(0, 0, currentArtW, currentArtH);
+  artCtx.clearRect(0, 0, currentArtW, currentArtH); 
+  
+  // Se NÃO for a caneca de vidro, preenche o fundo de branco. 
+  // (Para a de vidro, o fundo fica transparente para mostrar o vidro atrás da arte).
+  if (currentProductType !== 'vidro330') {
+    artCtx.fillStyle = '#ffffff'; 
+    artCtx.fillRect(0, 0, currentArtW, currentArtH);
+  }
+  
   if (art.image) {
     const iw = art.image.naturalWidth || art.image.width; const ih = art.image.naturalHeight || art.image.height;
     const fitScale = (currentArtH / ih) * art.scale;
@@ -941,7 +1013,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha' || currentProductType === 'xicara'
+      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330'
     );
     if (!isNormal) artCtx.scale(-1, 1);
 
@@ -950,7 +1022,13 @@ function redrawArt() {
   }
   artTex.needsUpdate = true;
 
-  artCtx2.clearRect(0, 0, currentArtW, currentArtH); artCtx2.fillStyle = '#ffffff'; artCtx2.fillRect(0, 0, currentArtW, currentArtH);
+  artCtx2.clearRect(0, 0, currentArtW, currentArtH); 
+  
+  if (currentProductType !== 'vidro330') {
+    artCtx2.fillStyle = '#ffffff'; 
+    artCtx2.fillRect(0, 0, currentArtW, currentArtH);
+  }
+
   if (art2.image) {
     const iw = art2.image.naturalWidth || art2.image.width; const ih = art2.image.naturalHeight || art2.image.height;
     const fitScale = (currentArtH / ih) * art2.scale;
@@ -963,7 +1041,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha' || currentProductType === 'xicara'
+      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330'
     );
     if (!isNormal) artCtx2.scale(-1, 1);
 
@@ -976,6 +1054,7 @@ function redrawArt() {
   colorMaterialInside.color.set(currentColor);
   zipperMaterial.color.set(currentColor);
   towelBodyMaterial.color.set(currentColor);
+  glassMaterial.color.set(currentColor); // Permite "tingir" o vidro se escolher outra cor
 }
 
 // ── 7. CONTROLES MOUSE/TOUCH ──
