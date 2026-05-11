@@ -82,6 +82,58 @@ scene.add(productGroup);
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
 
+  // ── XÍCARA (xicara.obj) ──
+  xicara: {
+    width: 2000, height: 1000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'xicara.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (5.0 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+                // Aplica arte se o nome tiver 'print' ou 'decal'
+                if (nome.includes('print') || nome.includes('decal')) {
+                  child.material = printMaterial;
+                } else if (nome.includes('inside')) {
+                  child.material = colorMaterialInside;
+                } else {
+                  child.material = colorMaterial;
+                }
+              }
+            });
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Erro ao carregar xicara.obj:', error);
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
   // ── CANECA 1 (umacaneca.obj) ──
   caneca1: {
     width: 2618, height: 1000,
@@ -106,31 +158,26 @@ const products = {
             wrapper.scale.set(scale, scale, scale);
             wrapper.position.y = 0.0;
 
-            // ✅ CORREÇÃO: mapeamento correto por nome de mesh
             object.traverse(function (child) {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-
                 if (nome === 'print' || nome === 'decal') {
                   child.material = printMaterial;
                 } else if (nome === 'inside') {
                   child.material = colorMaterialInside;
                 } else {
-                  // handle, other, bottom
                   child.material = colorMaterial;
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a caneca 1:', error);
-            alert('Aviso: Arquivo umacaneca.obj não encontrado.');
+            console.error('Erro ao carregar umacaneca.obj:', error);
             resolve(g);
           }
         );
@@ -178,14 +225,12 @@ const products = {
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a caneca 2:', error);
-            alert('Aviso: Arquivo duascanecas.obj não encontrado.');
+            console.error('Erro ao carregar duascanecas.obj:', error);
             resolve(g);
           }
         );
@@ -193,7 +238,7 @@ const products = {
     }
   },
 
-  // ── CANECA 3 (canecas.obj — original) ──
+  // ── CANECA 3 (canecas.obj) ──
   caneca: {
     width: 2618, height: 1000,
     layout: 'single',
@@ -229,14 +274,12 @@ const products = {
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a caneca 3:', error);
-            alert('Aviso: Arquivo canecas.obj não encontrado.');
+            console.error('Erro ao carregar canecas.obj:', error);
             resolve(g);
           }
         );
@@ -360,13 +403,12 @@ const products = {
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a necessaire:', error);
+            console.error('Erro ao carregar necessaire:', error);
             resolve(g);
           }
         );
@@ -478,7 +520,6 @@ const products = {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-
                 if (nome.includes('costa') || nome.includes('back')) {
                   child.material = printMaterial2;
                   const uv = child.geometry.attributes.uv;
@@ -493,14 +534,12 @@ const products = {
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a almofada:', error);
-            alert('Aviso: O arquivo almofada.obj não foi encontrado.');
+            console.error('Erro ao carregar almofada.obj:', error);
             resolve(g);
           }
         );
@@ -536,7 +575,6 @@ const products = {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-
                 if (nome.includes('costa') || nome.includes('back')) {
                   child.material = printMaterial2;
                   const uv = child.geometry.attributes.uv;
@@ -551,14 +589,12 @@ const products = {
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar o almochaveiro:', error);
-            alert('Aviso: O arquivo almochaveiro.obj não foi encontrado.');
+            console.error('Erro ao carregar almochaveiro.obj:', error);
             resolve(g);
           }
         );
@@ -594,7 +630,6 @@ const products = {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-
                 if (nome.includes('costa') || nome.includes('back')) {
                   child.material = printMaterial2;
                   const uv = child.geometry.attributes.uv;
@@ -609,14 +644,12 @@ const products = {
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a almofada retangular:', error);
-            alert('Aviso: O arquivo almofadaret.obj não foi encontrado.');
+            console.error('Erro ao carregar almofadaret.obj:', error);
             resolve(g);
           }
         );
@@ -652,9 +685,6 @@ const products = {
               if (child.isMesh) meshList.push(child);
             });
 
-            console.log('Total meshes mochila:', meshList.length);
-            meshList.forEach((m, i) => console.log(`[${i}] "${m.name}"`));
-
             meshList.forEach(function (child, index) {
               child.castShadow = true;
               child.receiveShadow = true;
@@ -664,14 +694,12 @@ const products = {
                 child.material = colorMaterial;
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a mochila:', error);
-            alert('Aviso: O arquivo mochila.obj não foi encontrado.');
+            console.error('Erro ao carregar mochila.obj:', error);
             resolve(g);
           }
         );
@@ -712,7 +740,6 @@ const products = {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 const nome = (child.name || '').toLowerCase();
-
                 if (
                   nome.includes('print') || nome.includes('faixa') ||
                   nome.includes('label') || nome.includes('stamp') ||
@@ -726,14 +753,12 @@ const products = {
                 }
               }
             });
-
             g.add(wrapper);
             resolve(g);
           },
           undefined,
           function (error) {
-            console.error('Ops, erro ao carregar a toalha:', error);
-            alert('Aviso: O arquivo toalha.obj não foi encontrado.');
+            console.error('Erro ao carregar toalha.obj:', error);
             resolve(g);
           }
         );
@@ -749,6 +774,7 @@ async function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
 
+  // Ajustes de propriedades físicas e materiais por tipo
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide;
@@ -762,7 +788,7 @@ async function loadProduct(type) {
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1;
     printMaterial.side = THREE.FrontSide;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara') {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0;
     printMaterial.side = THREE.DoubleSide;
   } else {
@@ -788,20 +814,21 @@ async function loadProduct(type) {
     type === 'agenda' || type === 'agenda_aberta' ||
     type === 'necessaire' || type === 'mousepad' ||
     type === 'almofada' || type === 'almofadaret' ||
-    type === 'almochaveiro' || type === 'mochila' || type === 'toalha'
+    type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara'
   );
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
   printMaterial.map = artTex; printMaterial2.map = artTex2;
-  printMaterial.needsUpdate = true; printMaterial2.needsUpdate = true; // ✅ força atualização do material
+  printMaterial.needsUpdate = true; printMaterial2.needsUpdate = true;
 
   const secUp2 = document.getElementById('sectionUpload2');
   const titleUp1 = document.getElementById('titleUpload1');
   const sec2 = document.querySelector('#sectionUpload2 .section-title');
   const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
 
+  // Ajustes da UI (Rótulos dos Botões de Upload)
   if (type === 'agenda') {
     if (secUp2) secUp2.style.display = 'block';
     if (titleUp1) titleUp1.textContent = 'Capa (Esquerda)';
@@ -822,6 +849,9 @@ async function loadProduct(type) {
     if (titleUp1) titleUp1.textContent = 'Frente';
     if (sec2) sec2.textContent = 'Verso';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Verso';
+  } else if (type === 'xicara') {
+    if (secUp2) secUp2.style.display = 'none';
+    if (titleUp1) titleUp1.textContent = 'Arte da Xícara';
   } else if (type === 'mochila') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Mochila';
@@ -845,6 +875,7 @@ async function loadProduct(type) {
     productGroup.remove(child);
   }
 
+  // Configurações de Câmera e Zoom por Produto
   if (type === 'mousepad') {
     rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'almofada' || type === 'almochaveiro') {
@@ -857,7 +888,7 @@ async function loadProduct(type) {
     rot.x = 0.3; rot.y = 0.1; targetZoom = 8.0;
   } else if (type === 'agenda_aberta') {
     rot.x = 0.35; rot.y = 0; targetZoom = 8.5;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
@@ -902,7 +933,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha'
+      currentProductType === 'toalha' || currentProductType === 'xicara'
     );
     if (!isNormal) artCtx.scale(-1, 1);
 
@@ -924,7 +955,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha'
+      currentProductType === 'toalha' || currentProductType === 'xicara'
     );
     if (!isNormal) artCtx2.scale(-1, 1);
 
@@ -1033,15 +1064,11 @@ document.getElementById('customColor')?.addEventListener('input', function () {
 
 // ── EXPORTAÇÃO COM ALTA QUALIDADE + LOGO D'ÁGUA ──
 document.getElementById('btnExport')?.addEventListener('click', () => {
-
   const originalPixelRatio = renderer.getPixelRatio();
   renderer.setPixelRatio(3);
   renderer.setSize(800, 500, false);
-
   renderer.render(scene, camera);
-
   const webglDataUrl = canvas.toDataURL('image/png');
-
   renderer.setPixelRatio(originalPixelRatio);
   renderer.setSize(800, 500, false);
 
@@ -1055,10 +1082,8 @@ document.getElementById('btnExport')?.addEventListener('click', () => {
   const webglImg = new Image();
   webglImg.onload = () => {
     exportCtx.drawImage(webglImg, 0, 0, exportW, exportH);
-
     const watermarkEl = document.querySelector('.watermark-logo');
     const logoSrc = watermarkEl ? watermarkEl.src : null;
-
     if (logoSrc) {
       const logoImg = new Image();
       logoImg.crossOrigin = 'anonymous';
@@ -1068,11 +1093,9 @@ document.getElementById('btnExport')?.addEventListener('click', () => {
         const logoDrawW = logoDisplayW;
         const logoDrawH = logoDisplayW * logoAspect;
         const margin = 24 * 3;
-
         exportCtx.globalAlpha = 0.65;
         exportCtx.drawImage(logoImg, margin, margin, logoDrawW, logoDrawH);
         exportCtx.globalAlpha = 1.0;
-
         const a = document.createElement('a');
         a.href = exportCanvas.toDataURL('image/png');
         a.download = 'mockup-personalise.png';
