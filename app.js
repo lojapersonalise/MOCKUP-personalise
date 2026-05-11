@@ -60,6 +60,7 @@ const artCanvas2 = document.createElement('canvas');
 const artCtx2 = artCanvas2.getContext('2d');
 let artTex2 = new THREE.CanvasTexture(artCanvas2);
 
+// ✅ MATERIAL DA ARTE CORRIGIDO PARA NÃO CORTAR (Z-FIGHTING)
 const printMaterial = new THREE.MeshPhysicalMaterial({ 
   color: 0xffffff, map: artTex, side: THREE.FrontSide, ...physicalProps,
   polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
@@ -68,6 +69,7 @@ const printMaterial2 = new THREE.MeshPhysicalMaterial({
   color: 0xffffff, map: artTex2, side: THREE.FrontSide, ...physicalProps,
   polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
 });
+
 const colorMaterial = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.FrontSide, ...physicalProps });
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.BackSide, ...physicalProps });
 const zipperMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(currentColor), roughness: 0.4, metalness: 0.2 });
@@ -78,15 +80,15 @@ const towelBodyMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.0
 });
 
-// CORREÇÃO: Material de Vidro Jateado Otimizado (Mais leve e sem bugar a arte)
+// ✅ MATERIAL DE VIDRO OTIMIZADO (Mais rápido e não buga a cena)
 const glassMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
   metalness: 0.1,
-  roughness: 0.5,      // Textura fosca (jateada)
+  roughness: 0.3,
   transparent: true,
-  opacity: 0.65,       // Simula a passagem de luz sem travar o navegador
+  opacity: 0.65,
   side: THREE.DoubleSide,
-  depthWrite: false    // Evita o bug de cortar a imagem no zoom
+  depthWrite: false
 });
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
@@ -132,7 +134,7 @@ const products = {
                 if (nome.includes('print') || nome.includes('decal')) {
                   child.material = printMaterial;
                 } else {
-                  child.material = glassMaterial; // Aplica o material de vidro jateado no corpo da caneca
+                  child.material = glassMaterial; 
                 }
               }
             });
@@ -151,7 +153,7 @@ const products = {
 
   // ── XÍCARA (xicara.obj) ──
   xicara: {
-    width: 2000, height: 500, // Ajuste feito anteriormente para arte 20x5
+    width: 2000, height: 500,
     layout: 'single',
     create: async function() {
       const g = new THREE.Group();
@@ -844,13 +846,17 @@ async function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
 
-// A transparência da arte só pode ser ativada na caneca de vidro!
+  // ✅ CORREÇÃO DEFINITIVA DO "FANTASMA": A transparência da arte só ativa na caneca de vidro!
   if (type === 'vidro330') {
     printMaterial.transparent = true;
     printMaterial2.transparent = true;
+    printMaterial.depthWrite = false;
+    printMaterial2.depthWrite = false;
   } else {
     printMaterial.transparent = false;
     printMaterial2.transparent = false;
+    printMaterial.depthWrite = true;
+    printMaterial2.depthWrite = true;
   }
 
   // Ajustes de propriedades físicas e materiais por tipo
@@ -907,7 +913,6 @@ async function loadProduct(type) {
   const sec2 = document.querySelector('#sectionUpload2 .section-title');
   const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
 
-  // Ajustes da UI (Rótulos dos Botões de Upload)
   if (type === 'agenda') {
     if (secUp2) secUp2.style.display = 'block';
     if (titleUp1) titleUp1.textContent = 'Capa (Esquerda)';
@@ -957,7 +962,6 @@ async function loadProduct(type) {
     productGroup.remove(child);
   }
 
-  // Configurações de Câmera e Zoom por Produto
   if (type === 'mousepad') {
     rot.x = 0.65; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'almofada' || type === 'almochaveiro') {
@@ -1004,8 +1008,6 @@ async function loadProduct(type) {
 function redrawArt() {
   artCtx.clearRect(0, 0, currentArtW, currentArtH); 
   
-  // Se NÃO for a caneca de vidro, preenche o fundo de branco. 
-  // (Para a de vidro, o fundo fica transparente para mostrar o vidro atrás da arte).
   if (currentProductType !== 'vidro330') {
     artCtx.fillStyle = '#ffffff'; 
     artCtx.fillRect(0, 0, currentArtW, currentArtH);
@@ -1064,7 +1066,7 @@ function redrawArt() {
   colorMaterialInside.color.set(currentColor);
   zipperMaterial.color.set(currentColor);
   towelBodyMaterial.color.set(currentColor);
-  glassMaterial.color.set(currentColor); // Permite "tingir" o vidro se escolher outra cor
+  glassMaterial.color.set(currentColor); 
 }
 
 // ── 7. CONTROLES MOUSE/TOUCH ──
@@ -1088,8 +1090,6 @@ canvas.addEventListener('touchmove', e => {
 canvas.addEventListener('wheel', e => { e.preventDefault(); targetZoom = Math.min(15, Math.max(6.0, targetZoom + e.deltaY * 0.01)); }, { passive: false });
 
 // ── 8. EVENTOS DA INTERFACE (UI) ──
-
-// Botões fixos
 document.getElementById('productSelector')?.addEventListener('click', e => {
   if (e.target.classList.contains('prod-btn')) {
     document.querySelectorAll('.prod-btn').forEach(b => b.classList.remove('active'));
@@ -1101,7 +1101,6 @@ document.getElementById('productSelector')?.addEventListener('click', e => {
   }
 });
 
-// Select dropdown
 document.getElementById('productSelectExtra')?.addEventListener('change', function() {
   if (!this.value) return;
   document.querySelectorAll('.prod-btn').forEach(b => b.classList.remove('active'));
