@@ -108,9 +108,20 @@ const products = {
 
             object.traverse(function (child) {
               if (child.isMesh) {
+                // Isso vai imprimir no F12 o nome de cada parte da xícara
+                console.log("Parte da xícara encontrada:", child.name);
+
+                const nome = (child.name || '').toLowerCase();
+
+                // Esconde o pires baseado nos nomes mais comuns
+                if (nome.includes('pires') || nome.includes('prato') || nome.includes('saucer') || nome.includes('plate')) {
+                  child.visible = false;
+                  return; // Para aqui e não aplica textura nessa peça
+                }
+
                 child.castShadow = true;
                 child.receiveShadow = true;
-                const nome = (child.name || '').toLowerCase();
+                
                 // Aplica arte se o nome tiver 'print' ou 'decal'
                 if (nome.includes('print') || nome.includes('decal')) {
                   child.material = printMaterial;
