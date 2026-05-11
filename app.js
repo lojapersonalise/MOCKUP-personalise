@@ -844,9 +844,14 @@ async function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
 
-  // Ajuste global para permitir transparência em imagens PNG nas artes
-  printMaterial.transparent = true;
-  printMaterial2.transparent = true;
+// A transparência da arte só pode ser ativada na caneca de vidro!
+  if (type === 'vidro330') {
+    printMaterial.transparent = true;
+    printMaterial2.transparent = true;
+  } else {
+    printMaterial.transparent = false;
+    printMaterial2.transparent = false;
+  }
 
   // Ajustes de propriedades físicas e materiais por tipo
   if (type === 'necessaire') {
