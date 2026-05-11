@@ -82,9 +82,9 @@ scene.add(productGroup);
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
 
-  // ── XÍCARA (xicara.obj) ──
+ // ── XÍCARA (xicara.obj) ──
   xicara: {
-    width: 2000, height: 1000,
+    width: 2000, height: 500, // Proporção exata para artes de 20x5 cm
     layout: 'single',
     create: async function() {
       const g = new THREE.Group();
@@ -108,15 +108,12 @@ const products = {
 
             object.traverse(function (child) {
               if (child.isMesh) {
-                // Isso vai imprimir no F12 o nome de cada parte da xícara
-                console.log("Parte da xícara encontrada:", child.name);
-
                 const nome = (child.name || '').toLowerCase();
 
-                // Esconde o pires baseado nos nomes mais comuns
+                // Esconde o pires
                 if (nome.includes('pires') || nome.includes('prato') || nome.includes('saucer') || nome.includes('plate')) {
                   child.visible = false;
-                  return; // Para aqui e não aplica textura nessa peça
+                  return; 
                 }
 
                 child.castShadow = true;
