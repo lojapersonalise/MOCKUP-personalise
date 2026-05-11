@@ -60,8 +60,14 @@ const artCanvas2 = document.createElement('canvas');
 const artCtx2 = artCanvas2.getContext('2d');
 let artTex2 = new THREE.CanvasTexture(artCanvas2);
 
-const printMaterial = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: artTex, side: THREE.FrontSide, ...physicalProps });
-const printMaterial2 = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: artTex2, side: THREE.FrontSide, ...physicalProps });
+const printMaterial = new THREE.MeshPhysicalMaterial({ 
+  color: 0xffffff, map: artTex, side: THREE.FrontSide, ...physicalProps,
+  polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
+});
+const printMaterial2 = new THREE.MeshPhysicalMaterial({ 
+  color: 0xffffff, map: artTex2, side: THREE.FrontSide, ...physicalProps,
+  polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
+});
 const colorMaterial = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.FrontSide, ...physicalProps });
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.BackSide, ...physicalProps });
 const zipperMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(currentColor), roughness: 0.4, metalness: 0.2 });
@@ -72,16 +78,15 @@ const towelBodyMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.0
 });
 
-// NOVO: Material de Vidro Jateado (Frosted Glass)
+// CORREÇÃO: Material de Vidro Jateado Otimizado (Mais leve e sem bugar a arte)
 const glassMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(currentColor),
-  metalness: 0.0,
-  roughness: 0.25,      // O desfoque do vidro jateado
-  transmission: 0.9,    // Transparência estilo vidro
-  ior: 1.5,             // Refração
-  thickness: 0.2,
+  metalness: 0.1,
+  roughness: 0.5,      // Textura fosca (jateada)
   transparent: true,
-  side: THREE.DoubleSide
+  opacity: 0.65,       // Simula a passagem de luz sem travar o navegador
+  side: THREE.DoubleSide,
+  depthWrite: false    // Evita o bug de cortar a imagem no zoom
 });
 
 const art = { image: null, offsetX: 0, offsetY: 0, scale: 1.0, rotation: 0, opacity: 1.0 };
