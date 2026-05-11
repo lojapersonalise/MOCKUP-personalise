@@ -22,10 +22,8 @@
       </div>
     </div>
 
-    <!-- ✅ sidebar sem overflow na página, rola internamente -->
     <div class="sidebar">
 
-      <!-- SELETOR DE PRODUTOS -->
       <div class="sidebar-section">
         <div class="section-title">Produto</div>
         <div class="product-selector" id="productSelector">
@@ -34,12 +32,11 @@
           <button class="prod-btn" data-product="agenda_aberta">Interior Agenda</button>
         </div>
 
-        <!-- SELECT DROPDOWN PARA DEMAIS PRODUTOS -->
         <select id="productSelectExtra">
           <option value="">— Outros produtos —</option>
           <option value="caneca1">1 Caneca</option>
           <option value="caneca">3 Canecas</option>
-          <option value="squeeze">Squeeze</option>
+          <option value="xicara">Xícara</option> <option value="squeeze">Squeeze</option>
           <option value="necessaire">Necessaire</option>
           <option value="mousepad">Mousepad</option>
           <option value="almofada">Almofada</option>
@@ -50,7 +47,6 @@
         </select>
       </div>
 
-      <!-- ÁREA DE UPLOAD DE ARTES -->
       <div class="sidebar-section">
         <div class="section-title" id="titleUpload1">Arte Principal</div>
         <button class="btn-upload" onclick="document.getElementById('fileInput').click()">⬆️ Carregar Imagem</button>
@@ -63,7 +59,6 @@
         </div>
       </div>
 
-      <!-- AJUSTES DA ARTE -->
       <div class="sidebar-section">
         <div class="section-title">Ajustes da Arte</div>
         <div class="control-label"><span>Horizontal</span><span id="valOffsetX">0</span></div>
@@ -73,7 +68,6 @@
         <input type="range" id="artScale" min="10" max="300" step="1" value="100" />
       </div>
 
-      <!-- CORES DO PRODUTO -->
       <div class="sidebar-section">
         <div class="section-title">Cores do Produto</div>
         <div id="productColors">
@@ -98,7 +92,6 @@
         </div>
       </div>
 
-      <!-- EXPORTAR -->
       <div class="sidebar-section">
         <button class="btn-export" id="btnExport">💾 Baixar PNG</button>
       </div>
