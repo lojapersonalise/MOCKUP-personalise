@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════
-//   APP.JS — Sistema Multi-Produtos 3D (CORRIGIDO PARA FIDELIDADE DE IMPRESSÃO)
+//   APP.JS — Sistema Multi-Produtos 3D (CORRIGIDO: LOUÇA E ARTE HARMONIZADAS)
 // ══════════════════════════════════════════
 
 import * as THREE from 'three';
@@ -9,11 +9,10 @@ window.addEventListener('error', function(e) {
   console.error('ERRO JS: ' + e.message);
 });
 
-// ✅ [CORREÇÃO] Constante global para calibração da vivacidade da impressão (Emissive Boost)
-// Compensação técnica para evitar que o BRDF físico escureça o branco e desbote cores na sombra.
-const PRINT_EMISSIVE_INTENSITY = 0.38;
+// ✅ [CORREÇÃO] Intensidade emissiva equilibrada para harmonizar a estampa com a louça da caneca
+const PRINT_EMISSIVE_INTENSITY = 0.18;
 
-// ✅ [CORREÇÃO] Função auxiliar para garantia de compatibilidade universal de Espaço de Cor sRGB
+// ✅ Função auxiliar para garantia de compatibilidade universal de Espaço de Cor sRGB
 function applyTextureColorSpace(texture) {
   if (!texture) return;
   if (THREE.SRGBColorSpace) {
@@ -31,12 +30,10 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-// ✅ [CORREÇÃO] Substituído ACESFilmicToneMapping por NoToneMapping.
-// Garante fidelidade absoluta de cores e saturação na estampa personalizada sem desvio de matiz.
+// ✅ Mantém cores fiéis sem alterar matiz ou desbotar saturação
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.toneMappingExposure = 1.0;
 
-// ✅ [CORREÇÃO] Configuração robusta para saída correta em tela (suporta versões novas e antigas do Three.js)
 if (THREE.SRGBColorSpace) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 } else if (THREE.sRGBEncoding) {
@@ -49,11 +46,10 @@ const camera = new THREE.PerspectiveCamera(35, 800 / 500, 0.1, 100);
 camera.position.set(0, 0.8, 10.0);
 
 // ── 2. LUZES E CHÃO ──
-// ✅ [CORREÇÃO] Iluminação de estúdio reequilibrada para trabalhar em harmonia com o emissiveMap.
-// Evita superexposição (branco estourado) e preserva o volume, relevo e sombras realistas do mockup.
-scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+// ✅ [CORREÇÃO] Luzes elevadas ao ponto ideal da cerâmica branca para evitar alças acinzentadas
+scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
-const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
 keyLight.position.set(3, 4, 6); 
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.width = 1024; 
@@ -61,11 +57,11 @@ keyLight.shadow.mapSize.height = 1024;
 keyLight.shadow.bias = -0.001;
 scene.add(keyLight);
 
-const fillLight = new THREE.DirectionalLight(0xffffff, 0.45);
+const fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
 fillLight.position.set(-6, 3, 2); 
 scene.add(fillLight);
 
-const rimLight = new THREE.PointLight(0xffffff, 0.8, 20);
+const rimLight = new THREE.PointLight(0xffffff, 1.0, 20);
 rimLight.position.set(0, 5, -5); 
 scene.add(rimLight);
 
@@ -82,7 +78,6 @@ const physicalProps = { roughness: 0.02, metalness: 0.0, clearcoat: 1.0, clearco
 let currentArtW = 2618;
 let currentArtH = 1000;
 
-// ✅ [CORREÇÃO] Solicitação explícita do espaço de cor sRGB para o contexto 2D
 const artCanvas = document.createElement('canvas');
 const artCtx = artCanvas.getContext('2d', { colorSpace: 'srgb' }) || artCanvas.getContext('2d');
 let artTex = new THREE.CanvasTexture(artCanvas);
@@ -93,8 +88,6 @@ const artCtx2 = artCanvas2.getContext('2d', { colorSpace: 'srgb' }) || artCanvas
 let artTex2 = new THREE.CanvasTexture(artCanvas2);
 applyTextureColorSpace(artTex2);
 
-// ✅ [CORREÇÃO] Injeção de emissiveMap + emissive branca com intensidade calibrada em printMaterial e printMaterial2.
-// Preserva o branco puro da arte e a saturação original sem perder sombras de oclusão e reflexos especulares.
 const printMaterial = new THREE.MeshPhysicalMaterial({ 
   color: 0xffffff, 
   map: artTex, 
@@ -117,8 +110,23 @@ const printMaterial2 = new THREE.MeshPhysicalMaterial({
   polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
 });
 
-const colorMaterial = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.FrontSide, ...physicalProps });
-const colorMaterialInside = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(currentColor), side: THREE.BackSide, ...physicalProps });
+// ✅ [CORREÇÃO] Inicializando os materiais de cor com capacidade de emissão para igualar ao branco da arte
+const colorMaterial = new THREE.MeshPhysicalMaterial({ 
+  color: new THREE.Color(currentColor), 
+  emissive: new THREE.Color(currentColor),
+  emissiveIntensity: PRINT_EMISSIVE_INTENSITY,
+  side: THREE.FrontSide, 
+  ...physicalProps 
+});
+
+const colorMaterialInside = new THREE.MeshPhysicalMaterial({ 
+  color: new THREE.Color(currentColor), 
+  emissive: new THREE.Color(currentColor),
+  emissiveIntensity: PRINT_EMISSIVE_INTENSITY * 0.8, // Interior levemente mais sombreado para realismo
+  side: THREE.BackSide, 
+  ...physicalProps 
+});
+
 const zipperMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(currentColor), roughness: 0.4, metalness: 0.2 });
 
 const towelBodyMaterial = new THREE.MeshStandardMaterial({
@@ -932,7 +940,6 @@ async function loadProduct(type) {
   artTex = new THREE.CanvasTexture(artCanvas);
   artTex2 = new THREE.CanvasTexture(artCanvas2);
 
-  // ✅ [CORREÇÃO] Garante a aplicação robusta de sRGB nas novas texturas recriadas
   applyTextureColorSpace(artTex);
   applyTextureColorSpace(artTex2);
 
@@ -946,7 +953,6 @@ async function loadProduct(type) {
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   artTex2.wrapS = THREE.RepeatWrapping; artTex2.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-  // ✅ [CORREÇÃO] Vincula a textura tanto em map quanto no emissiveMap de forma sincronizada
   printMaterial.map = artTex;
   printMaterial.emissiveMap = artTex;
   printMaterial2.map = artTex2;
@@ -1048,15 +1054,6 @@ async function loadProduct(type) {
   const oX = document.getElementById('offsetX'); if(oX) oX.value = 0;
 
   redrawArt();
-
-  // ── [LOGS TEMPORÁRIOS DE DIAGNÓSTICO - REMOVER EM PRODUÇÃO] ──
-  console.group('🛠️ [DIAGNÓSTICO PERSONALISE - AUDITORIA DE COR E WEBGL]');
-  console.log('Versão do Three.js:', THREE.REVISION);
-  console.log('Espaço de Cor Saída Renderer:', renderer.outputColorSpace || renderer.outputEncoding);
-  console.log('Tone Mapping Configurado:', renderer.toneMapping === THREE.NoToneMapping ? 'NoToneMapping (Linear/Fiel)' : renderer.toneMapping);
-  console.log('Intensidade Emissiva de Impressão:', PRINT_EMISSIVE_INTENSITY);
-  console.log('Espaço de Cor da Textura Principal:', artTex.colorSpace || artTex.encoding);
-  console.groupEnd();
 }
 
 // ── 6. LÓGICA DE REDESENHO DE ARTE ──
@@ -1117,11 +1114,18 @@ function redrawArt() {
   }
   artTex2.needsUpdate = true;
 
-  colorMaterial.color.set(currentColor);
-  colorMaterialInside.color.set(currentColor);
-  zipperMaterial.color.set(currentColor);
-  towelBodyMaterial.color.set(currentColor);
-  glassMaterial.color.set(currentColor); 
+  // ✅ [CORREÇÃO] Atualizando cor e emissividade da louça simultaneamente!
+  // Evita que a alça da caneca fique cinza quando a cor for branca, sem clarear se o cliente escolher preto.
+  const baseColor = new THREE.Color(currentColor);
+  colorMaterial.color.set(baseColor);
+  colorMaterial.emissive.set(baseColor);
+  
+  colorMaterialInside.color.set(baseColor);
+  colorMaterialInside.emissive.set(baseColor);
+
+  zipperMaterial.color.set(baseColor);
+  towelBodyMaterial.color.set(baseColor);
+  glassMaterial.color.set(baseColor); 
 }
 
 // ── 7. CONTROLES MOUSE/TOUCH ──
