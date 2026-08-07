@@ -9,7 +9,7 @@ window.addEventListener('error', function(e) {
   console.error('ERRO JS: ' + e.message);
 });
 
-// ✅ [CORREÇÃO] Intensidade emissiva equilibrada para harmonizar a estampa com a louça da caneca
+// ✅ Intensidade emissiva equilibrada para harmonizar a estampa com a louça da caneca
 const PRINT_EMISSIVE_INTENSITY = 0.18;
 
 // ✅ Função auxiliar para garantia de compatibilidade universal de Espaço de Cor sRGB
@@ -30,7 +30,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-// ✅ Mantém cores fiéis sem alterar matiz ou desbotar saturação
+// Mantém cores fiéis sem alterar matiz ou desbotar saturação
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.toneMappingExposure = 1.0;
 
@@ -46,7 +46,7 @@ const camera = new THREE.PerspectiveCamera(35, 800 / 500, 0.1, 100);
 camera.position.set(0, 0.8, 10.0);
 
 // ── 2. LUZES E CHÃO ──
-// ✅ [CORREÇÃO] Luzes elevadas ao ponto ideal da cerâmica branca para evitar alças acinzentadas
+// Luzes elevadas ao ponto ideal da cerâmica branca para evitar alças acinzentadas
 scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -88,6 +88,7 @@ const artCtx2 = artCanvas2.getContext('2d', { colorSpace: 'srgb' }) || artCanvas
 let artTex2 = new THREE.CanvasTexture(artCanvas2);
 applyTextureColorSpace(artTex2);
 
+// ✅ MATERIAL DA ARTE (polygonOffset inicia zerado para não bugar tecidos)
 const printMaterial = new THREE.MeshPhysicalMaterial({ 
   color: 0xffffff, 
   map: artTex, 
@@ -96,7 +97,7 @@ const printMaterial = new THREE.MeshPhysicalMaterial({
   emissiveIntensity: PRINT_EMISSIVE_INTENSITY,
   side: THREE.FrontSide, 
   ...physicalProps,
-  polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
+  polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: 0 
 });
 
 const printMaterial2 = new THREE.MeshPhysicalMaterial({ 
@@ -107,9 +108,10 @@ const printMaterial2 = new THREE.MeshPhysicalMaterial({
   emissiveIntensity: PRINT_EMISSIVE_INTENSITY,
   side: THREE.FrontSide, 
   ...physicalProps,
-  polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
+  polygonOffset: true, polygonOffsetFactor: 0, polygonOffsetUnits: 0 
 });
 
+// Inicializando os materiais de cor com capacidade de emissão para igualar ao branco da arte
 const colorMaterial = new THREE.MeshPhysicalMaterial({ 
   color: new THREE.Color(currentColor), 
   emissive: new THREE.Color(currentColor),
@@ -126,7 +128,7 @@ const colorMaterialInside = new THREE.MeshPhysicalMaterial({
   ...physicalProps 
 });
 
-// ✅ NOVO MATERIAL: Cerâmica Branca (Garante que o fundo/corpo de canecas complexas não mudem de cor)
+// MATERIAL: Cerâmica Branca (Garante que o fundo/corpo de canecas complexas não mudem de cor)
 const whiteCeramicMaterial = new THREE.MeshPhysicalMaterial({ 
   color: 0xffffff, 
   emissive: new THREE.Color(0xffffff),
@@ -196,10 +198,8 @@ const products = {
                 if (nome.includes('print')) {
                   child.material = printMaterial;
                 } else if (nome.includes('handle') || nome.includes('spoon') || nome.includes('inside')) {
-                  // O interior, a alça e a colher recebem a cor escolhida com renderização frontal
                   child.material = colorMaterial;
                 } else {
-                  // O corpo principal (mug) e o fundo ficam sempre brancos
                   child.material = whiteCeramicMaterial;
                 }
               }
@@ -957,6 +957,21 @@ async function loadProduct(type) {
   currentArtW = config.width;
   currentArtH = config.height;
 
+  // ✅ CORREÇÃO DA MOCHILA (Z-FIGHTING MATEMÁTICO)
+  // Permite que as louças usem a prioridade de textura e desativa matematicamente pro resto
+  if (['caneca', 'caneca1', 'caneca2', 'xicara', 'vidro330', 'conica'].includes(type)) {
+    printMaterial.polygonOffsetFactor = -4;
+    printMaterial.polygonOffsetUnits = -4;
+    printMaterial2.polygonOffsetFactor = -4;
+    printMaterial2.polygonOffsetUnits = -4;
+  } else {
+    printMaterial.polygonOffsetFactor = 0;
+    printMaterial.polygonOffsetUnits = 0;
+    printMaterial2.polygonOffsetFactor = 0;
+    printMaterial2.polygonOffsetUnits = 0;
+  }
+
+  // A transparência da arte só ativa na caneca de vidro!
   if (type === 'vidro330') {
     printMaterial.transparent = true;
     printMaterial2.transparent = true;
@@ -968,13 +983,7 @@ async function loadProduct(type) {
     printMaterial.depthWrite = true;
     printMaterial2.depthWrite = true;
   }
-  if (['caneca', 'caneca1', 'caneca2', 'xicara', 'vidro330', 'conica'].includes(type)) {
-    printMaterial.polygonOffset = true;
-    printMaterial2.polygonOffset = true;
-  } else {
-    printMaterial.polygonOffset = false;
-    printMaterial2.polygonOffset = false;
-  }
+
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide;
@@ -996,7 +1005,6 @@ async function loadProduct(type) {
     printMaterial.side = THREE.FrontSide;
   }
 
-  // ✅ Atualiza as propriedades físicas de todos os materiais juntos
   [printMaterial, printMaterial2, colorMaterial, colorMaterialInside, whiteCeramicMaterial].forEach(mat => {
     mat.roughness = physicalProps.roughness; mat.clearcoat = physicalProps.clearcoat;
   });
