@@ -968,7 +968,13 @@ async function loadProduct(type) {
     printMaterial.depthWrite = true;
     printMaterial2.depthWrite = true;
   }
-
+  if (['caneca', 'caneca1', 'caneca2', 'xicara', 'vidro330', 'conica'].includes(type)) {
+    printMaterial.polygonOffset = true;
+    printMaterial2.polygonOffset = true;
+  } else {
+    printMaterial.polygonOffset = false;
+    printMaterial2.polygonOffset = false;
+  }
   if (type === 'necessaire') {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.DoubleSide;
