@@ -71,7 +71,6 @@ scene.add(shadowPlane);
 
 // ── 3. MATERIAIS E CANVAS DUPLOS ──
 let currentColor = '#ffffff';
-let currentSecondaryColor = '#ffffff';
 let currentProductType = 'caneca2';
 
 const physicalProps = { roughness: 0.02, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.02 };
@@ -121,8 +120,8 @@ const colorMaterial = new THREE.MeshPhysicalMaterial({
 });
 
 const colorMaterialInside = new THREE.MeshPhysicalMaterial({ 
-  color: new THREE.Color(currentSecondaryColor), 
-  emissive: new THREE.Color(currentSecondaryColor),
+  color: new THREE.Color(currentColor), 
+  emissive: new THREE.Color(currentColor),
   emissiveIntensity: PRINT_EMISSIVE_INTENSITY * 0.8, // Interior levemente mais sombreado para realismo
   side: THREE.BackSide, 
   ...physicalProps 
@@ -155,57 +154,6 @@ scene.add(productGroup);
 
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
-
-  conica: {
-    width: 2000, height: 1000,
-    layout: 'single',
-    create: async function() {
-      const g = new THREE.Group();
-      return new Promise((resolve) => {
-        const loader = new OBJLoader();
-        loader.load(
-          'conica.obj',
-          function (object) {
-            const box = new THREE.Box3().setFromObject(object);
-            const center = box.getCenter(new THREE.Vector3());
-            object.position.set(-center.x, -center.y, -center.z);
-
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = maxDim > 0 ? (5.5 / maxDim) : 1;
-
-            const wrapper = new THREE.Group();
-            wrapper.add(object);
-            wrapper.scale.set(scale, scale, scale);
-            wrapper.position.y = 0.0;
-
-            object.traverse(function (child) {
-              if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-                const nome = (child.name || '').toLowerCase();
-                
-                if (nome.includes('print')) {
-                  child.material = printMaterial;
-                } else if (nome.includes('inside') || nome.includes('spoon')) {
-                  child.material = colorMaterialInside;
-                } else {
-                  child.material = colorMaterial;
-                }
-              }
-            });
-            g.add(wrapper);
-            resolve(g);
-          },
-          undefined,
-          function (error) {
-            console.error('Erro ao carregar conica.obj:', error);
-            resolve(g);
-          }
-        );
-      });
-    }
-  },
 
   vidro330: {
     width: 2618, height: 1000,
@@ -972,7 +920,7 @@ async function loadProduct(type) {
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1;
     printMaterial.side = THREE.FrontSide;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330' || type === 'conica') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330') {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0;
     printMaterial.side = THREE.DoubleSide;
   } else {
@@ -999,7 +947,7 @@ async function loadProduct(type) {
     type === 'agenda' || type === 'agenda_aberta' ||
     type === 'necessaire' || type === 'mousepad' ||
     type === 'almofada' || type === 'almofadaret' ||
-    type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara' || type === 'vidro330' || type === 'conica'
+    type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara' || type === 'vidro330'
   );
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -1016,7 +964,6 @@ async function loadProduct(type) {
   const titleUp1 = document.getElementById('titleUpload1');
   const sec2 = document.querySelector('#sectionUpload2 .section-title');
   const btn2 = document.querySelector('#sectionUpload2 .btn-upload');
-  const secondaryColorSection = document.getElementById('secondaryColorSection');
 
   if (type === 'agenda') {
     if (secUp2) secUp2.style.display = 'block';
@@ -1044,9 +991,6 @@ async function loadProduct(type) {
   } else if (type === 'vidro330') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte (Uso fundo transparente)';
-  } else if (type === 'conica') {
-    if (secUp2) secUp2.style.display = 'none';
-    if (titleUp1) titleUp1.textContent = 'Arte da Caneca Cônica';
   } else if (type === 'mochila') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Mochila';
@@ -1062,20 +1006,6 @@ async function loadProduct(type) {
   } else {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte Principal';
-  }
-  
-  if (type === 'conica' || type === 'xicara' || type === 'caneca1' || type === 'caneca2' || type === 'caneca') {
-      if (secondaryColorSection) secondaryColorSection.style.display = 'block';
-  } else {
-      if (secondaryColorSection) secondaryColorSection.style.display = 'none';
-  }
-
-
-  const secondaryColorSection = document.getElementById('secondaryColorSection');
-  if (type === 'conica' || type === 'xicara' || type === 'caneca1' || type === 'caneca2' || type === 'caneca') {
-      if (secondaryColorSection) secondaryColorSection.style.display = 'block';
-  } else {
-      if (secondaryColorSection) secondaryColorSection.style.display = 'none';
   }
 
   while(productGroup.children.length > 0){
@@ -1096,7 +1026,7 @@ async function loadProduct(type) {
     rot.x = 0.3; rot.y = 0.1; targetZoom = 8.0;
   } else if (type === 'agenda_aberta') {
     rot.x = 0.35; rot.y = 0; targetZoom = 8.5;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330' || type === 'conica') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
@@ -1147,7 +1077,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330' || currentProductType === 'conica'
+      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330'
     );
     if (!isNormal) artCtx.scale(-1, 1);
 
@@ -1175,7 +1105,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330' || currentProductType === 'conica'
+      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330'
     );
     if (!isNormal) artCtx2.scale(-1, 1);
 
@@ -1190,9 +1120,8 @@ function redrawArt() {
   colorMaterial.color.set(baseColor);
   colorMaterial.emissive.set(baseColor);
   
-  const secondaryColor = new THREE.Color(currentSecondaryColor);
-  colorMaterialInside.color.set(secondaryColor);
-  colorMaterialInside.emissive.set(secondaryColor);
+  colorMaterialInside.color.set(baseColor);
+  colorMaterialInside.emissive.set(baseColor);
 
   zipperMaterial.color.set(baseColor);
   towelBodyMaterial.color.set(baseColor);
@@ -1272,7 +1201,7 @@ document.getElementById('fileInput2')?.addEventListener('change', function () {
 
 document.getElementById('productColors')?.addEventListener('click', function (e) {
   if (e.target.tagName === 'INPUT') return;
-  const dot = e.target.closest('.color-dot');
+  const dot = e.target.closest('[data-color]');
   if (!dot) {
     const label = e.target.closest('label.color-dot');
     if (label) { this.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active')); label.classList.add('active'); }
@@ -1286,43 +1215,6 @@ document.getElementById('customColor')?.addEventListener('input', function () {
   const parent = this.closest('.color-dot');
   if (parent) { document.querySelectorAll('#productColors .color-dot').forEach(d => d.classList.remove('active')); parent.classList.add('active'); }
   currentColor = this.value; redrawArt();
-});
-
-document.getElementById('productColorsSecondary')?.addEventListener('click', function (e) {
-  if (e.target.tagName === 'INPUT') return;
-  const dot = e.target.closest('.color-dot-sec');
-  if (!dot) {
-    const label = e.target.closest('label.color-dot-sec');
-    if (label) { this.querySelectorAll('.color-dot-sec').forEach(d => d.classList.remove('active')); label.classList.add('active'); }
-    return;
-  }
-  this.querySelectorAll('.color-dot-sec').forEach(d => d.classList.remove('active'));
-  dot.classList.add('active'); currentSecondaryColor = dot.dataset.colorSec; redrawArt();
-});
-
-document.getElementById('customColorSecondary')?.addEventListener('input', function () {
-  const parent = this.closest('.color-dot-sec');
-  if (parent) { document.querySelectorAll('#productColorsSecondary .color-dot-sec').forEach(d => d.classList.remove('active')); parent.classList.add('active'); }
-  currentSecondaryColor = this.value; redrawArt();
-});
-
-
-document.getElementById('productColorsSecondary')?.addEventListener('click', function (e) {
-  if (e.target.tagName === 'INPUT') return;
-  const dot = e.target.closest('.color-dot-sec');
-  if (!dot) {
-    const label = e.target.closest('label.color-dot-sec');
-    if (label) { this.querySelectorAll('.color-dot-sec').forEach(d => d.classList.remove('active')); label.classList.add('active'); }
-    return;
-  }
-  this.querySelectorAll('.color-dot-sec').forEach(d => d.classList.remove('active'));
-  dot.classList.add('active'); currentSecondaryColor = dot.dataset.colorSec; redrawArt();
-});
-
-document.getElementById('customColorSecondary')?.addEventListener('input', function () {
-  const parent = this.closest('.color-dot-sec');
-  if (parent) { document.querySelectorAll('#productColorsSecondary .color-dot-sec').forEach(d => d.classList.remove('active')); parent.classList.add('active'); }
-  currentSecondaryColor = this.value; redrawArt();
 });
 
 // ── EXPORTAÇÃO COM ALTA QUALIDADE + LOGO D'ÁGUA ──
