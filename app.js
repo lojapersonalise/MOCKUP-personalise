@@ -155,6 +155,59 @@ scene.add(productGroup);
 // ── 4. DICIONÁRIO DE PRODUTOS ──
 const products = {
 
+  // ── CANECA CÔNICA COM COLHER (conica.obj) ──
+  conica: {
+    width: 2618, height: 1000,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'conica.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (5.5 / maxDim) : 1;
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+                
+                if (nome.includes('print')) {
+                  child.material = printMaterial;
+                } else if (nome.includes('inside')) {
+                  child.material = colorMaterialInside;
+                } else {
+                  // handle, spoon, mug
+                  child.material = colorMaterial;
+                }
+              }
+            });
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Erro ao carregar conica.obj:', error);
+            resolve(g);
+          }
+        );
+      });
+    }
+  },
+
   vidro330: {
     width: 2618, height: 1000,
     layout: 'single',
@@ -920,7 +973,7 @@ async function loadProduct(type) {
   } else if (type === 'agenda') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1;
     printMaterial.side = THREE.FrontSide;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330' || type === 'conica') {
     physicalProps.roughness = 0.02; physicalProps.clearcoat = 1.0;
     printMaterial.side = THREE.DoubleSide;
   } else {
@@ -991,6 +1044,9 @@ async function loadProduct(type) {
   } else if (type === 'vidro330') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte (Uso fundo transparente)';
+  } else if (type === 'conica') {
+    if (secUp2) secUp2.style.display = 'none';
+    if (titleUp1) titleUp1.textContent = 'Arte da Caneca';
   } else if (type === 'mochila') {
     if (secUp2) secUp2.style.display = 'none';
     if (titleUp1) titleUp1.textContent = 'Arte da Mochila';
@@ -1026,7 +1082,7 @@ async function loadProduct(type) {
     rot.x = 0.3; rot.y = 0.1; targetZoom = 8.0;
   } else if (type === 'agenda_aberta') {
     rot.x = 0.35; rot.y = 0; targetZoom = 8.5;
-  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330') {
+  } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330' || type === 'conica') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
   } else {
     rot.x = 0.15; rot.y = -0.2; targetZoom = 10.0;
@@ -1077,7 +1133,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330'
+      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330' || currentProductType === 'conica'
     );
     if (!isNormal) artCtx.scale(-1, 1);
 
@@ -1105,7 +1161,7 @@ function redrawArt() {
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
-      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330'
+      currentProductType === 'toalha' || currentProductType === 'xicara' || currentProductType === 'vidro330' || currentProductType === 'conica'
     );
     if (!isNormal) artCtx2.scale(-1, 1);
 
