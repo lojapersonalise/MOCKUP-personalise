@@ -110,7 +110,6 @@ const printMaterial2 = new THREE.MeshPhysicalMaterial({
   polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 
 });
 
-// ✅ [CORREÇÃO] Inicializando os materiais de cor com capacidade de emissão para igualar ao branco da arte
 const colorMaterial = new THREE.MeshPhysicalMaterial({ 
   color: new THREE.Color(currentColor), 
   emissive: new THREE.Color(currentColor),
@@ -124,6 +123,15 @@ const colorMaterialInside = new THREE.MeshPhysicalMaterial({
   emissive: new THREE.Color(currentColor),
   emissiveIntensity: PRINT_EMISSIVE_INTENSITY * 0.8, // Interior levemente mais sombreado para realismo
   side: THREE.BackSide, 
+  ...physicalProps 
+});
+
+// ✅ NOVO MATERIAL: Cerâmica Branca (Garante que o fundo/corpo de canecas complexas não mudem de cor)
+const whiteCeramicMaterial = new THREE.MeshPhysicalMaterial({ 
+  color: 0xffffff, 
+  emissive: new THREE.Color(0xffffff),
+  emissiveIntensity: PRINT_EMISSIVE_INTENSITY,
+  side: THREE.FrontSide, 
   ...physicalProps 
 });
 
@@ -187,11 +195,12 @@ const products = {
                 
                 if (nome.includes('print')) {
                   child.material = printMaterial;
-                } else if (nome.includes('inside')) {
-                  child.material = colorMaterialInside;
-                } else {
-                  // handle, spoon, mug
+                } else if (nome.includes('handle') || nome.includes('spoon') || nome.includes('inside')) {
+                  // O interior, a alça e a colher recebem a cor escolhida com renderização frontal
                   child.material = colorMaterial;
+                } else {
+                  // O corpo principal (mug) e o fundo ficam sempre brancos
+                  child.material = whiteCeramicMaterial;
                 }
               }
             });
@@ -981,7 +990,8 @@ async function loadProduct(type) {
     printMaterial.side = THREE.FrontSide;
   }
 
-  [printMaterial, printMaterial2, colorMaterial, colorMaterialInside].forEach(mat => {
+  // ✅ Atualiza as propriedades físicas de todos os materiais juntos
+  [printMaterial, printMaterial2, colorMaterial, colorMaterialInside, whiteCeramicMaterial].forEach(mat => {
     mat.roughness = physicalProps.roughness; mat.clearcoat = physicalProps.clearcoat;
   });
 
@@ -1000,7 +1010,7 @@ async function loadProduct(type) {
     type === 'agenda' || type === 'agenda_aberta' ||
     type === 'necessaire' || type === 'mousepad' ||
     type === 'almofada' || type === 'almofadaret' ||
-    type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara' || type === 'vidro330'
+    type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara' || type === 'vidro330' || type === 'conica'
   );
   artTex.repeat.x = noFlip ? 1 : -1; artTex2.repeat.x = noFlip ? 1 : -1;
   artTex.wrapS = THREE.RepeatWrapping; artTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -1170,8 +1180,6 @@ function redrawArt() {
   }
   artTex2.needsUpdate = true;
 
-  // ✅ [CORREÇÃO] Atualizando cor e emissividade da louça simultaneamente!
-  // Evita que a alça da caneca fique cinza quando a cor for branca, sem clarear se o cliente escolher preto.
   const baseColor = new THREE.Color(currentColor);
   colorMaterial.color.set(baseColor);
   colorMaterial.emissive.set(baseColor);
