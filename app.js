@@ -947,7 +947,72 @@ const products = {
         );
       });
     }
+  },
+
+  // ── BLOQUINHO ADICIONADO AQUI ──
+  bloquinho: {
+    width: 1240, height: 1754,
+    layout: 'single',
+    create: async function() {
+      const g = new THREE.Group();
+      return new Promise((resolve) => {
+        const loader = new OBJLoader();
+        loader.load(
+          'bloquinho.obj',
+          function (object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            object.position.set(-center.x, -center.y, -center.z);
+
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = maxDim > 0 ? (3.8 / maxDim) : 1; // Escala ajustada para ficar proporcional no canvas
+
+            const wrapper = new THREE.Group();
+            wrapper.add(object);
+            wrapper.scale.set(scale, scale, scale);
+            wrapper.position.y = 0.0;
+
+            // Materiais auxiliares para papel e espiral metálica do bloquinho
+            const paperMat = new THREE.MeshPhysicalMaterial({ color: 0xfafafa, roughness: 0.9, clearcoat: 0 });
+            const wireMat = new THREE.MeshPhysicalMaterial({ color: 0xdddddd, metalness: 0.6, roughness: 0.4 });
+
+            object.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const nome = (child.name || '').toLowerCase();
+
+                // Lógica baseada nas palavras-chaves de fallback solicitadas:
+                if (nome.includes('back') || nome.includes('verso') || nome.includes('tras') || nome.includes('costa')) {
+                  child.material = printMaterial2; // Upload 2
+                } else if (nome.includes('print') || nome.includes('capa') || nome.includes('cover') || nome.includes('front') || nome.includes('frente')) {
+                  child.material = printMaterial;  // Upload 1
+                } else if (nome.includes('page') || nome.includes('paper') || nome.includes('miolo') || nome.includes('folha')) {
+                  child.material = paperMat;       // Folhas de papel branco
+                } else if (nome.includes('spiral') || nome.includes('wire') || nome.includes('ring') || nome.includes('metal') || nome.includes('espiral') || nome.includes('argola') || nome.includes('ferragem')) {
+                  child.material = wireMat;        // Metal da espiral
+                } else if (nome.includes('elastic') || nome.includes('elastico')) {
+                  child.material = colorMaterial;  // Acompanha a cor customizada pelo usuário
+                } else {
+                  // Fallback seguro caso os nomes das meshes venham diferentes
+                  child.material = printMaterial;
+                }
+              }
+            });
+            g.add(wrapper);
+            resolve(g);
+          },
+          undefined,
+          function (error) {
+            console.error('Erro ao carregar bloquinho.obj:', error);
+            resolve(g);
+          }
+        );
+      });
+    }
   }
+
 };
 
 // ── 5. CARREGADOR DE PRODUTO DINÂMICO ──
@@ -994,7 +1059,7 @@ async function loadProduct(type) {
   ) {
     physicalProps.roughness = 0.95; physicalProps.clearcoat = 0.0;
     printMaterial.side = THREE.FrontSide;
-  } else if (type === 'agenda') {
+  } else if (type === 'agenda' || type === 'bloquinho') {
     physicalProps.roughness = 0.4; physicalProps.clearcoat = 0.1;
     printMaterial.side = THREE.FrontSide;
   } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330' || type === 'conica') {
@@ -1021,7 +1086,7 @@ async function loadProduct(type) {
   applyTextureColorSpace(artTex2);
 
   const noFlip = (
-    type === 'agenda' || type === 'agenda_aberta' ||
+    type === 'agenda' || type === 'agenda_aberta' || type === 'bloquinho' ||
     type === 'necessaire' || type === 'mousepad' ||
     type === 'almofada' || type === 'almofadaret' ||
     type === 'almochaveiro' || type === 'mochila' || type === 'toalha' || type === 'xicara' || type === 'vidro330' || type === 'conica'
@@ -1052,6 +1117,11 @@ async function loadProduct(type) {
     if (titleUp1) titleUp1.textContent = 'Página Esquerda';
     if (sec2) sec2.textContent = 'Página Direita';
     if (btn2) btn2.innerHTML = '⬆️ Carregar Direita';
+  } else if (type === 'bloquinho') {
+    if (secUp2) secUp2.style.display = 'block';
+    if (titleUp1) titleUp1.textContent = 'Capa (Frente)';
+    if (sec2) sec2.textContent = 'Verso (Costas)';
+    if (btn2) btn2.innerHTML = '⬆️ Carregar Verso';
   } else if (type === 'almofada' || type === 'almofadaret' || type === 'almochaveiro') {
     if (secUp2) secUp2.style.display = 'block';
     if (titleUp1) titleUp1.textContent = 'Frente';
@@ -1104,7 +1174,7 @@ async function loadProduct(type) {
     rot.x = 0.1; rot.y = 0.2; targetZoom = 9.0;
   } else if (type === 'toalha') {
     rot.x = 0.3; rot.y = 0.1; targetZoom = 8.0;
-  } else if (type === 'agenda_aberta') {
+  } else if (type === 'agenda_aberta' || type === 'bloquinho') {
     rot.x = 0.35; rot.y = 0; targetZoom = 8.5;
   } else if (type === 'caneca' || type === 'caneca1' || type === 'caneca2' || type === 'xicara' || type === 'vidro330' || type === 'conica') {
     rot.x = 0.15; rot.y = 0; targetZoom = 10.0;
@@ -1153,7 +1223,7 @@ function redrawArt() {
     artCtx.save(); artCtx.globalAlpha = art.opacity; artCtx.translate(cx, cy);
 
     const isNormal = (
-      currentProductType === 'agenda' || currentProductType === 'agenda_aberta' ||
+      currentProductType === 'agenda' || currentProductType === 'agenda_aberta' || currentProductType === 'bloquinho' ||
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
@@ -1181,7 +1251,7 @@ function redrawArt() {
     artCtx2.save(); artCtx2.globalAlpha = art2.opacity; artCtx2.translate(cx, cy);
 
     const isNormal = (
-      currentProductType === 'agenda' || currentProductType === 'agenda_aberta' ||
+      currentProductType === 'agenda' || currentProductType === 'agenda_aberta' || currentProductType === 'bloquinho' ||
       currentProductType === 'necessaire' || currentProductType === 'mousepad' ||
       currentProductType === 'almofada' || currentProductType === 'almofadaret' ||
       currentProductType === 'almochaveiro' || currentProductType === 'mochila' ||
@@ -1372,3 +1442,29 @@ loadProduct('caneca2');
   camera.position.z += (targetZoom - camera.position.z) * 0.08;
   renderer.render(scene, camera);
 })();
+
+// ── 10. INJEÇÃO AUTOMÁTICA NA INTERFACE (Evita edição do index.html) ──
+function injectBloquinhoUI() {
+  const selectExtra = document.getElementById('productSelectExtra');
+  if (selectExtra && !selectExtra.querySelector('option[value="bloquinho"]')) {
+    const opt = document.createElement('option');
+    opt.value = 'bloquinho';
+    opt.textContent = 'Bloquinho';
+    selectExtra.appendChild(opt);
+  } else {
+    // Se o layout não usar select dropdown, cria um botão junto com os outros
+    const selector = document.getElementById('productSelector');
+    if (selector && !document.querySelector('[data-product="bloquinho"]')) {
+      const btn = document.createElement('button');
+      btn.className = 'prod-btn';
+      btn.dataset.product = 'bloquinho';
+      btn.textContent = 'Bloquinho';
+      selector.appendChild(btn);
+    }
+  }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', injectBloquinhoUI);
+} else {
+  injectBloquinhoUI();
+}
